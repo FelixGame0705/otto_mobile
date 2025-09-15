@@ -1,16 +1,31 @@
-# otto_mobile
+# Otto Mobile
 
-A new Flutter project.
+Flutter app with two main screens:
 
-## Getting Started
+- BlocklyEditorScreen: author programs using Blockly, view Python preview, export JSON.
+- PhaserRunnerScreen: opens `https://phaser-map-seven.vercel.app/` in WebView and receives compiled JSON via bridge.
 
-This project is a starting point for a Flutter application.
+## Features
 
-A few resources to get you started if this is your first Flutter project:
+- WebView-based Blockly editor (`assets/blockly/index.html`) with custom blocks and generators
+- CompilerService validates schema and produces Python preview (display-only)
+- Storage via SharedPreferences + JSON import/export via file_picker
+- Phaser runner bridge sends messages via `window.receiveFromFlutter` or `CustomEvent('OttobitProgram')`
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Run
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. `flutter pub get`
+2. Run on Android/iOS/desktop. Navigate:
+   - `/blockly` to open the editor
+   - `/phaser` to open the runner
+3. In editor: Compose blocks → Compile → Export JSON or Send to Phaser
+4. In runner: Use AppBar action "Send Sample" to verify bridge (see console logs)
+
+## Screenshots
+
+Add screenshots here.
+
+## Notes
+
+- JavaScriptMode is unrestricted for WebView
+- Logs are printed in Flutter and injected JS console for debugging

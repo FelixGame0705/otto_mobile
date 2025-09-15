@@ -11,6 +11,16 @@ class HomeScreen extends StatelessWidget {
       title: 'OttoBit',
       actions: [
         IconButton(
+          icon: const Icon(Icons.extension),
+          tooltip: 'Blockly',
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.blockly),
+        ),
+        IconButton(
+          icon: const Icon(Icons.videogame_asset),
+          tooltip: 'Phaser',
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.phaser),
+        ),
+        IconButton(
           icon: const Icon(Icons.person),
           onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
         ),
