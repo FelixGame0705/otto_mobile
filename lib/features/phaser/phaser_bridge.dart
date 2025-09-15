@@ -48,7 +48,7 @@ class PhaserBridge {
           console.log('PhaserChannel methods:', Object.keys(window.PhaserChannel));
           
           // Victory listener
-          window.PhaserChannel.on('victory', function(data) {
+          window.PhaserChannel.on('VICTORY', function(data) {
             console.log('🎉 Victory event received:', data);
             if (window.FlutterFromPhaser) {
               window.FlutterFromPhaser.postMessage(JSON.stringify({
@@ -61,7 +61,7 @@ class PhaserBridge {
           });
           
           // Defeat listener
-          window.PhaserChannel.on('defeat', function(data) {
+          window.PhaserChannel.on('LOSE', function(data) {
             console.log('💀 Defeat event received:', data);
             if (window.FlutterFromPhaser) {
               window.FlutterFromPhaser.postMessage(JSON.stringify({
@@ -173,7 +173,7 @@ class PhaserBridge {
     await _controller!.runJavaScript('''
       console.log('️ Sending load_map event...');
       if (window.PhaserChannel) {
-        window.PhaserChannel.sendEvent('load_map', { mapKey: '$mapKey' });
+        window.PhaserChannel.sendEvent('LOAD_MAP_AND_CHALLENGE', { mapKey: '$mapKey' });
         console.log('✅ load_map event sent');
       } else {
         console.log('❌ PhaserChannel not available');
@@ -191,7 +191,7 @@ class PhaserBridge {
       await _controller!.runJavaScript('''
         console.log('🏃 Sending run_program event...');
         if (window.PhaserChannel) {
-          window.PhaserChannel.sendEvent('run_program', { program: $programJson });
+          window.PhaserChannel.sendEvent('RUN_PROGRAM', { program: $programJson });
           console.log('✅ run_program event sent');
         } else {
           console.log('❌ PhaserChannel not available');
