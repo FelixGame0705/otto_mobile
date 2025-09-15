@@ -180,7 +180,11 @@
           <block type="boolean_value"></block>
           <block type="logical_operation"></block>
           <block type="compare"></block>
-      </category>
+        </category>
+        <category name="⚡" colour="#ff9f43">
+          <block type="function_define"></block>
+          <block type="function_call"></block>
+        </category>
     </xml>
   </div>
   <script>
@@ -740,7 +744,48 @@
             this.setColour("#9b27b0"); // mint sáng
             this.setTooltip("Compare two numbers");
           },
-    };
+        };
+
+        // Function definition block
+        C.Blocks["function_define"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("📝")
+              .appendField("function")
+              .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
+            this.appendStatementInput("BODY").appendField("do");
+            this.setPreviousStatement(false); // Functions are top-level
+            this.setNextStatement(false);
+            this.setColour("#ff9f43"); // orange sáng
+            this.setTooltip("Define a custom function");
+            this.setHelpUrl("");
+          },
+
+          onchange: function () {
+            if (!this.workspace || this.isInFlyout) return;
+            
+            // Ensure function definitions are always top-level
+            if (this.getParent()) {
+              this.unplug(false);
+              this.bumpNeighbours();
+            }
+          },
+        };
+
+        // Function call block
+        C.Blocks["function_call"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("🔧")
+              .appendField("call")
+              .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour("#ff9f43"); // orange sáng
+            this.setTooltip("Call a custom function");
+            this.setHelpUrl("");
+          },
+        };
   })();
   // END inlined custom_blocks.js
   </script>
@@ -921,6 +966,21 @@
           return result;
         }
 
+        function nodeFunctionDefine(block) {
+          return {
+            type: "function_define",
+            name: block.getFieldValue("FUNCTION_NAME") || "myFunction1",
+            body: statementToList(block, "BODY")
+          };
+        }
+
+        function nodeFunctionCall(block) {
+          return {
+            type: "callFunction",
+            functionName: block.getFieldValue("FUNCTION_NAME") || "myFunction1"
+          };
+        }
+
         function blockToNode(block) {
           switch (block.type) {
             case "start":
@@ -975,6 +1035,10 @@
                 left: leftComp,
                 right: rightComp
               };
+            case "function_define":
+              return nodeFunctionDefine(block);
+            case "function_call":
+              return nodeFunctionCall(block);
             default:
               return null;
           }
@@ -993,33 +1057,60 @@
     }
 
         gens.toJSON = function (workspace) {
-      const topBlocks = workspace.getTopBlocks(true);
-      const actions = [];
-      
-      // Tìm block start và lấy tất cả blocks được kết nối dưới nó
-          const startBlock = topBlocks.find((b) => b.type === "start");
-      if (startBlock) {
-        // Lấy block đầu tiên được kết nối dưới start
-        const firstBlock = startBlock.getNextBlock();
-        if (firstBlock) {
-          // Lấy tất cả blocks trong chuỗi kết nối
-          let cur = firstBlock;
-          while (cur) {
-            const n = blockToNode(cur);
-            if (n) actions.push(n);
-            cur = cur.getNextBlock();
+          const topBlocks = workspace.getTopBlocks(true);
+          const actions = [];
+          const functions = [];
+
+          // Tách function definitions và main program
+          for (const block of topBlocks) {
+            if (block.type === "function_define") {
+              const funcNode = blockToNode(block);
+              if (funcNode) {
+                functions.push({
+                  name: funcNode.name,
+                  body: funcNode.body || []
+                });
+              }
+            }
           }
-        }
-      } else {
-        // Fallback: nếu không có start block, lấy tất cả top blocks (trừ start)
-        for (const b of topBlocks) {
-          const n = blockToNode(b);
-              if (n && n.type !== "start") actions.push(n);
-        }
-      }
-      
-          return { version: "1.0.0", programName: "program", actions };
-    };
+
+          // Tìm block start và lấy tất cả blocks được kết nối dưới nó
+          const startBlock = topBlocks.find((b) => b.type === "start");
+          if (startBlock) {
+            // Lấy block đầu tiên được kết nối dưới start
+            const firstBlock = startBlock.getNextBlock();
+            if (firstBlock) {
+              // Lấy tất cả blocks trong chuỗi kết nối
+              let cur = firstBlock;
+              while (cur) {
+                const n = blockToNode(cur);
+                if (n) actions.push(n);
+                cur = cur.getNextBlock();
+              }
+            }
+          } else {
+            // Fallback: nếu không có start block, lấy tất cả top blocks (trừ start và functions)
+            for (const b of topBlocks) {
+              if (b.type !== "function_define") {
+                const n = blockToNode(b);
+                if (n && n.type !== "start") actions.push(n);
+              }
+            }
+          }
+
+          const result = { 
+            version: "1.0.0", 
+            programName: "program", 
+            actions 
+          };
+
+          // Chỉ thêm functions nếu có
+          if (functions.length > 0) {
+            result.functions = functions;
+          }
+
+          return result;
+        };
 
         gens.toPython = function (workspace) {
       const program = gens.toJSON(workspace);
@@ -1106,8 +1197,11 @@
                   break;
                 case "while":
                   lines.push(ind + `while ${condToPy(n.cond)}:`);
-              emit(n.body || [], indent + 1);
-              break;
+                  emit(n.body || [], indent + 1);
+                  break;
+                case "callFunction":
+                  lines.push(ind + `${n.functionName}()`);
+                  break;
           }
         }
       }
