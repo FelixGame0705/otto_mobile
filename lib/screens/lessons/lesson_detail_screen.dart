@@ -73,11 +73,15 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   }
 
   void _handleViewChallenges() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Xem ${_lessonDetail?.challengesCount} thử thách'),
-        backgroundColor: Colors.blue,
-      ),
+    if (_lessonDetail == null) return;
+    Navigator.pushNamed(
+      context,
+      '/challenges',
+      arguments: {
+        'lessonId': _lessonDetail!.id,
+        'courseId': _lessonDetail!.courseId,
+        'lessonTitle': _lessonDetail!.title,
+      },
     );
   }
 

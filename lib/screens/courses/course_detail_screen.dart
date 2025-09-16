@@ -6,13 +6,16 @@ import 'package:otto_mobile/widgets/courseDetail/course_detail_header.dart';
 import 'package:otto_mobile/widgets/courseDetail/course_info_section.dart';
 import 'package:otto_mobile/widgets/courseDetail/course_action_buttons.dart';
 import 'package:otto_mobile/routes/app_routes.dart';
+import 'package:otto_mobile/services/enrollment_service.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
+  final bool hideEnroll;
 
   const CourseDetailScreen({
     super.key,
     required this.courseId,
+    this.hideEnroll = false,
   });
 
   @override
@@ -74,41 +77,29 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     });
 
     try {
-      // TODO: Implement actual enrollment logic
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
-      if (mounted) {
-        setState(() {
-          _isEnrolled = !_isEnrolled;
-          _isEnrolling = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEnrolled 
-                  ? 'Đăng ký khóa học thành công!' 
-                  : 'Hủy đăng ký khóa học thành công!',
-            ),
-            backgroundColor: _isEnrolled 
-                ? const Color(0xFF48BB78) 
-                : const Color(0xFFED8936),
-          ),
-        );
-      }
+      final resp = await EnrollmentService().enroll(courseId: widget.courseId);
+      if (!mounted) return;
+      setState(() {
+        _isEnrolled = true;
+        _isEnrolling = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(resp.message.isNotEmpty ? resp.message : 'Đăng ký khóa học thành công!'),
+          backgroundColor: const Color(0xFF48BB78),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isEnrolling = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Có lỗi xảy ra: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      setState(() {
+        _isEnrolling = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Có lỗi xảy ra: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -231,12 +222,25 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           CourseInfoSection(course: _course!),
           
           // Action Buttons
-          CourseActionButtons(
-            onEnroll: _handleEnroll,
-            onShare: _handleShare,
-            isEnrolled: _isEnrolled,
-            isLoading: _isEnrolling,
-          ),
+          if (!widget.hideEnroll)
+            CourseActionButtons(
+              onEnroll: _handleEnroll,
+              onShare: _handleShare,
+              isEnrolled: _isEnrolled,
+              isLoading: _isEnrolling,
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: _handleShare,
+                  icon: const Icon(Icons.share),
+                  label: const Text('Chia sẻ'),
+                ),
+              ),
+            ),
           
           // Lessons Button
           Padding(
