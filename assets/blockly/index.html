@@ -184,7 +184,7 @@
         <category name="⚡" colour="#ff9f43">
           <block type="function_define"></block>
           <block type="function_call"></block>
-        </category>
+      </category>
     </xml>
   </div>
   <script>
@@ -785,7 +785,7 @@
             this.setTooltip("Call a custom function");
             this.setHelpUrl("");
           },
-        };
+    };
   })();
   // END inlined custom_blocks.js
   </script>
@@ -1057,8 +1057,8 @@
     }
 
         gens.toJSON = function (workspace) {
-          const topBlocks = workspace.getTopBlocks(true);
-          const actions = [];
+      const topBlocks = workspace.getTopBlocks(true);
+      const actions = [];
           const functions = [];
 
           // Tách function definitions và main program
@@ -1073,26 +1073,26 @@
               }
             }
           }
-
-          // Tìm block start và lấy tất cả blocks được kết nối dưới nó
+      
+      // Tìm block start và lấy tất cả blocks được kết nối dưới nó
           const startBlock = topBlocks.find((b) => b.type === "start");
-          if (startBlock) {
-            // Lấy block đầu tiên được kết nối dưới start
-            const firstBlock = startBlock.getNextBlock();
-            if (firstBlock) {
-              // Lấy tất cả blocks trong chuỗi kết nối
-              let cur = firstBlock;
-              while (cur) {
-                const n = blockToNode(cur);
-                if (n) actions.push(n);
-                cur = cur.getNextBlock();
-              }
-            }
-          } else {
+      if (startBlock) {
+        // Lấy block đầu tiên được kết nối dưới start
+        const firstBlock = startBlock.getNextBlock();
+        if (firstBlock) {
+          // Lấy tất cả blocks trong chuỗi kết nối
+          let cur = firstBlock;
+          while (cur) {
+            const n = blockToNode(cur);
+            if (n) actions.push(n);
+            cur = cur.getNextBlock();
+          }
+        }
+      } else {
             // Fallback: nếu không có start block, lấy tất cả top blocks (trừ start và functions)
-            for (const b of topBlocks) {
+        for (const b of topBlocks) {
               if (b.type !== "function_define") {
-                const n = blockToNode(b);
+          const n = blockToNode(b);
                 if (n && n.type !== "start") actions.push(n);
               }
             }
@@ -1197,8 +1197,8 @@
                   break;
                 case "while":
                   lines.push(ind + `while ${condToPy(n.cond)}:`);
-                  emit(n.body || [], indent + 1);
-                  break;
+              emit(n.body || [], indent + 1);
+              break;
                 case "callFunction":
                   lines.push(ind + `${n.functionName}()`);
                   break;

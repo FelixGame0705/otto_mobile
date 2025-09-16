@@ -46,10 +46,16 @@ class HttpService {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
     
+    print('HttpService: Making GET request to: $uri');
+    print('HttpService: Headers: $headers');
+    
     try {
       final response = await _client.get(uri, headers: headers);
+      print('HttpService: Response status: ${response.statusCode}');
+      print('HttpService: Response body: ${response.body}');
       return _handleResponse(response);
     } catch (e) {
+      print('HttpService: GET request failed: $e');
       throw HttpException('GET request failed: $e');
     }
   }

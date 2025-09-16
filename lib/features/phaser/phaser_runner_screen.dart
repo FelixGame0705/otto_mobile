@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
+import '../../widgets/phaser/status_dialog_widget.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;
@@ -19,7 +20,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   bool _isLoading = true;
   bool _isGameReady = false;
   bool _isDialogShowing = false;
-  
 
   @override
   void initState() {
@@ -61,21 +61,18 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           setState(() {
             _isLoading = false;
           });
-          // Status update removed
         },
         onNavigationRequest: (NavigationRequest request) {
           debugPrint('Navigation request: ${request.url}');
           return NavigationDecision.navigate;
         },
       ))
-      ..loadRequest(Uri.parse('https://19ba6a670905.ngrok-free.app/'));
+      ..loadRequest(Uri.parse('https://phaser-map-three.vercel.app/'));
   }
-
 
   void _setupBridgeCallbacks() {
     _bridge.onReady = (data) {
       debugPrint('🎉 onReady callback called with data: $data');
-      // Status update removed
       if (mounted) {
         setState(() {
           _isGameReady = true;
@@ -88,7 +85,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
 
     _bridge.onVictory = (data) {
       debugPrint('🎉 onVictory callback called with data: $data');
-      // Status update removed
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showStatusDialog('VICTORY', 'Congratulations! You won!', Colors.green, data);
@@ -98,7 +94,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
 
     _bridge.onDefeat = (data) {
       debugPrint('💀 onDefeat callback called with data: $data');
-      // Status update removed
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showStatusDialog('LOSE', 'Game Over!', Colors.red, data);
@@ -108,13 +103,11 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
 
     _bridge.onProgress = (data) {
       debugPrint('📊 onProgress callback called with data: $data');
-      // Status update removed
       // Không hiển thị popup cho progress
     };
 
     _bridge.onError = (data) {
       debugPrint('❌ onError callback called with data: $data');
-      // Status update removed
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showStatusDialog('ERROR', 'Game Error Occurred', Colors.orange, data);
@@ -137,102 +130,35 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     showDialog(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.7),
       builder: (context) => WillPopScope(
         onWillPop: () async {
           debugPrint('🔙 Dialog dismissed by back button');
           _isDialogShowing = false;
           return true;
         },
-        child: AlertDialog(
-          title: Row(
-            children: [
-              Icon(
-                _getStatusIcon(status),
-                color: color,
-                size: 28,
-              ),
-              const SizedBox(width: 8),
-              Expanded(child: Text(title)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Status: $status',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text('Data:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: Text(
-                    const JsonEncoder.withIndent('  ').convert(data),
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            if (status == 'VICTORY' || status == 'LOSE')
-              TextButton(
-                onPressed: () {
-                  debugPrint('🔄 Play Again pressed');
-                  _isDialogShowing = false;
-                  Navigator.pop(context);
-                  _bridge.resetGame();
-                },
-                child: const Text('Play Again'),
-              ),
-            TextButton(
-              onPressed: () {
-                debugPrint('✅ OK pressed');
-                _isDialogShowing = false;
-                Navigator.pop(context);
-              },
-              child: const Text('OK'),
-            ),
-          ],
+        child: StatusDialogWidget(
+          status: status,
+          title: title,
+          color: color,
+          data: data,
+          onPlayAgain: () {
+            debugPrint('🔄 Play Again pressed');
+            _isDialogShowing = false;
+            Navigator.pop(context);
+            _bridge.resetGame();
+          },
+          onClose: () {
+            debugPrint('✅ Close pressed');
+            _isDialogShowing = false;
+            Navigator.pop(context);
+          },
         ),
       ),
     ).then((_) {
       debugPrint('🔚 Dialog closed');
       _isDialogShowing = false;
     });
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'VICTORY':
-        return Icons.emoji_events;
-      case 'LOSE':
-        return Icons.sentiment_very_dissatisfied;
-      case 'PROGRESS':
-        return Icons.trending_up;
-      case 'ERROR':
-        return Icons.error;
-      case 'READY':
-        return Icons.check_circle;
-      default:
-        return Icons.info;
-    }
   }
 
   Future<void> _loadMapAndRunProgram() async {
@@ -265,12 +191,9 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     await _bridge.resetGame();
   }
 
-  
-
   Future<void> _getGameStatus() async {
     final status = await _bridge.getGameStatus();
     if (status != null) {
-      // Status update removed
       _showStatusDialog('STATUS', 'Game Status', Colors.blue, status);
     }
   }
@@ -302,13 +225,11 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
               onPressed: _resetGame,
               tooltip: 'Reset',
             ),
-            
             IconButton(
               icon: const Icon(Icons.info),
               onPressed: _getGameStatus,
               tooltip: 'Status',
             ),
-        
           ],
         ],
       ),

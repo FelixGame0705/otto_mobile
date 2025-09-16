@@ -1,0 +1,82 @@
+import 'dart:convert';
+import 'package:otto_mobile/models/lesson_model.dart';
+import 'package:otto_mobile/services/http_service.dart';
+
+class LessonService {
+  static final LessonService _instance = LessonService._internal();
+  factory LessonService() => _instance;
+  LessonService._internal();
+
+  final HttpService _httpService = HttpService();
+
+  Future<LessonApiResponse> getLessons({
+    String? searchTerm,
+    required String courseId,
+    int? durationFrom,
+    int? durationTo,
+    bool includeDeleted = false,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'IncludeDeleted': includeDeleted.toString(),
+        'PageNumber': pageNumber.toString(),
+        'PageSize': pageSize.toString(),
+        'CourseId': courseId,
+      };
+
+      if (searchTerm != null && searchTerm.isNotEmpty) {
+        queryParams['SearchTerm'] = searchTerm;
+      }
+      if (durationFrom != null) {
+        queryParams['DurationFrom'] = durationFrom.toString();
+      }
+      if (durationTo != null) {
+        queryParams['DurationTo'] = durationTo.toString();
+      }
+
+      print('LessonService: Making request to /v1/lessons');
+      print('LessonService: Query params: $queryParams');
+
+      final response = await _httpService.get('/v1/lessons', queryParams: queryParams);
+
+      print('LessonService: Response status: ${response.statusCode}');
+      print('LessonService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        print('LessonService: Parsed JSON: $jsonData');
+        return LessonApiResponse.fromJson(jsonData);
+      } else {
+        print('LessonService: Error response: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to load lessons: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('LessonService: Exception: $e');
+      throw Exception('Error fetching lessons: $e');
+    }
+  }
+
+  Future<LessonApiResponse> getLessonById(String lessonId) async {
+    try {
+      print('LessonService: Making request to /v1/lessons/$lessonId');
+      final response = await _httpService.get('/v1/lessons/$lessonId');
+
+      print('LessonService: Response status: ${response.statusCode}');
+      print('LessonService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        print('LessonService: Parsed JSON: $jsonData');
+        return LessonApiResponse.fromJson(jsonData);
+      } else {
+        print('LessonService: Error response: ${response.statusCode} - ${response.body}');
+        throw Exception('Failed to load lesson: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('LessonService: Exception: $e');
+      throw Exception('Error fetching lesson: $e');
+    }
+  }
+}
