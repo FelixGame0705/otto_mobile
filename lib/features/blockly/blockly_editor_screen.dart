@@ -227,8 +227,11 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
         child: Scaffold(
           appBar: AppBar(
             title: const Text('Blockly Editor'),
-            bottom: const TabBar(
-              tabs: [
+            bottom: TabBar(
+              isScrollable: true,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+              tabs: const [
                 Tab(text: 'Blockly'),
                 Tab(text: 'Python Preview'),
               ],
