@@ -20,6 +20,7 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
   int _page = 1;
   int _totalPages = 1;
   bool _hasMore = true;
+  bool? _isCompleted; // null = all, false = in-progress, true = completed
 
   @override
   void initState() {
@@ -45,7 +46,11 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
       }
     });
     try {
-      final res = await _service.getMyEnrollments(pageNumber: _page, pageSize: 10);
+      final res = await _service.getMyEnrollments(
+        pageNumber: _page,
+        pageSize: 10,
+        isCompleted: _isCompleted,
+      );
       setState(() {
         final list = res.items;
         if (refresh) {
@@ -113,33 +118,80 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
         ),
       );
     }
-    if (_items.isEmpty) {
-      return const Center(child: Text('Bạn chưa đăng ký khóa học nào'));
-    }
-
-    return GridView.builder(
-      controller: _scroll,
-      padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 12),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: _cols(w, o),
-        childAspectRatio: _ratio(w, o),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == _items.length && _loadingMore) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
-          return Center(child: Text('Đã hiển thị tất cả'));
-        }
-        if (index < _items.length) {
-          final e = _items[index];
-          return _EnrollmentCard(enrollment: e);
-        }
-        return const SizedBox.shrink();
-      },
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+          child: Row(
+            children: [
+              const Text('Lọc:'),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 230,
+                child: DropdownButtonFormField<bool?>(
+                  value: _isCompleted,
+                  items: const [
+                    DropdownMenuItem<bool?>(
+                      value: null,
+                      child: Row(children: [Icon(Icons.all_inclusive, size: 18), SizedBox(width: 8), Text('Tất cả')]),
+                    ),
+                    DropdownMenuItem<bool?>(
+                      value: false,
+                      child: Row(children: [Icon(Icons.timelapse, size: 18), SizedBox(width: 8), Text('Chưa hoàn thành')]),
+                    ),
+                    DropdownMenuItem<bool?>(
+                      value: true,
+                      child: Row(children: [Icon(Icons.check_circle, size: 18), SizedBox(width: 8), Text('Đã hoàn thành')]),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    setState(() => _isCompleted = v);
+                    _load(refresh: true);
+                  },
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (_items.isNotEmpty)
+                Text('${_items.length}${_hasMore ? '+' : ''}'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_items.isEmpty)
+          const Expanded(child: Center(child: Text('Không có khóa học phù hợp')))
+        else
+          Expanded(
+            child: GridView.builder(
+              controller: _scroll,
+              padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 12),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _cols(w, o),
+                childAspectRatio: _ratio(w, o),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == _items.length && _loadingMore) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
+                  return Center(child: Text('Đã hiển thị tất cả'));
+                }
+                if (index < _items.length) {
+                  final e = _items[index];
+                  return _EnrollmentCard(enrollment: e);
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+      ],
     );
   }
 }
