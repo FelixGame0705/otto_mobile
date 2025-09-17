@@ -114,12 +114,24 @@ class PhaserBridge {
           
           // Ready listener
           window.PhaserChannel.on('ready', function(data) {
-            console.log('✅ Ready event received:', data);
+            console.log('✅ Ready event received (lowercase):', data);
             if (window.FlutterFromPhaser) {
               window.FlutterFromPhaser.postMessage(JSON.stringify({
                 channel: 'PhaserChannel',
                 type: 'event',
                 event: 'ready',
+                data: data
+              }));
+            }
+          });
+          // READY (uppercase) listener to match WebViewMessenger
+          window.PhaserChannel.on('READY', function(data) {
+            console.log('✅ READY event received (uppercase):', data);
+            if (window.FlutterFromPhaser) {
+              window.FlutterFromPhaser.postMessage(JSON.stringify({
+                channel: 'PhaserChannel',
+                type: 'event',
+                event: 'ready', // normalize to lowercase for Dart side
                 data: data
               }));
             }
@@ -202,6 +214,37 @@ class PhaserBridge {
     } catch (e) {
       developer.log('❌ Error running program: $e');
       onError?.call({'error': e.toString(), 'type': 'run_program_error'});
+    }
+  }
+
+  // Gửi đồng thời mapJson và challengeJson tới game
+  Future<void> loadMapAndChallenge({
+    required Map<String, dynamic> mapJson,
+    required Map<String, dynamic> challengeJson,
+  }) async {
+    debugPrint('Sending LOAD_MAP_AND_CHALLENGE to Phaser');
+    developer.log('📦 Sending LOAD_MAP_AND_CHALLENGE to Phaser');
+    if (_controller == null) return;
+    try {
+      final mapStr = jsonEncode(mapJson);
+      final challengeStr = jsonEncode(challengeJson);
+      developer.log('📦 Sending LOAD_MAP_AND_CHALLENGE to Phaser');
+      await _controller!.runJavaScript('''
+        console.log('️ Sending LOAD_MAP_AND_CHALLENGE with payloads...');
+        if (window.PhaserChannel) {
+          window.PhaserChannel.sendEvent('LOAD_MAP_AND_CHALLENGE', { 
+            mapJson: $mapStr, 
+            challengeJson: $challengeStr 
+          });
+          console.log('Sending LOAD_MAP_AND_CHALLENGE event sent');
+        } else {
+          console.log('❌ PhaserChannel not available');
+          throw new Error('PhaserChannel not available');
+        }
+      ''');
+    } catch (e) {
+      developer.log('❌ Error sending LOAD_MAP_AND_CHALLENGE: $e');
+      onError?.call({'error': e.toString(), 'type': 'load_map_challenge_error'});
     }
   }
 

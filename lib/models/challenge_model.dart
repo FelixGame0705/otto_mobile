@@ -1,3 +1,4 @@
+import 'dart:convert';
 class Challenge {
   final String id;
   final String lessonId;
@@ -10,6 +11,9 @@ class Challenge {
   final int submissionsCount;
   final String lessonTitle;
   final String courseTitle;
+  // Optional embedded payloads for Phaser
+  final Map<String, dynamic>? mapJson; // aka messageJson from API, if provided
+  final Map<String, dynamic>? challengeJson;
 
   Challenge({
     required this.id,
@@ -23,9 +27,27 @@ class Challenge {
     required this.submissionsCount,
     required this.lessonTitle,
     required this.courseTitle,
+    this.mapJson,
+    this.challengeJson,
   });
 
   factory Challenge.fromJson(Map<String, dynamic> json) {
+    // The API may return mapJson as either an object or a JSON string (sometimes named messageJson)
+    Map<String, dynamic>? parseMap(dynamic v) {
+      if (v == null) return null;
+      if (v is Map<String, dynamic>) return v;
+      if (v is String && v.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(v);
+          if (decoded is Map<String, dynamic>) return decoded;
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    final dynamic rawMapJson = json['mapJson'] ?? json['messageJson'];
+    final dynamic rawChallengeJson = json['challengeJson'];
+
     return Challenge(
       id: json['id'] ?? '',
       lessonId: json['lessonId'] ?? '',
@@ -38,6 +60,8 @@ class Challenge {
       submissionsCount: json['submissionsCount'] ?? 0,
       lessonTitle: json['lessonTitle'] ?? '',
       courseTitle: json['courseTitle'] ?? '',
+      mapJson: parseMap(rawMapJson),
+      challengeJson: parseMap(rawChallengeJson),
     );
   }
 }

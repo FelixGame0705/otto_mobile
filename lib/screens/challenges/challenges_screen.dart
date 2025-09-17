@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:otto_mobile/models/challenge_model.dart';
 import 'package:otto_mobile/services/challenge_service.dart';
 import 'package:otto_mobile/widgets/challenges/challenge_card.dart';
+import 'package:otto_mobile/features/blockly/blockly_editor_screen.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String lessonId;
@@ -216,7 +217,15 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                 return ChallengeCard(
                                   challenge: c,
                                   onTap: () {
-                                    // TODO: Navigate to challenge detail in future
+                                    // Mở Blockly Editor và gửi mapJson + challengeJson
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocklyEditorScreen(
+                                          initialMapJson: c.mapJson,
+                                          initialChallengeJson: c.challengeJson,
+                                        ),
+                                      ),
+                                    );
                                   },
                                 );
                               }

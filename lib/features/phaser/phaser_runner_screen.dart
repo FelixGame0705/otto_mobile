@@ -8,7 +8,11 @@ import '../../widgets/phaser/status_dialog_widget.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;
-  const PhaserRunnerScreen({super.key, this.initialProgram});
+  final Map<String, dynamic>? initialMapJson;
+  final Map<String, dynamic>? initialChallengeJson;
+  final bool embedded;
+  final ValueChanged<PhaserBridge>? onBridgeReady;
+  const PhaserRunnerScreen({super.key, this.initialProgram, this.initialMapJson, this.initialChallengeJson, this.embedded = false, this.onBridgeReady});
 
   @override
   State<PhaserRunnerScreen> createState() => _PhaserRunnerScreenState();
@@ -20,6 +24,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   bool _isLoading = true;
   bool _isGameReady = false;
   bool _isDialogShowing = false;
+  bool _sentInitialLoad = false;
 
   @override
   void initState() {
@@ -31,6 +36,12 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     // Khởi tạo bridge trước
     _bridge = PhaserBridge();
     _setupBridgeCallbacks();
+    // Thông báo bridge cho parent nếu cần
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.onBridgeReady?.call(_bridge);
+      }
+    });
     
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -51,10 +62,8 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           });
           // Initialize bridge sau khi page load
           _bridge.initialize(_controller);
-          
-          if (widget.initialProgram != null) {
-            _loadMapAndRunProgram();
-          }
+          // Chỉ gửi payload sau khi nhận READY từ Phaser
+          debugPrint('⏳ Waiting for READY from Phaser before sending payload');
         },
         onWebResourceError: (WebResourceError error) {
           debugPrint('WebView error: ${error.description}');
@@ -77,9 +86,8 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         setState(() {
           _isGameReady = true;
         });
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showStatusDialog('READY', 'Game is ready!', Colors.green, data);
-        });
+        _sendInitialPayloadIfAny();
+        // Do not show READY popup
       }
     };
 
@@ -167,6 +175,22 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     }
   }
 
+  void _sendInitialPayloadIfAny() {
+    debugPrint('🔍 Sending initial payload if any');
+    if (_sentInitialLoad) return;
+    if (!_isGameReady) return;
+    if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
+      _sentInitialLoad = true;
+      _bridge.loadMapAndChallenge(
+        mapJson: widget.initialMapJson!,
+        challengeJson: widget.initialChallengeJson!,
+      );
+    } else if (widget.initialProgram != null) {
+      // fallback behavior if only program is provided
+      _loadMapAndRunProgram();
+    }
+  }
+
   Future<void> _loadMap(String mapKey) async {
     await _bridge.loadMap(mapKey);
   }
@@ -191,6 +215,15 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     await _bridge.resetGame();
   }
 
+  Future<void> _reloadMapAndChallenge() async {
+    if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
+      await _bridge.loadMapAndChallenge(
+        mapJson: widget.initialMapJson!,
+        challengeJson: widget.initialChallengeJson!,
+      );
+    }
+  }
+
   Future<void> _getGameStatus() async {
     final status = await _bridge.getGameStatus();
     if (status != null) {
@@ -198,12 +231,40 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     }
   }
 
+  Widget _buildBodyOnly() {
+    return Stack(
+      children: [
+        WebViewWidget(controller: _controller),
+        if (_isLoading)
+          const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Loading game...'),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.embedded) {
+      return _buildBodyOnly();
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Phaser Robot Game'),
         actions: [
+          if (_isGameReady && widget.initialMapJson != null && widget.initialChallengeJson != null)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _reloadMapAndChallenge,
+              tooltip: 'Reload Map & Challenge',
+            ),
           if (_isGameReady) ...[
             IconButton(
               icon: const Icon(Icons.play_circle),
@@ -233,22 +294,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           ],
         ],
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading)
-            const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading game...'),
-                ],
-              ),
-            ),
-        ],
-      ),
+      body: _buildBodyOnly(),
       floatingActionButton: _isGameReady ? Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
