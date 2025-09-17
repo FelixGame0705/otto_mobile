@@ -36,6 +36,10 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel('FlutterFromBlockly', onMessageReceived: (msg) {
@@ -67,6 +71,18 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     
     // Đăng ký JavaScript channel để nhận messages từ Blockly
     _bridge?.registerInboundChannel();
+  }
+
+  @override
+  void dispose() {
+    // Restore all orientations when leaving this screen
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    super.dispose();
   }
 
   Future<void> _newWorkspace() async {
