@@ -7,6 +7,7 @@ import 'package:otto_mobile/widgets/courseDetail/course_info_section.dart';
 import 'package:otto_mobile/widgets/courseDetail/course_action_buttons.dart';
 import 'package:otto_mobile/routes/app_routes.dart';
 import 'package:otto_mobile/services/enrollment_service.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -104,13 +105,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   void _handleShare() {
-    // TODO: Implement share functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Tính năng chia sẻ sẽ được cập nhật sớm!'),
-        backgroundColor: Color(0xFF4299E1),
-      ),
-    );
+    if (_course == null) return;
+    final url = 'https://ottobit-fe.vercel.app/user/courses/${_course!.id}';
+    final message = '${_course!.title}\n\n${_course!.description}\n\n$url';
+    Share.share(message, subject: _course!.title);
   }
 
   @override
