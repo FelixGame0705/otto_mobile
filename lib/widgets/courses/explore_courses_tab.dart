@@ -121,7 +121,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
     if (width >= 1200) return 0.8;
     if (width >= 900) return 0.72;
     if (width >= 600) return 0.78;
-    return orientation == Orientation.landscape ? 0.8 : 0.6;
+    return orientation == Orientation.landscape ? 0.7 : 0.54;
   }
 
   @override

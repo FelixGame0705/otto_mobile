@@ -150,11 +150,19 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           title: title,
           color: color,
           data: data,
+          bridge: _bridge,
+          challengeId: () {
+            final challengeId = widget.initialChallengeJson?['id'] ?? widget.initialChallengeJson?['challengeId'];
+            debugPrint('🔍 Challenge ID for submission: $challengeId');
+            debugPrint('🔍 Full challenge data: ${widget.initialChallengeJson}');
+            return challengeId;
+          }(),
+          codeJson: widget.initialProgram != null ? jsonEncode(widget.initialProgram!) : '{}',
           onPlayAgain: () {
             debugPrint('🔄 Play Again pressed');
             _isDialogShowing = false;
             Navigator.pop(context);
-            _bridge.resetGame();
+            _bridge.restartScene();
           },
           onClose: () {
             debugPrint('✅ Close pressed');

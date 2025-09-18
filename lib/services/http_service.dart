@@ -42,6 +42,7 @@ class HttpService {
     String endpoint, {
     Map<String, String>? queryParams,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
@@ -53,7 +54,7 @@ class HttpService {
       final response = await _client.get(uri, headers: headers);
       print('HttpService: Response status: ${response.statusCode}');
       print('HttpService: Response body: ${response.body}');
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       print('HttpService: GET request failed: $e');
       throw HttpException('GET request failed: $e');
@@ -140,21 +141,39 @@ class HttpService {
   }
 
   // Xử lý response
-  http.Response _handleResponse(http.Response response) {
+  http.Response _handleResponse(
+    http.Response response, {
+    bool throwOnError = true,
+  }) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     } else if (response.statusCode == 401) {
       // Token hết hạn hoặc không hợp lệ
       _handleUnauthorized();
-      throw HttpException('Unauthorized: Token expired or invalid');
+      if (throwOnError) {
+        throw HttpException('Unauthorized: Token expired or invalid');
+      }
+      return response;
     } else if (response.statusCode == 403) {
-      throw HttpException('Forbidden: Access denied');
+      if (throwOnError) {
+        throw HttpException('Forbidden: Access denied');
+      }
+      return response;
     } else if (response.statusCode >= 400 && response.statusCode < 500) {
-      throw HttpException('Client error: ${response.statusCode}');
+      if (throwOnError) {
+        throw HttpException('Client error: ${response.statusCode}');
+      }
+      return response;
     } else if (response.statusCode >= 500) {
-      throw HttpException('Server error: ${response.statusCode}');
+      if (throwOnError) {
+        throw HttpException('Server error: ${response.statusCode}');
+      }
+      return response;
     } else {
-      throw HttpException('Unexpected error: ${response.statusCode}');
+      if (throwOnError) {
+        throw HttpException('Unexpected error: ${response.statusCode}');
+      }
+      return response;
     }
   }
 

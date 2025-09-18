@@ -217,12 +217,15 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                 return ChallengeCard(
                                   challenge: c,
                                   onTap: () {
-                                    // Mở Blockly Editor và gửi mapJson + challengeJson
+                                    // Mở Blockly Editor và gửi mapJson + challengeJson + challengeId
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
                                         builder: (_) => BlocklyEditorScreen(
                                           initialMapJson: c.mapJson,
-                                          initialChallengeJson: c.challengeJson,
+                                          initialChallengeJson: {
+                                            ...?c.challengeJson,
+                                            'id': c.id, // Add challenge ID to challengeJson
+                                          },
                                         ),
                                       ),
                                     );

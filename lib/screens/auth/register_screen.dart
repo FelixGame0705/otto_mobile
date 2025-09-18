@@ -54,7 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (result.isSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Đăng ký thành công! Vui lòng đăng nhập.'),
+                content: Text('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.'),
                 backgroundColor: Colors.green,
               ),
             );

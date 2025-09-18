@@ -64,7 +64,7 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = e.toString().replaceFirst('Exception: ', '');
         _loading = false;
       });
     }
@@ -105,15 +105,25 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error.isNotEmpty) {
+      final isNotStudent = _error.toLowerCase().contains('student not found') || _error.contains('Bạn chưa là học sinh');
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error, color: Colors.red, size: 56),
             const SizedBox(height: 8),
-            Text(_error),
+            Text(_error, textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            ElevatedButton(onPressed: () => _load(refresh: true), child: const Text('Thử lại')),
+            if (isNotStudent)
+              ElevatedButton(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
+                child: const Text('Đăng ký'),
+              )
+            else
+              ElevatedButton(
+                onPressed: () => _load(refresh: true),
+                child: const Text('Thử lại'),
+              ),
           ],
         ),
       );

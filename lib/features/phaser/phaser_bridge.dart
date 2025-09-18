@@ -290,6 +290,57 @@ class PhaserBridge {
     ''');
   }
 
+  Future<void> restartScene() async {
+    if (_controller == null) return;
+    
+    try {
+      // Get current map and challenge data from the scene
+      final result = await _controller!.runJavaScriptReturningResult('''
+        const current = game.scene.getScene("Scene");
+        if (current && current.mapJson && current.challengeJson) {
+          return JSON.stringify({
+            mapJson: current.mapJson,
+            challengeJson: current.challengeJson
+          });
+        }
+        return null;
+      ''');
+      
+      if (result is String && result != 'null' && result.isNotEmpty) {
+        final data = jsonDecode(result) as Map<String, dynamic>;
+        final mapStr = jsonEncode(data['mapJson']);
+        final challengeStr = jsonEncode(data['challengeJson']);
+        
+        await _controller!.runJavaScript('''
+          console.log('🔄 Sending RESTART_SCENE event...');
+          if (window.PhaserChannel) {
+            window.PhaserChannel.sendEvent('RESTART_SCENE', { 
+                mapJson: $mapStr, 
+                challengeJson: $challengeStr 
+              });
+            console.log('✅ RESTART_SCENE event sent');
+          } else {
+            console.log('❌ PhaserChannel not available');
+          }
+        ''');
+      } else {
+        // Fallback: just send empty event
+        await _controller!.runJavaScript('''
+          console.log('🔄 Sending RESTART_SCENE event (no data)...');
+          if (window.PhaserChannel) {
+            window.PhaserChannel.sendEvent('RESTART_SCENE', {});
+            console.log('✅ RESTART_SCENE event sent');
+          } else {
+            console.log('❌ PhaserChannel not available');
+          }
+        ''');
+      }
+    } catch (e) {
+      developer.log('❌ Error restarting scene: $e');
+      onError?.call({'error': e.toString(), 'type': 'restart_scene_error'});
+    }
+  }
+
   Future<Map<String, dynamic>?> getGameStatus() async {
     if (_controller == null) return null;
     

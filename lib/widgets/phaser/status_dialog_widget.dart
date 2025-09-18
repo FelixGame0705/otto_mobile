@@ -1,15 +1,19 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
+import 'package:otto_mobile/services/submission_service.dart';
 import 'responsive_helpers.dart';
-import 'stat_card_widget.dart';
 import 'action_button_widget.dart';
 import 'defeat_reason_widget.dart';
 
-class StatusDialogWidget extends StatelessWidget {
+class StatusDialogWidget extends StatefulWidget {
   final String status;
   final String title;
   final Color color;
   final Map<String, dynamic> data;
+  final PhaserBridge? bridge;
+  final String? challengeId;
+  final String? codeJson;
   final VoidCallback onPlayAgain;
   final VoidCallback onClose;
 
@@ -19,13 +23,106 @@ class StatusDialogWidget extends StatelessWidget {
     required this.title,
     required this.color,
     required this.data,
+    this.bridge,
+    this.challengeId,
+    this.codeJson,
     required this.onPlayAgain,
     required this.onClose,
   });
 
   @override
+  State<StatusDialogWidget> createState() => _StatusDialogWidgetState();
+}
+
+class _StatusDialogWidgetState extends State<StatusDialogWidget> {
+  final SubmissionService _submissionService = SubmissionService();
+  bool _isSubmitting = false;
+
+  Future<void> _handleSubmit() async {
+    debugPrint('🔍 Submit attempt - ChallengeId: ${widget.challengeId}, CodeJson: ${widget.codeJson}');
+    
+    if (widget.challengeId == null || widget.challengeId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Missing challenge ID. Cannot submit without a valid challenge.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    if (widget.codeJson == null || widget.codeJson!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Missing code data. Please create some blocks first.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Calculate stars from the victory data
+      final dynamicCardScore = widget.data['cardScore'] ?? (widget.data['details'] is Map<String, dynamic> ? widget.data['details']['cardScore'] : null);
+      double normalizedScore;
+      if (dynamicCardScore is num) {
+        normalizedScore = dynamicCardScore.toDouble();
+      } else {
+        final rawScore = widget.data['score'];
+        if (rawScore is num) {
+          final s = rawScore.toDouble();
+          normalizedScore = s <= 1.0 ? s : (s / 100.0);
+        } else {
+          normalizedScore = 0.0;
+        }
+      }
+      int stars = (normalizedScore * 3).ceil();
+      if (stars < 1) stars = 1;
+      if (stars > 3) stars = 3;
+
+      final response = await _submissionService.createSubmission(
+        challengeId: widget.challengeId!,
+        codeJson: widget.codeJson!,
+        star: stars,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: const Color(0xFF48BB78),
+          ),
+        );
+        
+        widget.onClose();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Submission failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isGameOver = status == 'LOSE';
+    final isGameOver = widget.status == 'LOSE';
     
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -54,11 +151,11 @@ class StatusDialogWidget extends StatelessWidget {
                   minWidth: ResponsiveHelpers.getResponsiveMinWidth(screenWidth, isGameOver),
                 ),
                 decoration: BoxDecoration(
-                  gradient: ResponsiveHelpers.getStatusGradient(status),
+                  gradient: ResponsiveHelpers.getStatusGradient(widget.status),
                   borderRadius: BorderRadius.circular(isTablet ? 24 : 16),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.3),
+                      color: widget.color.withOpacity(0.3),
                       blurRadius: isTablet ? 25 : 15,
                       spreadRadius: isTablet ? 8 : 3,
                     ),
@@ -97,7 +194,7 @@ class StatusDialogWidget extends StatelessWidget {
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 800),
             builder: (context, value, child) {
-              final iconSize = ResponsiveHelpers.getResponsiveIconSize(screenWidth, screenHeight, isGameOver, isTablet, isLandscape, status);
+              final iconSize = ResponsiveHelpers.getResponsiveIconSize(screenWidth, screenHeight, isGameOver, isTablet, isLandscape, widget.status);
               final iconInnerSize = iconSize * 0.5;
               
               return Transform.scale(
@@ -117,8 +214,8 @@ class StatusDialogWidget extends StatelessWidget {
                     ],
                   ),
                   child: Icon(
-                    ResponsiveHelpers.getStatusIcon(status),
-                    color: color,
+                    ResponsiveHelpers.getStatusIcon(widget.status),
+                    color: widget.color,
                     size: iconInnerSize,
                   ),
                 ),
@@ -128,9 +225,9 @@ class StatusDialogWidget extends StatelessWidget {
           SizedBox(height: isTablet ? 20 : (isLandscape ? 12 : 16)),
           // Title
           Text(
-            title,
+            widget.title,
             style: TextStyle(
-              fontSize: ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'title', status),
+              fontSize: ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'title', widget.status),
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -149,11 +246,11 @@ class StatusDialogWidget extends StatelessWidget {
               border: Border.all(color: Colors.white.withOpacity(0.3)),
             ),
             child: Text(
-              status,
+              widget.status,
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
-                fontSize: ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'status', status),
+                fontSize: ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'status', widget.status),
               ),
             ),
           ),
@@ -163,6 +260,19 @@ class StatusDialogWidget extends StatelessWidget {
   }
 
   Widget _buildContent(double screenWidth, double screenHeight, bool isTablet, bool isLandscape, bool isGameOver, BuildContext context) {
+    if (widget.status == 'VICTORY') {
+      // For VICTORY, use a fixed height container without scroll
+      return Container(
+        width: double.infinity,
+        height: isTablet ? 70 : (isLandscape ? 40 : 60),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 24 : 16,
+          vertical: isTablet ? 12 : 8,
+        ),
+        child: _buildStarsSection(isTablet, isLandscape),
+      );
+    }
+    
     return Flexible(
       child: Container(
         width: double.infinity,
@@ -172,46 +282,19 @@ class StatusDialogWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (status == 'VICTORY') ...[
-                StatCardWidget(
-                  label: 'Score',
-                  value: '${data['score'] ?? 0}',
-                  icon: Icons.star,
-                  iconColor: Colors.amber,
-                  isTablet: isTablet,
-                  isLandscape: isLandscape,
-                ),
-                SizedBox(height: isTablet ? 16 : 12),
-                StatCardWidget(
-                  label: 'Batteries',
-                  value: '${data['collectedBatteries'] ?? 0}',
-                  icon: Icons.battery_charging_full,
-                  iconColor: Colors.green,
-                  isTablet: isTablet,
-                  isLandscape: isLandscape,
-                ),
-                SizedBox(height: isTablet ? 16 : 12),
-                StatCardWidget(
-                  label: 'Map',
-                  value: '${data['mapKey'] ?? 'Unknown'}',
-                  icon: Icons.map,
-                  iconColor: Colors.blue,
-                  isTablet: isTablet,
-                  isLandscape: isLandscape,
-                ),
-              ] else if (status == 'LOSE') ...[
+              if (widget.status == 'LOSE') ...[
                 DefeatReasonWidget(
-                  data: data,
+                  data: widget.data,
                   isTablet: isTablet,
                   isLandscape: isLandscape,
                   screenWidth: screenWidth,
                   screenHeight: screenHeight,
-                  status: status,
+                  status: widget.status,
                 ),
               ],
               
               // Only show details for non-Game Over or if user wants to see them
-              if (!isGameOver) ...[
+              if (!isGameOver && widget.status != 'VICTORY') ...[
                 SizedBox(height: isTablet ? 20 : 16),
                 
                 // Expandable details section
@@ -239,7 +322,7 @@ class StatusDialogWidget extends StatelessWidget {
                           border: Border.all(color: Colors.white.withOpacity(0.1)),
                         ),
                         child: Text(
-                          const JsonEncoder.withIndent('  ').convert(data),
+                          const JsonEncoder.withIndent('  ').convert(widget.data),
                           style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: isTablet ? 13 : (isLandscape ? 10 : 11),
@@ -258,10 +341,119 @@ class StatusDialogWidget extends StatelessWidget {
     );
   }
 
+  Widget _buildStarsSection(bool isTablet, bool isLandscape) {
+    final dynamicCardScore = widget.data['cardScore'] ?? (widget.data['details'] is Map<String, dynamic> ? widget.data['details']['cardScore'] : null);
+    double normalizedScore;
+    if (dynamicCardScore is num) {
+      normalizedScore = dynamicCardScore.toDouble();
+    } else {
+      final rawScore = widget.data['score'];
+      if (rawScore is num) {
+        final s = rawScore.toDouble();
+        normalizedScore = s <= 1.0 ? s : (s / 100.0);
+      } else {
+        normalizedScore = 0.0;
+      }
+    }
+    int stars = (normalizedScore * 3).ceil();
+    if (stars < 1) stars = 1;
+    if (stars > 3) stars = 3;
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Star rating with animation
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 1200),
+          curve: Curves.elasticOut,
+          builder: (context, value, child) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) {
+                final filled = index < stars;
+                final starSize = isTablet ? 36.0 : (isLandscape ? 24.0 : 30.0);
+                
+                return TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.elasticOut,
+                  builder: (context, starValue, child) {
+                    return Transform.scale(
+                      scale: filled ? starValue : 0.8,
+                      child: Container(
+                        margin: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Glow effect for filled stars
+                            if (filled)
+                              Container(
+                                width: starSize + 8,
+                                height: starSize + 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.amber.withOpacity(0.6),
+                                      blurRadius: 12,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            // Star icon
+                            Icon(
+                              filled ? Icons.star : Icons.star_border,
+                              color: filled ? Colors.amber : Colors.amber.withOpacity(0.3),
+                              size: starSize,
+                            ),
+                            // Sparkle effect for filled stars
+                            if (filled && starValue > 0.8)
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  duration: const Duration(milliseconds: 300),
+                                  builder: (context, sparkleValue, child) {
+                                    return Transform.scale(
+                                      scale: sparkleValue,
+                                      child: Icon(
+                                        Icons.auto_awesome,
+                                        color: Colors.white,
+                                        size: starSize * 0.3,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildActions(double screenWidth, double screenHeight, bool isTablet, bool isLandscape, bool isGameOver) {
-    if (status == 'VICTORY' || status == 'LOSE') {
+    if (widget.status == 'VICTORY' || widget.status == 'LOSE') {
+      final basePad = ResponsiveHelpers.getResponsivePadding(screenWidth, screenHeight, isTablet, isGameOver, 'actions');
+      final tightTopPad = EdgeInsets.only(
+        left: basePad.left,
+        right: basePad.right,
+        bottom: basePad.bottom,
+        top: 0,
+      );
       return Container(
-        padding: ResponsiveHelpers.getResponsivePadding(screenWidth, screenHeight, isTablet, isGameOver, 'actions'),
+        padding: tightTopPad,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.only(
@@ -274,13 +466,26 @@ class StatusDialogWidget extends StatelessWidget {
           children: [
             Expanded(
               child: ActionButtonWidget(
-                text: 'Play Again',
-                icon: Icons.refresh,
+                text: widget.status == 'VICTORY' 
+                  ? (_isSubmitting ? 'Submitting...' : 'Submit')
+                  : 'Play Again',
+                icon: widget.status == 'VICTORY' 
+                  ? (_isSubmitting ? Icons.hourglass_empty : Icons.upload)
+                  : Icons.refresh,
                 textColor: Colors.white,
-                backgroundColor: color.withOpacity(0.15),
+                backgroundColor: widget.color.withOpacity(0.15),
                 isTablet: isTablet,
                 isLandscape: isLandscape,
-                onPressed: onPlayAgain,
+                onPressed: _isSubmitting 
+                  ? () {} // Disabled state
+                  : (widget.status == 'VICTORY' 
+                      ? _handleSubmit
+                      : () {
+                          if (widget.bridge != null) {
+                            widget.bridge!.restartScene();
+                          }
+                          widget.onPlayAgain();
+                        }),
               ),
             ),
             SizedBox(width: 12),
@@ -292,13 +497,13 @@ class StatusDialogWidget extends StatelessWidget {
                 backgroundColor: Colors.white.withOpacity(0.1),
                 isTablet: isTablet,
                 isLandscape: isLandscape,
-                onPressed: onClose,
+                onPressed: widget.onClose,
               ),
             ),
           ],
         ),
       );
-    } else if (status != 'VICTORY' && status != 'LOSE') {
+    } else if (widget.status != 'VICTORY' && widget.status != 'LOSE') {
       // Actions for other dialogs (READY, ERROR, etc.)
       return Container(
         padding: ResponsiveHelpers.getResponsivePadding(screenWidth, screenHeight, isTablet, isGameOver, 'actions'),
@@ -312,7 +517,7 @@ class StatusDialogWidget extends StatelessWidget {
               backgroundColor: Colors.white.withOpacity(0.1),
               isTablet: isTablet,
               isLandscape: isLandscape,
-              onPressed: onClose,
+              onPressed: widget.onClose,
             ),
           ],
         ),

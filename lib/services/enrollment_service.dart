@@ -29,11 +29,24 @@ class EnrollmentService {
       'PageSize': pageSize.toString(),
       if (isCompleted != null) 'IsCompleted': isCompleted.toString(),
     };
-    final res = await _http.get('/v1/enrollments/my-enrollments', queryParams: params);
+    final res = await _http.get(
+      '/v1/enrollments/my-enrollments',
+      queryParams: params,
+      throwOnError: false,
+    );
     if (res.statusCode == 200) {
       final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
       return EnrollmentListResponse.fromJson(jsonData);
     }
+    
+    // Handle specific 400 error for student not found
+    if (res.statusCode == 400) {
+      final responseBody = res.body.toLowerCase();
+      if (responseBody.contains('student not found')) {
+        throw Exception('Bạn chưa là học sinh, vui lòng đăng ký.');
+      }
+    }
+    
     throw Exception('Failed to fetch enrollments: ${res.statusCode}');
   }
 }
