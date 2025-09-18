@@ -145,12 +145,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _handleCreateStudent() async {
     if (_user == null) return;
+    
+    // Show dialog for student registration
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => _StudentRegistrationDialog(
+        initialFullname: _user!.fullName,
+      ),
+    );
+    
+    if (result == null) return; // User cancelled
+    
     setState(() => _creatingStudent = true);
     try {
       final service = StudentService();
       final resp = await service.createStudent(
-        fullname: _user!.fullName,
-        dateOfBirth: DateTime.now(), // TODO: cho phép người dùng chọn ngày sinh
+        fullname: result['fullname'] as String,
+        dateOfBirth: result['dateOfBirth'] as DateTime,
       );
       if (!mounted) return;
       final created = resp.data;
@@ -203,13 +214,163 @@ extension _StudentCard on _ProfileScreenState {
           const SizedBox(height: 8),
           _infoRow('Họ tên:', s.fullname),
           const SizedBox(height: 6),
-          _infoRow('Ngày sinh:', s.dateOfBirth.toLocal().toString()),
+          _infoRow('Ngày sinh:', '${s.dateOfBirth.day.toString().padLeft(2, '0')}/${s.dateOfBirth.month.toString().padLeft(2, '0')}/${s.dateOfBirth.year}'),
           const SizedBox(height: 6),
           _infoRow('Enrollments:', s.enrollmentsCount.toString()),
           const SizedBox(height: 6),
           _infoRow('Submissions:', s.submissionsCount.toString()),
         ],
       ),
+    );
+  }
+}
+
+class _StudentRegistrationDialog extends StatefulWidget {
+  final String initialFullname;
+
+  const _StudentRegistrationDialog({
+    required this.initialFullname,
+  });
+
+  @override
+  State<_StudentRegistrationDialog> createState() => _StudentRegistrationDialogState();
+}
+
+class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _fullnameController = TextEditingController();
+  DateTime? _selectedDate;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullnameController.text = widget.initialFullname;
+  }
+
+  @override
+  void dispose() {
+    _fullnameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate() async {
+    try {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: _selectedDate ?? DateTime.now().subtract(const Duration(days: 365 * 18)), // Default to 18 years ago
+        firstDate: DateTime(1900),
+        lastDate: DateTime.now(),
+      );
+      if (picked != null && picked != _selectedDate) {
+        setState(() {
+          _selectedDate = picked;
+        });
+      }
+    } catch (e) {
+      // Handle any date picker errors gracefully
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi khi chọn ngày: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate() && _selectedDate != null) {
+      Navigator.of(context).pop({
+        'fullname': _fullnameController.text.trim(),
+        'dateOfBirth': _selectedDate!,
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text(
+        'Đăng ký tài khoản học sinh',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: _fullnameController,
+              decoration: const InputDecoration(
+                labelText: 'Họ và tên *',
+                hintText: 'Nhập họ và tên đầy đủ',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Vui lòng nhập họ và tên';
+                }
+                if (value.trim().length < 2) {
+                  return 'Họ và tên phải có ít nhất 2 ký tự';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: _selectDate,
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Ngày sinh *',
+                  hintText: 'Chọn ngày sinh',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.calendar_today),
+                ),
+                child: Text(
+                  _selectedDate != null
+                      ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
+                      : 'Chọn ngày sinh',
+                  style: TextStyle(
+                    color: _selectedDate != null ? Colors.black : Colors.grey[600],
+                  ),
+                ),
+              ),
+            ),
+            if (_selectedDate == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'Vui lòng chọn ngày sinh',
+                  style: TextStyle(color: Colors.red, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Hủy'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _submitForm,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4299E1),
+            foregroundColor: Colors.white,
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('Đăng ký'),
+        ),
+      ],
     );
   }
 }

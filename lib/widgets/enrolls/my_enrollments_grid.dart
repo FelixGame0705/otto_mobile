@@ -88,10 +88,10 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
   }
 
   double _ratio(double w, Orientation o) {
-    if (w >= 1200) return 0.8;
-    if (w >= 900) return 0.76;
-    if (w >= 600) return 0.7;
-    return o == Orientation.landscape ? 0.82 : 0.7;
+    if (w >= 1200) return 0.9;
+    if (w >= 900) return 0.88;
+    if (w >= 600) return 0.82;
+    return o == Orientation.landscape ? 0.82 : 0.62;
   }
 
   @override
