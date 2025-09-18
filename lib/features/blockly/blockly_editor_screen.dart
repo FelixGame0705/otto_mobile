@@ -31,7 +31,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
   double _rightPaneWidth = 420.0;
   final double _minRightPaneWidth = 280.0;
   final double _maxRightPaneWidth = 600.0;
-  int _currentTabIndex = 0;
+  bool _showPythonPreview = false;
 
   @override
   void initState() {
@@ -89,37 +89,6 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     await _bridge?.importWorkspace('<xml xmlns="https://developers.google.com/blockly/xml"></xml>');
   }
 
-  Future<void> _importWorkspace() async {
-    final map = await _storage.importFromFile();
-    if (map == null) return;
-    final xml = map['__xml'] as String?; // optional embedding
-    if (xml != null) await _bridge?.importWorkspace(xml);
-  }
-
-  Future<void> _exportJson() async {
-    if (_compiledProgram == null) return;
-    await _storage.exportToFile(_compiledProgram!);
-  }
-
-  Future<void> _savePrefs() async {
-    if (_compiledProgram == null) return;
-    final data = {
-      ..._compiledProgram!,
-      if (_lastXml != null) '__xml': _lastXml,
-    };
-    await _storage.saveToPrefs(data);
-  }
-
-  Future<void> _loadPrefs() async {
-    final loaded = await _storage.loadFromPrefs();
-    if (loaded == null) return;
-    final xml = loaded['__xml'] as String?;
-    if (xml != null) await _bridge?.importWorkspace(xml);
-  }
-
-  Future<void> _compile() async {
-    await _bridge?.compileNow();
-  }
 
   Future<void> _sendToPhaser() async {
     if (!mounted) return;
@@ -144,34 +113,25 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
   PhaserBridge? _embeddedPhaserBridge;
 
-  void _switchTab() {
-    final controller = DefaultTabController.maybeOf(context);
-    if (controller != null) {
-      final next = (controller.index + 1) % controller.length;
-      controller.animateTo(next);
-      setState(() {
-        _currentTabIndex = next;
-      });
-    }
+  void _togglePythonPreview() {
+    setState(() {
+      _showPythonPreview = !_showPythonPreview;
+    });
   }
 
-  Widget _buildLeftTabbedPane() {
+  Widget _buildLeftPane() {
     return Column(
       children: [
         Expanded(
-          child: TabBarView(
-            physics: NeverScrollableScrollPhysics(),
-            children: [
-              WebViewWidget(controller: _controller),
-              SingleChildScrollView(
+          child: _showPythonPreview 
+            ? SingleChildScrollView(
                 padding: const EdgeInsets.all(12),
                 child: Text(
                   _pythonPreview.isEmpty ? '# Empty\n\nCreate some blocks to see Python code here!' : _pythonPreview,
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 ),
-              ),
-            ],
-          ),
+              )
+            : WebViewWidget(controller: _controller),
         ),
       ],
     );
@@ -212,58 +172,64 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      initialIndex: _currentTabIndex,
-      child: KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (KeyEvent event) {
-          if (event is KeyDownEvent && 
-              event.logicalKey == LogicalKeyboardKey.keyP && 
-              HardwareKeyboard.instance.isControlPressed) {
-            _switchTab();
-          }
-        },
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Blockly Editor'),
-            bottom: TabBar(
-              isScrollable: true,
-              indicatorSize: TabBarIndicatorSize.label,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              tabs: const [
-                Tab(text: 'Blockly'),
-                Tab(text: 'Python Preview'),
-              ],
-            ),
-            actions: [
-              IconButton(tooltip: 'New', onPressed: _newWorkspace, icon: const Icon(Icons.note_add_outlined)),
-              IconButton(tooltip: 'Import', onPressed: _importWorkspace, icon: const Icon(Icons.file_open)),
-              IconButton(tooltip: 'Save', onPressed: _savePrefs, icon: const Icon(Icons.save_outlined)),
-              IconButton(tooltip: 'Load', onPressed: _loadPrefs, icon: const Icon(Icons.download_outlined)),
-              IconButton(tooltip: 'Compile', onPressed: _compile, icon: const Icon(Icons.build_rounded)),
-              IconButton(tooltip: 'Export JSON', onPressed: _exportJson, icon: const Icon(Icons.file_download)),
-              IconButton(tooltip: 'Send to Phaser', onPressed: _sendToPhaser, icon: const Icon(Icons.send)),
-            ],
-          ),
-          body: Row(
-            children: [
-              Expanded(child: _buildLeftTabbedPane()),
-              _buildMiddleDivider(),
-              Container(
-                width: _rightPaneWidth,
-                color: Theme.of(context).cardColor,
-                child: PhaserRunnerScreen(
-                  embedded: true,
-                  onBridgeReady: (b) {
-                    _embeddedPhaserBridge = b;
-                  },
-                  initialMapJson: widget.initialMapJson,
-                  initialChallengeJson: widget.initialChallengeJson,
-                ),
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent && 
+            event.logicalKey == LogicalKeyboardKey.keyP && 
+            HardwareKeyboard.instance.isControlPressed) {
+          _togglePythonPreview();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Blockly Editor'),
+          actions: [
+            IconButton(
+              tooltip: 'Blockly',
+              onPressed: () {
+                setState(() {
+                  _showPythonPreview = false;
+                });
+              },
+              icon: Icon(
+                Icons.view_module,
+                color: !_showPythonPreview ? Theme.of(context).primaryColor : null,
               ),
-            ],
-          ),
+            ),
+            IconButton(
+              tooltip: 'Python Preview',
+              onPressed: () {
+                setState(() {
+                  _showPythonPreview = true;
+                });
+              },
+              icon: Icon(
+                Icons.code,
+                color: _showPythonPreview ? Theme.of(context).primaryColor : null,
+              ),
+            ),
+            IconButton(tooltip: 'New', onPressed: _newWorkspace, icon: const Icon(Icons.note_add_outlined)),
+            IconButton(tooltip: 'Send to Phaser', onPressed: _sendToPhaser, icon: const Icon(Icons.send)),
+          ],
+        ),
+        body: Row(
+          children: [
+            Expanded(child: _buildLeftPane()),
+            _buildMiddleDivider(),
+            Container(
+              width: _rightPaneWidth,
+              color: Theme.of(context).cardColor,
+              child: PhaserRunnerScreen(
+                embedded: true,
+                onBridgeReady: (b) {
+                  _embeddedPhaserBridge = b;
+                },
+                initialMapJson: widget.initialMapJson,
+                initialChallengeJson: widget.initialChallengeJson,
+              ),
+            ),
+          ],
         ),
       ),
     );
