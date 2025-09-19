@@ -162,7 +162,14 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
             debugPrint('🔄 Play Again pressed');
             _isDialogShowing = false;
             Navigator.pop(context);
-            _bridge.restartScene();
+            if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
+              _bridge.restartScene(
+                mapJson: widget.initialMapJson!,
+                challengeJson: widget.initialChallengeJson!,
+              );
+            } else {
+              debugPrint('❌ Cannot restart: missing mapJson or challengeJson');
+            }
           },
           onClose: () {
             debugPrint('✅ Close pressed');

@@ -481,9 +481,6 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   : (widget.status == 'VICTORY' 
                       ? _handleSubmit
                       : () {
-                          if (widget.bridge != null) {
-                            widget.bridge!.restartScene();
-                          }
                           widget.onPlayAgain();
                         }),
               ),

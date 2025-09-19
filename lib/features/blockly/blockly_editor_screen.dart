@@ -111,6 +111,21 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     _embeddedPhaserBridge?.runProgram(program);
   }
 
+  Future<void> _restartScene() async {
+    if (!mounted) return;
+    
+    if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
+      _embeddedPhaserBridge?.restartScene(
+        mapJson: widget.initialMapJson!,
+        challengeJson: widget.initialChallengeJson!,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot restart: missing map or challenge data.')),
+      );
+    }
+  }
+
   PhaserBridge? _embeddedPhaserBridge;
 
   void _togglePythonPreview() {
@@ -210,6 +225,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
               ),
             ),
             IconButton(tooltip: 'New', onPressed: _newWorkspace, icon: const Icon(Icons.note_add_outlined)),
+            IconButton(tooltip: 'Restart Scene', onPressed: _restartScene, icon: const Icon(Icons.refresh)),
             IconButton(tooltip: 'Send to Phaser', onPressed: _sendToPhaser, icon: const Icon(Icons.send)),
           ],
         ),

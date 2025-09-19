@@ -8,8 +8,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 /// Bridge để giao tiếp với Phaser game qua PhaserChannel
 class PhaserBridge {
   WebViewController? _controller;
-  String? _currentMap;
-  Map<String, dynamic>? _currentProgram;
   
   // Callbacks
   Function(Map<String, dynamic>)? onVictory;
@@ -191,7 +189,6 @@ class PhaserBridge {
         console.log('❌ PhaserChannel not available');
       }
     ''');
-    _currentMap = mapKey;
   }
 
   Future<void> runProgram(Map<String, dynamic> program) async {
@@ -210,7 +207,6 @@ class PhaserBridge {
           throw new Error('PhaserChannel not available');
         }
       ''');
-      _currentProgram = program;
     } catch (e) {
       developer.log('❌ Error running program: $e');
       onError?.call({'error': e.toString(), 'type': 'run_program_error'});
@@ -290,51 +286,28 @@ class PhaserBridge {
     ''');
   }
 
-  Future<void> restartScene() async {
+  Future<void> restartScene({
+    required Map<String, dynamic> mapJson,
+    required Map<String, dynamic> challengeJson,
+  }) async {
     if (_controller == null) return;
     
     try {
-      // Get current map and challenge data from the scene
-      final result = await _controller!.runJavaScriptReturningResult('''
-        const current = game.scene.getScene("Scene");
-        if (current && current.mapJson && current.challengeJson) {
-          return JSON.stringify({
-            mapJson: current.mapJson,
-            challengeJson: current.challengeJson
-          });
-        }
-        return null;
-      ''');
+      final mapStr = jsonEncode(mapJson);
+      final challengeStr = jsonEncode(challengeJson);
       
-      if (result is String && result != 'null' && result.isNotEmpty) {
-        final data = jsonDecode(result) as Map<String, dynamic>;
-        final mapStr = jsonEncode(data['mapJson']);
-        final challengeStr = jsonEncode(data['challengeJson']);
-        
-        await _controller!.runJavaScript('''
-          console.log('🔄 Sending RESTART_SCENE event...');
-          if (window.PhaserChannel) {
-            window.PhaserChannel.sendEvent('RESTART_SCENE', { 
-                mapJson: $mapStr, 
-                challengeJson: $challengeStr 
-              });
-            console.log('✅ RESTART_SCENE event sent');
-          } else {
-            console.log('❌ PhaserChannel not available');
-          }
-        ''');
-      } else {
-        // Fallback: just send empty event
-        await _controller!.runJavaScript('''
-          console.log('🔄 Sending RESTART_SCENE event (no data)...');
-          if (window.PhaserChannel) {
-            window.PhaserChannel.sendEvent('RESTART_SCENE', {});
-            console.log('✅ RESTART_SCENE event sent');
-          } else {
-            console.log('❌ PhaserChannel not available');
-          }
-        ''');
-      }
+      await _controller!.runJavaScript('''
+        console.log('🔄 Sending RESTART_SCENE event...');
+        if (window.PhaserChannel) {
+          window.PhaserChannel.sendEvent('RESTART_SCENE', { 
+            mapJson: $mapStr, 
+            challengeJson: $challengeStr 
+          });
+          console.log('✅ RESTART_SCENE event sent');
+        } else {
+          console.log('❌ PhaserChannel not available');
+        }
+      ''');
     } catch (e) {
       developer.log('❌ Error restarting scene: $e');
       onError?.call({'error': e.toString(), 'type': 'restart_scene_error'});
