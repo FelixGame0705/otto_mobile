@@ -172,12 +172,11 @@
         <block type="warehouseCount"></block>
         <block type="math_number"></block>
           <block type="var_ref"></block>
-          <block type="check_pin_green"></block>
-          <block type="check_pin_red"></block>
-          <block type="check_pin_yellow"></block>
         </category>
         <category name="🧠" colour="#a8e6cf">
           <block type="boolean_value"></block>
+          <block type="check_pin_boolean"></block>
+          <block type="pin_color_compare"></block>
           <block type="logical_operation"></block>
           <block type="compare"></block>
         </category>
@@ -632,42 +631,6 @@
           },
         };
 
-        // Pin color check blocks - diamond shaped condition blocks
-        C.Blocks["check_pin_green"] = {
-          init: function () {
-            this.appendDummyInput()
-              .appendField("🟢")
-              .appendField("pin is green");
-            this.setOutput(true, "Boolean");
-            this.setColour("#4cb04f"); // green sáng
-            this.setTooltip("Check if the pin is green");
-            this.setHelpUrl("");
-          },
-        };
-
-        C.Blocks["check_pin_red"] = {
-          init: function () {
-            this.appendDummyInput()
-              .appendField("🔴")
-              .appendField("pin is red");
-            this.setOutput(true, "Boolean");
-            this.setColour("#ff4757"); // red sáng
-            this.setTooltip("Check if the pin is red");
-            this.setHelpUrl("");
-          },
-        };
-
-        C.Blocks["check_pin_yellow"] = {
-          init: function () {
-            this.appendDummyInput()
-              .appendField("🟡")
-              .appendField("pin is yellow");
-            this.setOutput(true, "Boolean");
-            this.setColour("#ffa502"); // yellow sáng
-            this.setTooltip("Check if the pin is yellow");
-            this.setHelpUrl("");
-          },
-        };
 
         // Boolean literal block (true/false in one block)
         C.Blocks["boolean_value"] = {
@@ -682,6 +645,53 @@
             this.setOutput(true, "Boolean");
             this.setColour("#9b27b0"); // mint sáng
             this.setTooltip("Boolean true/false value");
+          },
+        };
+
+        // Pin color check block for boolean conditions
+        C.Blocks["check_pin_boolean"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("pin is")
+              .appendField(
+                new C.FieldDropdown([
+                  ["🟢 green", "green"],
+                  ["🔴 red", "red"],
+                  ["🟡 yellow", "yellow"],
+                ]),
+                "COLOR"
+              );
+            this.setOutput(true, "Boolean");
+            this.setColour("#9b27b0"); // mint sáng
+            this.setTooltip("Check if pin is a specific color");
+            this.setHelpUrl("");
+          },
+        };
+
+        // Pin color comparison block
+        C.Blocks["pin_color_compare"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("pin color")
+              .appendField(
+                new C.FieldDropdown([
+                  ["=", "EQ"],
+                  ["≠", "NEQ"],
+                ]),
+                "OP"
+              )
+              .appendField(
+                new C.FieldDropdown([
+                  ["🟢 green", "green"],
+                  ["🔴 red", "red"],
+                  ["🟡 yellow", "yellow"],
+                ]),
+                "COLOR"
+              );
+            this.setOutput(true, "Boolean");
+            this.setColour("#9b27b0"); // mint sáng
+            this.setTooltip("Compare pin color with a specific color");
+            this.setHelpUrl("");
           },
         };
 
@@ -725,9 +735,9 @@
         // Comparison operators
         C.Blocks["compare"] = {
           init: function () {
-            this.appendValueInput("A").setCheck("Number");
+            this.appendValueInput("A").setCheck(null); // Accept any type
             this.appendValueInput("B")
-              .setCheck("Number")
+              .setCheck(null) // Accept any type
               .appendField(
                 new C.FieldDropdown([
                   ["=", "EQ"],
@@ -742,7 +752,7 @@
             this.setOutput(true, "Boolean");
             this.setInputsInline(true);
             this.setColour("#9b27b0"); // mint sáng
-            this.setTooltip("Compare two numbers");
+            this.setTooltip("Compare two values (numbers or strings)");
           },
         };
 
@@ -812,6 +822,8 @@
           switch (cond.type) {
             case "condition":
               return `${cond.function}()`;
+            case "value":
+              return `"${cond.value}"`;
             case "boolean":
               return cond.value ? "True" : "False";
             case "logical":
@@ -820,8 +832,8 @@
               const op = cond.operator === "AND" ? " and " : " or ";
               return `(${leftPy}${op}${rightPy})`;
             case "compare":
-              const leftVal = typeof cond.left === "string" ? cond.left : JSON.stringify(cond.left);
-              const rightVal = typeof cond.right === "string" ? cond.right : JSON.stringify(cond.right);
+              const leftVal = typeof cond.left === "string" ? `"${cond.left}"` : JSON.stringify(cond.left);
+              const rightVal = typeof cond.right === "string" ? `"${cond.right}"` : JSON.stringify(cond.right);
               const operators = {
                 EQ: " == ",
                 NEQ: " != ",
@@ -1005,33 +1017,77 @@
               return nodeIfElseIf(block);
             case "while_color":
               return nodeWhileColor(block);
-            case "check_pin_green":
-              return { type: "condition", function: "isGreen", check: true };
-            case "check_pin_red":
-              return { type: "condition", function: "isRed", check: true };
-            case "check_pin_yellow":
-              return { type: "condition", function: "isYellow", check: true };
             case "boolean_value":
               const boolValue = block.getFieldValue("VALUE");
               return { type: "boolean", value: boolValue === "TRUE" };
+            case "check_pin_boolean":
+              const pinColor = block.getFieldValue("COLOR");
+              return { 
+                type: "condition", 
+                function: `is${pinColor.charAt(0).toUpperCase() + pinColor.slice(1)}`, 
+                check: true 
+              };
+            case "pin_color_compare":
+              const pinColor2 = block.getFieldValue("COLOR");
+              const pinOperator = block.getFieldValue("OP");
+              return {
+                type: "variableComparison",
+                variable: "pinColor",
+                operator: pinOperator,
+                value: pinColor2
+              };
             case "logical_operation":
               const leftLogic = block.getInputTargetBlock("A");
               const rightLogic = block.getInputTargetBlock("B");
               const logicOp = block.getFieldValue("OP");
               return {
-                type: "logical",
-                operator: logicOp,
-                left: leftLogic ? blockToNode(leftLogic) : { type: "boolean", value: logicOp === "AND" },
-                right: rightLogic ? blockToNode(rightLogic) : { type: "boolean", value: logicOp === "AND" }
+                type: logicOp === "AND" ? "and" : "or",
+                conditions: [
+                  leftLogic ? blockToNode(leftLogic) : { type: "boolean", value: false },
+                  rightLogic ? blockToNode(rightLogic) : { type: "boolean", value: false }
+                ]
               };
             case "var_ref":
               return { type: "variable", name: block.getFieldValue("VAR") };
             case "compare":
               const leftComp = numFrom(block, "A");
               const rightComp = numFrom(block, "B");
+              const operator = block.getFieldValue("OP");
+              
+              // Check if comparing with battery count
+              if (leftComp === "batteryCount" || rightComp === "batteryCount") {
+                return {
+                  type: "variableComparison",
+                  variable: "batteryCount",
+                  operator: operator,
+                  value: leftComp === "batteryCount" ? rightComp : leftComp
+                };
+              }
+              
+              // Check if comparing with warehouse count
+              if (leftComp === "warehouseCount" || rightComp === "warehouseCount") {
+                return {
+                  type: "variableComparison",
+                  variable: "warehouseCount",
+                  operator: operator,
+                  value: leftComp === "warehouseCount" ? rightComp : leftComp
+                };
+              }
+              
+              // Check if comparing with number box
+              if (leftComp === "getNumberBox" || rightComp === "getNumberBox") {
+                return {
+                  type: "variableComparison",
+                  variable: "getNumberBox",
+                  operator: operator,
+                  value: leftComp === "getNumberBox" ? rightComp : leftComp
+                };
+              }
+              
+              // Default comparison
               return {
                 type: "compare",
-                operator: block.getFieldValue("OP"),
+                operator: operator,
                 left: leftComp,
                 right: rightComp
               };
