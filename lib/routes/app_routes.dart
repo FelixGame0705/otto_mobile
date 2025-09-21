@@ -11,6 +11,7 @@ import 'package:otto_mobile/features/phaser/phaser_runner_screen.dart';
 import 'package:otto_mobile/screens/challenges/challenges_screen.dart';
 import 'package:otto_mobile/features/blockly/blockly_editor_screen.dart';
 import 'package:otto_mobile/screens/auth/change_password_screen.dart';
+import 'package:otto_mobile/screens/microbit/microbit_connection_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const String changePassword = '/change-password';
   static const String phaser = '/phaser';
   static const String blockly = '/blockly';
+  static const String microbitConnection = '/microbit-connection';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -96,5 +98,6 @@ class AppRoutes {
     changePassword: (context) => const ChangePasswordScreen(),
     phaser: (context) => const PhaserRunnerScreen(),
     blockly: (context) => const BlocklyEditorScreen(),
+    microbitConnection: (context) => const MicrobitConnectionScreen(),
   };
 }

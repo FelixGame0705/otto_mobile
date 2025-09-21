@@ -43,6 +43,9 @@ dependencies:
   # File picker for import/export JSON
   file_picker: ^8.0.3
 
+  # Bluetooth Low Energy for micro:bit communication
+  flutter_blue_plus: ^1.32.10
+
   # Utilities
   collection: ^1.18.0
   equatable: ^2.0.5
