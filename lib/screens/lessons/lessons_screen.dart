@@ -9,11 +9,7 @@ class LessonsScreen extends StatefulWidget {
   final String courseId;
   final String? courseTitle;
 
-  const LessonsScreen({
-    super.key,
-    required this.courseId,
-    this.courseTitle,
-  });
+  const LessonsScreen({super.key, required this.courseId, this.courseTitle});
 
   @override
   State<LessonsScreen> createState() => _LessonsScreenState();
@@ -60,7 +56,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
     });
 
     try {
-      print('Search term: $_searchTerm, Page: $_currentPage, CourseId: ${widget.courseId}');
+      print(
+        'Search term: $_searchTerm, Page: $_currentPage, CourseId: ${widget.courseId}',
+      );
       final response = await _lessonService.getLessons(
         courseId: widget.courseId,
         searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
@@ -82,7 +80,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
           _hasMoreData = _currentPage < _totalPages;
           _isLoading = false;
         });
-        print('State updated with ${_lessons.length} lessons, Page: $_currentPage/$_totalPages');
+        print(
+          'State updated with ${_lessons.length} lessons, Page: $_currentPage/$_totalPages',
+        );
       }
     } catch (e) {
       print('Error loading lessons: $e');
@@ -135,11 +135,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   void _handleLessonTap(Lesson lesson) {
-    Navigator.pushNamed(
-      context,
-      AppRoutes.lessonDetail,
-      arguments: lesson.id,
-    );
+    Navigator.pushNamed(context, AppRoutes.lessonDetail, arguments: lesson.id);
   }
 
   @override
@@ -165,9 +161,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
             colors: [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
           ),
         ),
-        child: SafeArea(
-          child: _buildContent(),
-        ),
+        child: SafeArea(child: _buildContent()),
       ),
     );
   }
@@ -182,13 +176,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
           onSearchPressed: _handleSearch,
           onClearPressed: _handleClearSearch,
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Content
-        Flexible(
-          child: _buildMainContent(),
-        ),
+        Flexible(child: _buildMainContent()),
       ],
     );
   }
@@ -205,10 +197,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
             SizedBox(height: 16),
             Text(
               'Đang tải bài học...',
-              style: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF718096),
-              ),
+              style: TextStyle(fontSize: 16, color: Color(0xFF718096)),
             ),
           ],
         ),
@@ -258,14 +247,20 @@ class _LessonsScreenState extends State<LessonsScreen> {
     final screenWidth = mediaQuery.size.width;
     final orientation = mediaQuery.orientation;
 
-    final int crossAxisCount = _calculateCrossAxisCount(screenWidth, orientation);
-    final double childAspectRatio = _calculateChildAspectRatio(screenWidth, orientation);
+    final int crossAxisCount = _calculateCrossAxisCount(
+      screenWidth,
+      orientation,
+    );
+    final double childAspectRatio = _calculateChildAspectRatio(
+      screenWidth,
+      orientation,
+    );
     final EdgeInsets gridPadding = EdgeInsets.symmetric(
       horizontal: screenWidth >= 900
           ? 24
           : screenWidth >= 600
-              ? 20
-              : 12,
+          ? 20
+          : 12,
     );
 
     return GridView.builder(
@@ -277,7 +272,10 @@ class _LessonsScreenState extends State<LessonsScreen> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: _lessons.length + (_isLoadingMore ? 1 : 0) + (!_hasMoreData && _lessons.isNotEmpty ? 1 : 0),
+      itemCount:
+          _lessons.length +
+          (_isLoadingMore ? 1 : 0) +
+          (!_hasMoreData && _lessons.isNotEmpty ? 1 : 0),
       itemBuilder: (context, index) {
         // Loading More Indicator
         if (index == _lessons.length && _isLoadingMore) {
@@ -290,24 +288,23 @@ class _LessonsScreenState extends State<LessonsScreen> {
             ),
           );
         }
-        
+
         // End of List Indicator
-        if (index == _lessons.length + (_isLoadingMore ? 1 : 0) && !_hasMoreData && _lessons.isNotEmpty) {
+        if (index == _lessons.length + (_isLoadingMore ? 1 : 0) &&
+            !_hasMoreData &&
+            _lessons.isNotEmpty) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
                 'Đã hiển thị tất cả bài học',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
             ),
           );
         }
-        
+
         // Lesson Card
         if (index < _lessons.length) {
           final lesson = _lessons[index];
@@ -316,7 +313,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
             onTap: () => _handleLessonTap(lesson),
           );
         }
-        
+
         return const SizedBox.shrink();
       },
     );

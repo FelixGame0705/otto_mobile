@@ -17,6 +17,8 @@ class LessonService {
     bool includeDeleted = false,
     int pageNumber = 1,
     int pageSize = 10,
+    int sortBy = 1,
+    int sortDirection = 0,
   }) async {
     try {
       final queryParams = <String, String>{
@@ -24,6 +26,9 @@ class LessonService {
         'PageNumber': pageNumber.toString(),
         'PageSize': pageSize.toString(),
         'CourseId': courseId,
+        // Sorting
+        'SortBy': sortBy.toString(),
+        'SortDirection': sortDirection.toString(),
       };
 
       if (searchTerm != null && searchTerm.isNotEmpty) {
@@ -36,10 +41,13 @@ class LessonService {
         queryParams['DurationTo'] = durationTo.toString();
       }
 
-      print('LessonService: Making request to /v1/lessons');
+      print('LessonService: Making request to /v1/lessons/preview');
       print('LessonService: Query params: $queryParams');
 
-      final response = await _httpService.get('/v1/lessons', queryParams: queryParams);
+      final response = await _httpService.get(
+        '/v1/lessons/preview',
+        queryParams: queryParams,
+      );
 
       print('LessonService: Response status: ${response.statusCode}');
       print('LessonService: Response body: ${response.body}');
@@ -49,7 +57,9 @@ class LessonService {
         print('LessonService: Parsed JSON: $jsonData');
         return LessonApiResponse.fromJson(jsonData);
       } else {
-        print('LessonService: Error response: ${response.statusCode} - ${response.body}');
+        print(
+          'LessonService: Error response: ${response.statusCode} - ${response.body}',
+        );
         throw Exception('Failed to load lessons: ${response.statusCode}');
       }
     } catch (e) {
@@ -71,7 +81,9 @@ class LessonService {
         print('LessonService: Parsed JSON: $jsonData');
         return LessonApiResponse.fromJson(jsonData);
       } else {
-        print('LessonService: Error response: ${response.statusCode} - ${response.body}');
+        print(
+          'LessonService: Error response: ${response.statusCode} - ${response.body}',
+        );
         throw Exception('Failed to load lesson: ${response.statusCode}');
       }
     } catch (e) {

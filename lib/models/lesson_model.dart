@@ -26,15 +26,25 @@ class Lesson {
   });
 
   factory Lesson.fromJson(Map<String, dynamic> json) {
+    DateTime _parseDate(dynamic value) {
+      if (value is String && value.isNotEmpty) {
+        try {
+          return DateTime.parse(value);
+        } catch (_) {}
+      }
+      // Fallback for preview items that don't include timestamps
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
     return Lesson(
       id: json['id'] ?? '',
       courseId: json['courseId'] ?? '',
       title: json['title'] ?? '',
-      content: json['content'] ?? '',
+      content: (json['content'] ?? '').toString(),
       durationInMinutes: json['durationInMinutes'] ?? 0,
       order: json['order'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: _parseDate(json['createdAt']),
+      updatedAt: _parseDate(json['updatedAt']),
       challengesCount: json['challengesCount'] ?? 0,
       courseTitle: json['courseTitle'] ?? '',
     );
@@ -106,9 +116,7 @@ class LessonApiResponse {
   factory LessonApiResponse.fromJson(Map<String, dynamic> json) {
     return LessonApiResponse(
       message: json['message'] ?? '',
-      data: json['data'] != null
-          ? LessonListResponse.fromJson(json)
-          : null,
+      data: json['data'] != null ? LessonListResponse.fromJson(json) : null,
       errors: json['errors'],
       errorCode: json['errorCode'],
       timestamp: DateTime.parse(json['timestamp']),
