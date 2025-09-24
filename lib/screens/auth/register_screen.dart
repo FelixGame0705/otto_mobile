@@ -4,6 +4,7 @@ import 'package:otto_mobile/services/auth_service.dart';
 import 'package:otto_mobile/layout/app_scaffold.dart';
 import 'package:otto_mobile/widgets/common/section_card.dart';
 import 'package:otto_mobile/widgets/common/app_text_field.dart';
+import 'package:otto_mobile/widgets/ui/notifications.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _agreeToTerms = false;
+  String? _agreeToTermsError;
 
   @override
   void dispose() {
@@ -36,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_formKey.currentState!.validate() && _agreeToTerms) {
       setState(() {
         _isLoading = true;
+        _agreeToTermsError = null;
       });
 
       try {
@@ -52,20 +55,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (mounted) {
           if (result.isSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.'),
-                backgroundColor: Colors.green,
-              ),
-            );
+            showSuccessToast(context, 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
             Navigator.pushReplacementNamed(context, AppRoutes.login);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(result.message ?? 'Đăng ký thất bại'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            showErrorToast(context, result.message ?? 'Đăng ký thất bại');
           }
         }
       } catch (e) {
@@ -73,22 +66,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _isLoading = false;
         });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Lỗi kết nối: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (mounted) showErrorToast(context, 'Lỗi kết nối: $e');
       }
-    } else if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đồng ý với điều khoản sử dụng'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } 
+    else if (!_agreeToTerms) {
+      setState(() {
+        _agreeToTermsError = 'Vui lòng đồng ý với điều khoản sử dụng';
+      });
+      //showErrorToast(context, 'Vui lòng đồng ý với điều khoản sử dụng');
     }
   }
 
@@ -188,14 +173,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Checkbox(
                     value: _agreeToTerms,
-                    onChanged: (v) => setState(() => _agreeToTerms = v ?? false),
+                    onChanged: (v) => setState(() {
+                      _agreeToTerms = v ?? false;
+                      if (_agreeToTerms) _agreeToTermsError = null;
+                    }),
                     activeColor: const Color(0xFF00ba4a),
                   ),
                   const Expanded(
                     child: Text('Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật', style: TextStyle(color: Color(0xFF718096))),
                   ),
+                  
                 ],
               ),
+              if (_agreeToTermsError != null && _agreeToTermsError!.isNotEmpty)
+                const SizedBox(height: 6),
+              if (_agreeToTermsError != null && _agreeToTermsError!.isNotEmpty)
+                InlineErrorText(message: _agreeToTermsError!),
               const SizedBox(height: 16),
 
               SizedBox(

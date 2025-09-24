@@ -111,6 +111,7 @@ class AuthService {
           'confirmPassword': password,
         },
         includeAuth: false,
+        throwOnError: false,
       );
 
       final data = jsonDecode(response.body);
@@ -133,7 +134,20 @@ class AuthService {
             : (data['message'] ?? 'Đăng ký thành công');
         return AuthResult.success(user: user, message: successMsg);
       } else {
-        final message = data['message'] ?? 'Đăng ký thất bại';
+        String message = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Đăng ký thất bại',
+        );
+        try {
+          final errs = data['errors'];
+          if (errs is List && errs.isNotEmpty) {
+            final joined = errs.map((e) => e.toString()).join('\n');
+            if (joined.trim().isNotEmpty) {
+              message = '$message\n$joined';
+            }
+          }
+        } catch (_) {}
         return AuthResult.failure(message: message);
       }
     } catch (e) {

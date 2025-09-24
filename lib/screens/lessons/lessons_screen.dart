@@ -5,6 +5,7 @@ import 'package:otto_mobile/services/lesson_detail_service.dart';
 import 'package:otto_mobile/widgets/lessons/lesson_card.dart';
 import 'package:otto_mobile/widgets/lessons/lesson_search_bar.dart';
 import 'package:otto_mobile/routes/app_routes.dart';
+import 'package:otto_mobile/widgets/ui/notifications.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String courseId;
@@ -92,6 +93,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
           _errorMessage = e.toString().replaceFirst('Exception: ', '');
           _isLoading = false;
         });
+        if (_errorMessage.isNotEmpty) {
+          showErrorToast(context, _errorMessage);
+        }
       }
     }
   }
@@ -208,6 +212,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
         ),
 
         const SizedBox(height: 16),
+
+        // Inline error (top area)
+        InlineErrorText(message: _errorMessage),
 
         // Content
         Flexible(child: _buildMainContent()),

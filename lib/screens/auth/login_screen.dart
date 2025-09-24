@@ -4,6 +4,7 @@ import 'package:otto_mobile/services/auth_service.dart';
 import 'package:otto_mobile/layout/app_scaffold.dart';
 import 'package:otto_mobile/widgets/common/section_card.dart';
 import 'package:otto_mobile/widgets/common/app_text_field.dart';
+import 'package:otto_mobile/widgets/ui/notifications.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -29,6 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
+        _emailError = null;
+        _passwordError = null;
       });
 
       try {
@@ -43,14 +48,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (mounted) {
           if (result.isSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Đăng nhập thành công!'), backgroundColor: Colors.green),
-            );
+            showSuccessToast(context, 'Đăng nhập thành công!');
             Navigator.pushReplacementNamed(context, AppRoutes.home);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(result.message ?? 'Đăng nhập thất bại'), backgroundColor: Colors.red),
-            );
+            final msg = (result.message ?? '').trim();
+            bool handledInline = false;
+            setState(() {
+              final lower = msg.toLowerCase();
+              if (lower.contains('email is not a valid') || lower.contains('email')) {
+                _emailError = msg;
+                handledInline = true;
+              }
+              if (lower.contains('invalid email or password')) {
+                _passwordError = msg;
+                handledInline = true;
+              }
+            });
+            if (!handledInline) {
+              showErrorToast(context, msg.isNotEmpty ? msg : 'Đăng nhập thất bại');
+            }
           }
         }
       } catch (e) {
@@ -58,9 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi kết nối: $e'), backgroundColor: Colors.red),
-          );
+          showErrorToast(context, 'Lỗi kết nối: $e');
         }
       }
     }
@@ -110,9 +124,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Vui lòng nhập email';
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Email không hợp lệ';
                   return null;
                 },
               ),
+              if (_emailError != null && _emailError!.isNotEmpty)
+                const SizedBox(height: 6),
+              if (_emailError != null && _emailError!.isNotEmpty)
+                InlineErrorText(message: _emailError!),
               const SizedBox(height: 16),
 
               AppTextField(
@@ -127,6 +146,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
+              if (_passwordError != null && _passwordError!.isNotEmpty)
+                const SizedBox(height: 6),
+              if (_passwordError != null && _passwordError!.isNotEmpty)
+                InlineErrorText(message: _passwordError!),
               const SizedBox(height: 12),
 
               Align(

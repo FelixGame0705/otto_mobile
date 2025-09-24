@@ -3,6 +3,7 @@ import 'package:otto_mobile/models/challenge_model.dart';
 import 'package:otto_mobile/services/challenge_service.dart';
 import 'package:otto_mobile/widgets/challenges/challenge_card.dart';
 import 'package:otto_mobile/features/blockly/blockly_editor_screen.dart';
+import 'package:otto_mobile/widgets/ui/notifications.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String lessonId;
@@ -83,6 +84,9 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         _error = msg;
         _loading = false;
       });
+      if (msg.isNotEmpty) {
+        showErrorToast(context, msg);
+      }
       if (!mounted) return;
       await showDialog(
         context: context,
@@ -265,23 +269,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                             } catch (e) {
                               if (!mounted) return;
                               final msg = e.toString().replaceFirst('Exception: ', '');
-                              await showDialog(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Không thể mở thử thách'),
-                                  content: Text(
-                                    msg.isNotEmpty
-                                        ? msg
-                                        : 'Đã xảy ra lỗi khi mở thử thách.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(ctx).pop(),
-                                      child: const Text('Đóng'),
-                                    ),
-                                  ],
-                                ),
-                              );
+                              showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
                             }
                           },
                         );
