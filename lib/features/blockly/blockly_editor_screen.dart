@@ -27,6 +27,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
   Map<String, dynamic>? _compiledProgram;
   String? _lastXml;
   final _storage = ProgramStorageService();
+  int _lastCompileTick = 0;
   
   // Right Phaser pane resize
   bool _isDragging = false;
@@ -65,6 +66,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
         if (python != null) _pythonPreview = python;
         if (compiled != null) {
           _compiledProgram = compiled;
+          _lastCompileTick = DateTime.now().millisecondsSinceEpoch;
           // Auto-save để Runner có thể load lại khi cần
           final data = {
             ...compiled,
@@ -118,15 +120,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
   Future<void> _sendToPhaser() async {
     if (!mounted) return;
-    var program = _compiledProgram;
-    
-    // Nếu chưa có compiled program, thử compile trước
-    if (program == null) {
-      await _bridge?.compileNow();
-      await Future.delayed(const Duration(milliseconds: 200));
-      program = _compiledProgram ?? await _storage.loadFromPrefs(); // fallback từ prefs
-    }
-    
+    final program = await _compileAndGetProgram();
     if (program == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No program to send. Please create some blocks first.')),
@@ -160,6 +154,19 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     });
   }
 
+  Future<Map<String, dynamic>?> _compileAndGetProgram() async {
+    final int before = _lastCompileTick;
+    await _bridge?.compileNow();
+    // wait briefly to allow onChange to capture compilation
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (_compiledProgram != null && _lastCompileTick != before) {
+      return _compiledProgram;
+    }
+    // fallback to persisted copy if compile did not trigger
+    final persisted = await _storage.loadFromPrefs();
+    return persisted;
+  }
+
   void _toggleMicrobitPanel() {
     setState(() {
       _showMicrobitPanel = !_showMicrobitPanel;
@@ -174,16 +181,16 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
       return;
     }
 
-    if (_compiledProgram == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No program to send. Please create some blocks first.')),
-      );
-      return;
-    }
-
     try {
-      // Convert compiled program to string and send securely
-      String programData = _compiledProgram.toString();
+      final program = await _compileAndGetProgram();
+      if (program == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No program to send. Please create some blocks first.')),
+        );
+        return;
+      }
+      // Convert fresh compiled program to string and send securely
+      String programData = program.toString();
       await _bleService.sendDataSecurely('PROGRAM:$programData');
       
       ScaffoldMessenger.of(context).showSnackBar(
