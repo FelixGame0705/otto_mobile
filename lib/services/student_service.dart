@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:otto_mobile/models/student_model.dart';
 import 'package:otto_mobile/services/http_service.dart';
+import 'package:otto_mobile/utils/api_error_handler.dart';
 
 class StudentService {
   static final StudentService _instance = StudentService._internal();
@@ -10,12 +11,17 @@ class StudentService {
   final HttpService _http = HttpService();
 
   Future<StudentApiResponse> getStudentByUser() async {
-    final res = await _http.get('/v1/students/by-user');
+    final res = await _http.get('/v1/students/by-user', throwOnError: false);
     if (res.statusCode == 200) {
       final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
       return StudentApiResponse.fromJson(jsonData);
     }
-    throw Exception('Failed to fetch student: ${res.statusCode}');
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to fetch student: ${res.statusCode}',
+    );
+    throw Exception(friendly);
   }
 
   Future<StudentApiResponse> createStudent({
@@ -27,14 +33,23 @@ class StudentService {
       'dateOfBirth': dateOfBirth.toUtc().toIso8601String(),
     };
 
-    final res = await _http.post('/v1/students', body: body);
+    final res = await _http.post(
+      '/v1/students',
+      body: body,
+      throwOnError: false,
+    );
 
     if (res.statusCode == 201 || res.statusCode == 200) {
       final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
       return StudentApiResponse.fromJson(jsonData);
     }
 
-    throw Exception('Failed to create student: ${res.statusCode}');
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to create student: ${res.statusCode}',
+    );
+    throw Exception(friendly);
   }
 }
 

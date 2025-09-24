@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:otto_mobile/models/submission_model.dart';
 import 'package:otto_mobile/services/http_service.dart';
+import 'package:otto_mobile/utils/api_error_handler.dart';
 
 class SubmissionService {
   static final SubmissionService _instance = SubmissionService._internal();
@@ -24,7 +25,11 @@ class SubmissionService {
     print('📤 Code JSON: $codeJson');
     print('📤 Request body: $body');
     
-    final res = await _http.post('/v1/submissions', body: body);
+    final res = await _http.post(
+      '/v1/submissions',
+      body: body,
+      throwOnError: false,
+    );
     print('📥 Response status: ${res.statusCode}');
     print('📥 Response body: ${res.body}');
     
@@ -32,6 +37,11 @@ class SubmissionService {
       final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
       return SubmissionApiResponse.fromJson(jsonData);
     }
-    throw Exception('Failed to create submission: ${res.statusCode} - ${res.body}');
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to create submission: ${res.statusCode}',
+    );
+    throw Exception(friendly);
   }
 }

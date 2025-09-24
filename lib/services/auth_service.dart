@@ -3,6 +3,7 @@ import 'package:otto_mobile/models/user_model.dart';
 import 'package:otto_mobile/services/http_service.dart';
 import 'package:otto_mobile/services/storage_service.dart';
 import 'package:otto_mobile/services/jwt_token_manager.dart';
+import 'package:otto_mobile/utils/api_error_handler.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -28,6 +29,7 @@ class AuthService {
           'password': password,
         },
         includeAuth: false, // Không cần token cho đăng nhập
+        throwOnError: false,
       );
 
       final data = jsonDecode(response.body);
@@ -80,7 +82,11 @@ class AuthService {
 
         return AuthResult.success(user: user);
       } else {
-        final message = data['message'] ?? 'Đăng nhập thất bại';
+        final message = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Đăng nhập thất bại',
+        );
         return AuthResult.failure(message: message);
       }
     } catch (e) {

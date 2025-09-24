@@ -66,6 +66,7 @@ class HttpService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
@@ -76,7 +77,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('POST request failed: $e');
     }
@@ -87,6 +88,7 @@ class HttpService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
@@ -97,7 +99,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('PUT request failed: $e');
     }
@@ -107,13 +109,14 @@ class HttpService {
   Future<http.Response> delete(
     String endpoint, {
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
     
     try {
       final response = await _client.delete(uri, headers: headers);
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('DELETE request failed: $e');
     }
@@ -124,6 +127,7 @@ class HttpService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
@@ -134,7 +138,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('PATCH request failed: $e');
     }

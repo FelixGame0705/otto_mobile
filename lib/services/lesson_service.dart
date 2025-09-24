@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:otto_mobile/models/lesson_model.dart';
 import 'package:otto_mobile/services/http_service.dart';
+import 'package:otto_mobile/utils/api_error_handler.dart';
 
 class LessonService {
   static final LessonService _instance = LessonService._internal();
@@ -47,6 +48,7 @@ class LessonService {
       final response = await _httpService.get(
         '/v1/lessons/preview',
         queryParams: queryParams,
+        throwOnError: false,
       );
 
       print('LessonService: Response status: ${response.statusCode}');
@@ -60,7 +62,12 @@ class LessonService {
         print(
           'LessonService: Error response: ${response.statusCode} - ${response.body}',
         );
-        throw Exception('Failed to load lessons: ${response.statusCode}');
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load lessons: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('LessonService: Exception: $e');
@@ -71,7 +78,10 @@ class LessonService {
   Future<LessonApiResponse> getLessonById(String lessonId) async {
     try {
       print('LessonService: Making request to /v1/lessons/$lessonId');
-      final response = await _httpService.get('/v1/lessons/$lessonId');
+      final response = await _httpService.get(
+        '/v1/lessons/$lessonId',
+        throwOnError: false,
+      );
 
       print('LessonService: Response status: ${response.statusCode}');
       print('LessonService: Response body: ${response.body}');
@@ -84,11 +94,16 @@ class LessonService {
         print(
           'LessonService: Error response: ${response.statusCode} - ${response.body}',
         );
-        throw Exception('Failed to load lesson: ${response.statusCode}');
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load lesson: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('LessonService: Exception: $e');
-      throw Exception('Error fetching lesson: $e');
+      rethrow;
     }
   }
 }

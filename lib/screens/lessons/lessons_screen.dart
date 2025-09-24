@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:otto_mobile/models/lesson_model.dart';
 import 'package:otto_mobile/services/lesson_service.dart';
+import 'package:otto_mobile/services/lesson_detail_service.dart';
 import 'package:otto_mobile/widgets/lessons/lesson_card.dart';
 import 'package:otto_mobile/widgets/lessons/lesson_search_bar.dart';
 import 'package:otto_mobile/routes/app_routes.dart';
@@ -135,7 +136,36 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   void _handleLessonTap(Lesson lesson) {
-    Navigator.pushNamed(context, AppRoutes.lessonDetail, arguments: lesson.id);
+    _openLessonDetail(lesson.id);
+  }
+
+  Future<void> _openLessonDetail(String lessonId) async {
+    try {
+      // Probe access by fetching detail; backend will return USER_003 if blocked
+      await LessonDetailService().getLessonDetail(lessonId);
+      if (!mounted) return;
+      Navigator.pushNamed(context, AppRoutes.lessonDetail, arguments: lessonId);
+    } catch (e) {
+      if (!mounted) return;
+      final message = e.toString().replaceFirst('Exception: ', '');
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Không thể mở bài học'),
+          content: Text(
+            message.isNotEmpty
+                ? message
+                : 'Có lỗi không xác định xảy ra',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override

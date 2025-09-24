@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:otto_mobile/models/lesson_detail_model.dart';
 import 'package:otto_mobile/services/http_service.dart';
+import 'package:otto_mobile/utils/api_error_handler.dart';
 
 class LessonDetailService {
   static final LessonDetailService _instance = LessonDetailService._internal();
@@ -53,26 +54,16 @@ class LessonDetailService {
         print(
           'LessonDetailService: Error response: ${response.statusCode} - ${response.body}',
         );
-        // Try to extract server-provided message/errorCode for better UX
-        try {
-          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-          final message = (jsonData['message'] as String?)?.trim();
-          final errorCode = (jsonData['errorCode'] as String?)?.trim();
-          if (errorCode == 'USER_003') {
-            // Business rule: previous lessons must be completed first
-            throw Exception(
-              'Bạn cần hoàn thành các bài học trước đó trước khi xem bài này.',
-            );
-          }
-          if (message != null && message.isNotEmpty) {
-            throw Exception(message);
-          }
-        } catch (_) {}
-        throw Exception('Failed to load lesson detail: ${response.statusCode}');
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load lesson detail: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('LessonDetailService: Exception: $e');
-      throw Exception('Error fetching lesson detail: $e');
+      rethrow;
     }
   }
 }

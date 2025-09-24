@@ -27,16 +27,18 @@ class LessonDetail {
 
   factory LessonDetail.fromJson(Map<String, dynamic> json) {
     return LessonDetail(
-      id: json['id'] ?? '',
-      courseId: json['courseId'] ?? '',
-      title: json['title'] ?? '',
-      content: json['content'] ?? '',
-      durationInMinutes: json['durationInMinutes'] ?? 0,
-      order: json['order'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-      challengesCount: json['challengesCount'] ?? 0,
-      courseTitle: json['courseTitle'] ?? '',
+      id: (json['id'] as String?) ?? '',
+      courseId: (json['courseId'] as String?) ?? '',
+      title: (json['title'] as String?) ?? '',
+      content: (json['content'] as String?) ?? '',
+      durationInMinutes: (json['durationInMinutes'] as int?) ?? 0,
+      order: (json['order'] as int?) ?? 0,
+      createdAt: DateTime.tryParse((json['createdAt'] as String?) ?? '')
+              ?? DateTime.fromMillisecondsSinceEpoch(0),
+      updatedAt: DateTime.tryParse((json['updatedAt'] as String?) ?? '')
+              ?? DateTime.fromMillisecondsSinceEpoch(0),
+      challengesCount: (json['challengesCount'] as int?) ?? 0,
+      courseTitle: (json['courseTitle'] as String?) ?? '',
     );
   }
 
@@ -82,13 +84,16 @@ class LessonDetailApiResponse {
 
   factory LessonDetailApiResponse.fromJson(Map<String, dynamic> json) {
     return LessonDetailApiResponse(
-      message: json['message'] ?? '',
-      data: json['data'] != null
+      message: (json['message'] as String?) ?? '',
+      data: json['data'] is Map<String, dynamic>
           ? LessonDetail.fromJson(json['data'] as Map<String, dynamic>)
           : null,
-      errors: json['errors'],
-      errorCode: json['errorCode'],
-      timestamp: DateTime.parse(json['timestamp']),
+      errors: (json['errors'] is String)
+          ? json['errors'] as String
+          : (json['errors']?.toString()),
+      errorCode: (json['errorCode'] as String?)?.trim(),
+      timestamp: DateTime.tryParse((json['timestamp'] as String?) ?? '')
+          ?? DateTime.now(),
     );
   }
 }

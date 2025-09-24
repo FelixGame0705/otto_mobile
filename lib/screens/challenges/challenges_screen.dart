@@ -78,10 +78,29 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         _loading = false;
       });
     } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = msg;
         _loading = false;
       });
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Không thể tải thử thách'),
+          content: Text(
+            msg.isNotEmpty
+                ? msg
+                : 'Đã xảy ra lỗi khi tải danh sách thử thách.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -245,15 +264,22 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                               );
                             } catch (e) {
                               if (!mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
+                              final msg = e.toString().replaceFirst('Exception: ', '');
+                              await showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Không thể mở thử thách'),
                                   content: Text(
-                                    e.toString().replaceFirst(
-                                      'Exception: ',
-                                      '',
-                                    ),
+                                    msg.isNotEmpty
+                                        ? msg
+                                        : 'Đã xảy ra lỗi khi mở thử thách.',
                                   ),
-                                  backgroundColor: Colors.red,
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(),
+                                      child: const Text('Đóng'),
+                                    ),
+                                  ],
                                 ),
                               );
                             }

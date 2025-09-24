@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:otto_mobile/models/enrollment_model.dart';
 import 'package:otto_mobile/services/http_service.dart';
+import 'package:otto_mobile/utils/api_error_handler.dart';
 
 class EnrollmentService {
   static final EnrollmentService _instance = EnrollmentService._internal();
@@ -11,12 +12,21 @@ class EnrollmentService {
 
   Future<EnrollmentApiResponse> enroll({required String courseId}) async {
     final body = <String, dynamic>{'courseId': courseId};
-    final res = await _http.post('/v1/enrollments', body: body);
+    final res = await _http.post(
+      '/v1/enrollments',
+      body: body,
+      throwOnError: false,
+    );
     if (res.statusCode == 201 || res.statusCode == 200) {
       final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
       return EnrollmentApiResponse.fromJson(jsonData);
     }
-    throw Exception('Failed to enroll: ${res.statusCode}');
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to enroll: ${res.statusCode}',
+    );
+    throw Exception(friendly);
   }
 
   Future<EnrollmentListResponse> getMyEnrollments({
@@ -47,7 +57,12 @@ class EnrollmentService {
       }
     }
     
-    throw Exception('Failed to fetch enrollments: ${res.statusCode}');
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to fetch enrollments: ${res.statusCode}',
+    );
+    throw Exception(friendly);
   }
 }
 
