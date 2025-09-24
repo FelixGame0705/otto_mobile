@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/screens/auth/login_screen.dart';
-import 'package:otto_mobile/screens/auth/register_screen.dart';
-import 'package:otto_mobile/screens/auth/forgot_password_screen.dart';
-import 'package:otto_mobile/screens/home/home_screen.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/http_service.dart';
-import 'package:otto_mobile/services/storage_service.dart';
+import 'package:ottobit/screens/auth/login_screen.dart';
+import 'package:ottobit/screens/auth/register_screen.dart';
+import 'package:ottobit/screens/auth/forgot_password_screen.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/services/storage_service.dart';
 
 void main() async {
   // Đảm bảo Flutter bindings được khởi tạo

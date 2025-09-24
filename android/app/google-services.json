@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "230205957347",
+    "project_id": "ottobit-2d7ae",
+    "storage_bucket": "ottobit-2d7ae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:230205957347:android:51bc26d035708b429351d6",
+        "android_client_info": {
+          "package_name": "com.otto.ottobit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "230205957347-nldr90vq0muigr4130045ilfg1vb3ldt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.otto.ottobit",
+            "certificate_hash": "db1dc0d922211d28db342e25affe812e8219f4b3"
+          }
+        },
+        {
+          "client_id": "230205957347-92orekvvv41o7dkis4431883v35ei9s5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGQ2Zf-5hxleDQQYGPadNzIr8BHaSP1po"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "230205957347-92orekvvv41o7dkis4431883v35ei9s5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

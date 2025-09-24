@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/course_model.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/course_service.dart';
-import 'package:otto_mobile/widgets/courses/course_search_bar.dart';
+import 'package:ottobit/models/course_model.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/course_service.dart';
+import 'package:ottobit/widgets/courses/course_search_bar.dart';
 
 class ExploreCoursesTab extends StatefulWidget {
   const ExploreCoursesTab({super.key});

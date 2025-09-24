@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/screens/auth/login_screen.dart';
-import 'package:otto_mobile/screens/auth/register_screen.dart';
-import 'package:otto_mobile/screens/auth/forgot_password_screen.dart';
-import 'package:otto_mobile/screens/home/home_screen.dart';
-import 'package:otto_mobile/screens/profile/profile_screen.dart';
-import 'package:otto_mobile/screens/courses/course_detail_screen.dart';
-import 'package:otto_mobile/screens/lessons/lessons_screen.dart';
-import 'package:otto_mobile/screens/lessons/lesson_detail_screen.dart';
-import 'package:otto_mobile/features/phaser/phaser_runner_screen.dart';
-import 'package:otto_mobile/screens/challenges/challenges_screen.dart';
-import 'package:otto_mobile/features/blockly/blockly_editor_screen.dart';
-import 'package:otto_mobile/screens/auth/change_password_screen.dart';
-import 'package:otto_mobile/screens/microbit/microbit_connection_screen.dart';
+import 'package:ottobit/screens/auth/login_screen.dart';
+import 'package:ottobit/screens/auth/register_screen.dart';
+import 'package:ottobit/screens/auth/forgot_password_screen.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
+import 'package:ottobit/screens/profile/profile_screen.dart';
+import 'package:ottobit/screens/courses/course_detail_screen.dart';
+import 'package:ottobit/screens/lessons/lessons_screen.dart';
+import 'package:ottobit/screens/lessons/lesson_detail_screen.dart';
+import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
+import 'package:ottobit/screens/challenges/challenges_screen.dart';
+import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/screens/auth/change_password_screen.dart';
+import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';

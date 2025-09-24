@@ -1,6 +1,6 @@
 {
-    "name": "otto_mobile",
-    "short_name": "otto_mobile",
+    "name": "ottobit",
+    "short_name": "ottobit",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hexcode",

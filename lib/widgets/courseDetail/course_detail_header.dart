@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/course_detail_model.dart';
+import 'package:ottobit/models/course_detail_model.dart';
 
 class CourseDetailHeader extends StatelessWidget {
   final CourseDetail course;

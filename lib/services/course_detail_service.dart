@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:otto_mobile/models/course_detail_model.dart';
-import 'package:otto_mobile/services/http_service.dart';
-import 'package:otto_mobile/utils/api_error_handler.dart';
+import 'package:ottobit/models/course_detail_model.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CourseDetailService {
   static final CourseDetailService _instance = CourseDetailService._internal();

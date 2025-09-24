@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
-import 'package:otto_mobile/services/submission_service.dart';
+import 'package:ottobit/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/services/submission_service.dart';
 import 'responsive_helpers.dart';
 import 'action_button_widget.dart';
 import 'defeat_reason_widget.dart';

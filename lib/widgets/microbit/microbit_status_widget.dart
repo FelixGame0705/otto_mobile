@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/services/microbit_ble_service.dart';
+import 'package:ottobit/services/microbit_ble_service.dart';
 
 class MicrobitStatusWidget extends StatelessWidget {
   final MicrobitBleService bleService;

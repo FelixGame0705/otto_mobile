@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:otto_mobile/core/services/compiler_service.dart';
+import 'package:ottobit/core/services/compiler_service.dart';
 
 void main() {
   test('repeatRange with placeholder {{i}} compiles and appears in Python', () {

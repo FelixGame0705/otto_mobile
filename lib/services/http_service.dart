@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:otto_mobile/utils/constants.dart';
-import 'package:otto_mobile/services/storage_service.dart';
+import 'package:ottobit/utils/constants.dart';
+import 'package:ottobit/services/storage_service.dart';
 
 class HttpService {
   static final HttpService _instance = HttpService._internal();

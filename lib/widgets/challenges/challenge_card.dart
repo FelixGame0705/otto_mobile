@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/challenge_model.dart';
+import 'package:ottobit/models/challenge_model.dart';
 
 class ChallengeCard extends StatelessWidget {
   final Challenge challenge;

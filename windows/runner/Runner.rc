@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "otto_mobile" "\0"
+            VALUE "CompanyName", "com.otto" "\0"
+            VALUE "FileDescription", "ottobit" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "otto_mobile" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "otto_mobile.exe" "\0"
-            VALUE "ProductName", "otto_mobile" "\0"
+            VALUE "InternalName", "ottobit" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.otto. All rights reserved." "\0"
+            VALUE "OriginalFilename", "ottobit.exe" "\0"
+            VALUE "ProductName", "ottobit" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

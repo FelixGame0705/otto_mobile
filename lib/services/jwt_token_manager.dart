@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:otto_mobile/services/storage_service.dart';
-import 'package:otto_mobile/services/auth_service.dart';
+import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/services/auth_service.dart';
 
 class JwtTokenManager {
   static final JwtTokenManager _instance = JwtTokenManager._internal();

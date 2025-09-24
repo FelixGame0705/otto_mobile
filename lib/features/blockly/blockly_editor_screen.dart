@@ -2,12 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:otto_mobile/core/services/storage_service.dart';
-import 'package:otto_mobile/features/blockly/blockly_bridge.dart';
-import 'package:otto_mobile/features/phaser/phaser_runner_screen.dart';
-import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
-import 'package:otto_mobile/services/microbit_ble_service.dart';
-import 'package:otto_mobile/screens/microbit/microbit_connection_screen.dart';
+import 'package:ottobit/core/services/storage_service.dart';
+import 'package:ottobit/features/blockly/blockly_bridge.dart';
+import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
+import 'package:ottobit/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/services/microbit_ble_service.dart';
+import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
 
 class BlocklyEditorScreen extends StatefulWidget {
   final Map<String, dynamic>? initialMapJson;

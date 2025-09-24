@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/lesson_detail_model.dart';
+import 'package:ottobit/models/lesson_detail_model.dart';
 
 class LessonDetailHeader extends StatelessWidget {
   final LessonDetail lesson;

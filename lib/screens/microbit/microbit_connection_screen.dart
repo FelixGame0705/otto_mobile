@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:otto_mobile/services/microbit_ble_service.dart';
+import 'package:ottobit/services/microbit_ble_service.dart';
 
 class MicrobitConnectionScreen extends StatefulWidget {
   const MicrobitConnectionScreen({super.key});

@@ -3,9 +3,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import '../../widgets/phaser/status_dialog_widget.dart';
-import 'package:otto_mobile/core/services/storage_service.dart';
+import 'package:ottobit/core/services/storage_service.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;

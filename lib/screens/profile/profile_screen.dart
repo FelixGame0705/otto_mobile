@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/user_model.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/storage_service.dart';
-import 'package:otto_mobile/layout/app_scaffold.dart';
-import 'package:otto_mobile/widgets/common/section_card.dart';
-import 'package:otto_mobile/services/student_service.dart';
-import 'package:otto_mobile/models/student_model.dart';
+import 'package:ottobit/models/user_model.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/layout/app_scaffold.dart';
+import 'package:ottobit/widgets/common/section_card.dart';
+import 'package:ottobit/services/student_service.dart';
+import 'package:ottobit/models/student_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});

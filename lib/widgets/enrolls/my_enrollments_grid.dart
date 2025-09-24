@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/enrollment_model.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/enrollment_service.dart';
+import 'package:ottobit/models/enrollment_model.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/enrollment_service.dart';
 
 class MyEnrollmentsGrid extends StatefulWidget {
   const MyEnrollmentsGrid({super.key});

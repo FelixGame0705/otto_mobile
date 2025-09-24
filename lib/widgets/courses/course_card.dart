@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/course_model.dart';
+import 'package:ottobit/models/course_model.dart';
 
 class CourseCard extends StatelessWidget {
   final Course course;

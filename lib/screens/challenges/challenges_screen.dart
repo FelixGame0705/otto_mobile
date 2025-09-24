@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/challenge_model.dart';
-import 'package:otto_mobile/services/challenge_service.dart';
-import 'package:otto_mobile/widgets/challenges/challenge_card.dart';
-import 'package:otto_mobile/features/blockly/blockly_editor_screen.dart';
-import 'package:otto_mobile/widgets/ui/notifications.dart';
+import 'package:ottobit/models/challenge_model.dart';
+import 'package:ottobit/services/challenge_service.dart';
+import 'package:ottobit/widgets/challenges/challenge_card.dart';
+import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/widgets/ui/notifications.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String lessonId;

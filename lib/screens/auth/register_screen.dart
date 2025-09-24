@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/auth_service.dart';
-import 'package:otto_mobile/layout/app_scaffold.dart';
-import 'package:otto_mobile/widgets/common/section_card.dart';
-import 'package:otto_mobile/widgets/common/app_text_field.dart';
-import 'package:otto_mobile/widgets/ui/notifications.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/auth_service.dart';
+import 'package:ottobit/layout/app_scaffold.dart';
+import 'package:ottobit/widgets/common/section_card.dart';
+import 'package:ottobit/widgets/common/app_text_field.dart';
+import 'package:ottobit/widgets/ui/notifications.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

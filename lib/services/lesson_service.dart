@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:otto_mobile/models/lesson_model.dart';
-import 'package:otto_mobile/services/http_service.dart';
-import 'package:otto_mobile/utils/api_error_handler.dart';
+import 'package:ottobit/models/lesson_model.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonService {
   static final LessonService _instance = LessonService._internal();

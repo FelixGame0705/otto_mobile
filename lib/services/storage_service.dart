@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:otto_mobile/models/user_model.dart';
-import 'package:otto_mobile/utils/constants.dart';
+import 'package:ottobit/models/user_model.dart';
+import 'package:ottobit/utils/constants.dart';
 
 class StorageService {
   static SharedPreferences? _prefs;

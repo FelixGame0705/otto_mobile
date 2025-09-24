@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/layout/app_scaffold.dart';
-import 'package:otto_mobile/models/course_detail_model.dart';
-import 'package:otto_mobile/services/course_detail_service.dart';
-import 'package:otto_mobile/widgets/courseDetail/course_detail_header.dart';
-import 'package:otto_mobile/widgets/courseDetail/course_info_section.dart';
-import 'package:otto_mobile/widgets/courseDetail/course_action_buttons.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/enrollment_service.dart';
+import 'package:ottobit/layout/app_scaffold.dart';
+import 'package:ottobit/models/course_detail_model.dart';
+import 'package:ottobit/services/course_detail_service.dart';
+import 'package:ottobit/widgets/courseDetail/course_detail_header.dart';
+import 'package:ottobit/widgets/courseDetail/course_info_section.dart';
+import 'package:ottobit/widgets/courseDetail/course_action_buttons.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/enrollment_service.dart';
 import 'package:share_plus/share_plus.dart';
 
 class CourseDetailScreen extends StatefulWidget {

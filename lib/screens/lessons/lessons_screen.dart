@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/lesson_model.dart';
-import 'package:otto_mobile/services/lesson_service.dart';
-import 'package:otto_mobile/services/lesson_detail_service.dart';
-import 'package:otto_mobile/widgets/lessons/lesson_card.dart';
-import 'package:otto_mobile/widgets/lessons/lesson_search_bar.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/widgets/ui/notifications.dart';
+import 'package:ottobit/models/lesson_model.dart';
+import 'package:ottobit/services/lesson_service.dart';
+import 'package:ottobit/services/lesson_detail_service.dart';
+import 'package:ottobit/widgets/lessons/lesson_card.dart';
+import 'package:ottobit/widgets/lessons/lesson_search_bar.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/widgets/ui/notifications.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String courseId;

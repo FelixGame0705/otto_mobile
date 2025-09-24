@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:otto_mobile/models/user_model.dart';
-import 'package:otto_mobile/services/http_service.dart';
-import 'package:otto_mobile/services/storage_service.dart';
-import 'package:otto_mobile/services/jwt_token_manager.dart';
-import 'package:otto_mobile/utils/api_error_handler.dart';
+import 'package:ottobit/models/user_model.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/services/jwt_token_manager.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -91,6 +91,28 @@ class AuthService {
       }
     } catch (e) {
       return AuthResult.failure(message: 'Lỗi kết nối: $e');
+    }
+  }
+
+  // Đăng nhập bằng Google: gửi googleIdToken lên backend và trả về toàn bộ response map để UI hiển thị
+  static Future<Map<String, dynamic>> loginWithGoogle(String googleIdToken) async {
+    try {
+      final response = await HttpService().post(
+        '/v1/authentications/login-google',
+        body: {
+          'googleIdToken': googleIdToken,
+        },
+        includeAuth: false,
+        throwOnError: false,
+      );
+
+      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data;
+    } catch (e) {
+      return {
+        'message': 'Login Google failed',
+        'error': e.toString(),
+      };
     }
   }
 

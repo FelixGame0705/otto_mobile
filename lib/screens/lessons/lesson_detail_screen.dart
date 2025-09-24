@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/lesson_detail_model.dart';
-import 'package:otto_mobile/services/lesson_detail_service.dart';
-import 'package:otto_mobile/widgets/lessonDetail/lesson_detail_header.dart';
-import 'package:otto_mobile/widgets/lessonDetail/lesson_content_section.dart';
-import 'package:otto_mobile/widgets/lessonDetail/lesson_action_buttons.dart';
+import 'package:ottobit/models/lesson_detail_model.dart';
+import 'package:ottobit/services/lesson_detail_service.dart';
+import 'package:ottobit/widgets/lessonDetail/lesson_detail_header.dart';
+import 'package:ottobit/widgets/lessonDetail/lesson_content_section.dart';
+import 'package:ottobit/widgets/lessonDetail/lesson_action_buttons.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String lessonId;

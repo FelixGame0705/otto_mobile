@@ -1,4 +1,4 @@
-name: otto_mobile
+name: ottobit
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -33,6 +33,7 @@ dependencies:
   
   # HTTP client for API calls
   http: ^1.1.0
+  google_sign_in: ^6.1.5
   
   # Local storage for JWT tokens and user data
   shared_preferences: ^2.2.2
