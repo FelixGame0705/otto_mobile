@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:otto_mobile/core/models/program.dart';
+import 'package:ottobit/core/models/program.dart';
 
 class CompileResult {
   final Program program;

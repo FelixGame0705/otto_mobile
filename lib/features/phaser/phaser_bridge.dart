@@ -8,8 +8,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 /// Bridge để giao tiếp với Phaser game qua PhaserChannel
 class PhaserBridge {
   WebViewController? _controller;
-  String? _currentMap;
-  Map<String, dynamic>? _currentProgram;
   
   // Callbacks
   Function(Map<String, dynamic>)? onVictory;
@@ -191,7 +189,6 @@ class PhaserBridge {
         console.log('❌ PhaserChannel not available');
       }
     ''');
-    _currentMap = mapKey;
   }
 
   Future<void> runProgram(Map<String, dynamic> program) async {
@@ -210,7 +207,6 @@ class PhaserBridge {
           throw new Error('PhaserChannel not available');
         }
       ''');
-      _currentProgram = program;
     } catch (e) {
       developer.log('❌ Error running program: $e');
       onError?.call({'error': e.toString(), 'type': 'run_program_error'});
@@ -288,6 +284,34 @@ class PhaserBridge {
         console.log('❌ PhaserChannel not available');
       }
     ''');
+  }
+
+  Future<void> restartScene({
+    required Map<String, dynamic> mapJson,
+    required Map<String, dynamic> challengeJson,
+  }) async {
+    if (_controller == null) return;
+    
+    try {
+      final mapStr = jsonEncode(mapJson);
+      final challengeStr = jsonEncode(challengeJson);
+      
+      await _controller!.runJavaScript('''
+        console.log('🔄 Sending RESTART_SCENE event...');
+        if (window.PhaserChannel) {
+          window.PhaserChannel.sendEvent('RESTART_SCENE', { 
+            mapJson: $mapStr, 
+            challengeJson: $challengeStr 
+          });
+          console.log('✅ RESTART_SCENE event sent');
+        } else {
+          console.log('❌ PhaserChannel not available');
+        }
+      ''');
+    } catch (e) {
+      developer.log('❌ Error restarting scene: $e');
+      onError?.call({'error': e.toString(), 'type': 'restart_scene_error'});
+    }
   }
 
   Future<Map<String, dynamic>?> getGameStatus() async {

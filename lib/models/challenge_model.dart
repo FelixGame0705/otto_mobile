@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 class Challenge {
   final String id;
   final String lessonId;
@@ -48,15 +49,24 @@ class Challenge {
     final dynamic rawMapJson = json['mapJson'] ?? json['messageJson'];
     final dynamic rawChallengeJson = json['challengeJson'];
 
+    DateTime _parseDate(dynamic v) {
+      if (v is String && v.isNotEmpty) {
+        try {
+          return DateTime.parse(v);
+        } catch (_) {}
+      }
+      return DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
     return Challenge(
       id: json['id'] ?? '',
-      lessonId: json['lessonId'] ?? '',
+      lessonId: (json['lessonId'] ?? '').toString(),
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       order: json['order'] ?? 0,
       difficulty: json['difficulty'] ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: _parseDate(json['createdAt']),
+      updatedAt: _parseDate(json['updatedAt']),
       submissionsCount: json['submissionsCount'] ?? 0,
       lessonTitle: json['lessonTitle'] ?? '',
       courseTitle: json['courseTitle'] ?? '',
@@ -122,5 +132,3 @@ class ChallengeApiResponse {
     );
   }
 }
-
-

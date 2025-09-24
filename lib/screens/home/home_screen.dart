@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/widgets/enrolls/my_enrollments_grid.dart';
-import 'package:otto_mobile/widgets/courses/explore_courses_tab.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
+import 'package:ottobit/widgets/courses/explore_courses_tab.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

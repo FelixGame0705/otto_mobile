@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:otto_mobile/utils/constants.dart';
-import 'package:otto_mobile/services/storage_service.dart';
+import 'package:ottobit/utils/constants.dart';
+import 'package:ottobit/services/storage_service.dart';
 
 class HttpService {
   static final HttpService _instance = HttpService._internal();
@@ -42,6 +42,7 @@ class HttpService {
     String endpoint, {
     Map<String, String>? queryParams,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
@@ -53,7 +54,7 @@ class HttpService {
       final response = await _client.get(uri, headers: headers);
       print('HttpService: Response status: ${response.statusCode}');
       print('HttpService: Response body: ${response.body}');
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       print('HttpService: GET request failed: $e');
       throw HttpException('GET request failed: $e');
@@ -65,6 +66,7 @@ class HttpService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
@@ -75,7 +77,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('POST request failed: $e');
     }
@@ -86,6 +88,7 @@ class HttpService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
@@ -96,7 +99,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('PUT request failed: $e');
     }
@@ -106,13 +109,14 @@ class HttpService {
   Future<http.Response> delete(
     String endpoint, {
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
     
     try {
       final response = await _client.delete(uri, headers: headers);
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('DELETE request failed: $e');
     }
@@ -123,6 +127,7 @@ class HttpService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool includeAuth = true,
+    bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
     final uri = Uri.parse('$_baseUrl$endpoint');
@@ -133,28 +138,46 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response);
+      return _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('PATCH request failed: $e');
     }
   }
 
   // Xử lý response
-  http.Response _handleResponse(http.Response response) {
+  http.Response _handleResponse(
+    http.Response response, {
+    bool throwOnError = true,
+  }) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     } else if (response.statusCode == 401) {
       // Token hết hạn hoặc không hợp lệ
       _handleUnauthorized();
-      throw HttpException('Unauthorized: Token expired or invalid');
+      if (throwOnError) {
+        throw HttpException('Unauthorized: Token expired or invalid');
+      }
+      return response;
     } else if (response.statusCode == 403) {
-      throw HttpException('Forbidden: Access denied');
+      if (throwOnError) {
+        throw HttpException('Forbidden: Access denied');
+      }
+      return response;
     } else if (response.statusCode >= 400 && response.statusCode < 500) {
-      throw HttpException('Client error: ${response.statusCode}');
+      if (throwOnError) {
+        throw HttpException('Client error: ${response.statusCode}');
+      }
+      return response;
     } else if (response.statusCode >= 500) {
-      throw HttpException('Server error: ${response.statusCode}');
+      if (throwOnError) {
+        throw HttpException('Server error: ${response.statusCode}');
+      }
+      return response;
     } else {
-      throw HttpException('Unexpected error: ${response.statusCode}');
+      if (throwOnError) {
+        throw HttpException('Unexpected error: ${response.statusCode}');
+      }
+      return response;
     }
   }
 

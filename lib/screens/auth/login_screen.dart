@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/auth_service.dart';
-import 'package:otto_mobile/layout/app_scaffold.dart';
-import 'package:otto_mobile/widgets/common/section_card.dart';
-import 'package:otto_mobile/widgets/common/app_text_field.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/auth_service.dart';
+import 'package:ottobit/layout/app_scaffold.dart';
+import 'package:ottobit/widgets/common/section_card.dart';
+import 'package:ottobit/widgets/common/app_text_field.dart';
+import 'package:ottobit/widgets/ui/notifications.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/services/jwt_token_manager.dart';
+import 'package:ottobit/models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +22,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _emailError;
+  String? _passwordError;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    serverClientId: '230205957347-92orekvvv41o7dkis4431883v35ei9s5.apps.googleusercontent.com',
+  );
 
   @override
   void dispose() {
@@ -25,10 +36,99 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleGoogleLogin() async {
+    try {
+      setState(() => _isLoading = true);
+      final account = await _googleSignIn.signIn();
+      if (account == null) {
+        setState(() => _isLoading = false);
+        showErrorToast(context, 'Đăng nhập Google bị hủy.');
+        return;
+      }
+      final auth = await account.authentication;
+      final idtoken = auth.idToken;
+      if (idtoken == null || idtoken.isEmpty) {
+        setState(() => _isLoading = false);
+        showErrorToast(context, 'Không lấy được Google ID token. $auth');
+        return;
+      }
+
+      final response = await AuthService.loginWithGoogle(idtoken);
+
+      // Handle like _handleLogin: persist tokens, user, then navigate
+      try {
+        final message = (response['message'] ?? '').toString();
+        final data = response['data'] as Map<String, dynamic>?;
+        if (data == null) {
+          setState(() => _isLoading = false);
+          showErrorToast(context, message.isNotEmpty ? message : 'Đăng nhập Google thất bại');
+          return;
+        }
+
+        final userMap = (data['user'] ?? {}) as Map<String, dynamic>;
+        final tokens = (data['tokens'] ?? {}) as Map<String, dynamic>;
+        final accessToken = (tokens['accessToken'] ?? '').toString();
+        final refreshToken = (tokens['refreshToken'] ?? '').toString();
+        final expiresAtUtcStr = (tokens['expiresAtUtc'] ?? '').toString();
+
+        if (accessToken.isEmpty) {
+          setState(() => _isLoading = false);
+          showErrorToast(context, 'Đăng nhập Google thất bại: thiếu accessToken');
+          return;
+        }
+
+        await StorageService.saveToken(accessToken);
+        await StorageService.saveRefreshToken(refreshToken);
+
+        DateTime? expiryTime;
+        if (expiresAtUtcStr.isNotEmpty) {
+          try {
+            expiryTime = DateTime.parse(expiresAtUtcStr).toLocal();
+          } catch (_) {}
+        }
+        if (expiryTime == null) {
+          final payload = JwtTokenManager.getTokenPayload(accessToken);
+          final exp = payload != null ? payload['exp'] : null;
+          if (exp != null) {
+            expiryTime = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
+          }
+        }
+        if (expiryTime != null) {
+          await StorageService.saveTokenExpiry(expiryTime);
+        }
+
+        final user = UserModel(
+          id: (userMap['userId'] ?? userMap['id'] ?? '').toString(),
+          fullName: (userMap['fullName'] ?? account.displayName ?? '').toString(),
+          email: (userMap['email'] ?? account.email).toString(),
+          phone: (userMap['phone'] ?? '').toString(),
+          avatar: (userMap['avatar'] ?? '')?.toString(),
+          createdAt: DateTime.now(),
+          isActive: true,
+        );
+        await StorageService.saveUser(user);
+
+        setState(() => _isLoading = false);
+        if (mounted) {
+          showSuccessToast(context, message.isNotEmpty ? message : 'Đăng nhập thành công!');
+          Navigator.pushReplacementNamed(context, AppRoutes.home);
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+        showErrorToast(context, 'Lỗi xử lý đăng nhập Google: $e');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      showErrorToast(context, 'Google Sign-In lỗi: $e');
+    }
+  }
+
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
+        _emailError = null;
+        _passwordError = null;
       });
 
       try {
@@ -43,14 +143,25 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (mounted) {
           if (result.isSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Đăng nhập thành công!'), backgroundColor: Colors.green),
-            );
+            showSuccessToast(context, 'Đăng nhập thành công!');
             Navigator.pushReplacementNamed(context, AppRoutes.home);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(result.message ?? 'Đăng nhập thất bại'), backgroundColor: Colors.red),
-            );
+            final msg = (result.message ?? '').trim();
+            bool handledInline = false;
+            setState(() {
+              final lower = msg.toLowerCase();
+              if (lower.contains('email is not a valid') || lower.contains('email')) {
+                _emailError = msg;
+                handledInline = true;
+              }
+              if (lower.contains('invalid email or password')) {
+                _passwordError = msg;
+                handledInline = true;
+              }
+            });
+            if (!handledInline) {
+              showErrorToast(context, msg.isNotEmpty ? msg : 'Đăng nhập thất bại');
+            }
           }
         }
       } catch (e) {
@@ -58,9 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Lỗi kết nối: $e'), backgroundColor: Colors.red),
-          );
+          showErrorToast(context, 'Lỗi kết nối: $e');
         }
       }
     }
@@ -110,9 +219,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'Vui lòng nhập email';
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Email không hợp lệ';
                   return null;
                 },
               ),
+              if (_emailError != null && _emailError!.isNotEmpty)
+                const SizedBox(height: 6),
+              if (_emailError != null && _emailError!.isNotEmpty)
+                InlineErrorText(message: _emailError!),
               const SizedBox(height: 16),
 
               AppTextField(
@@ -127,6 +241,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
+              if (_passwordError != null && _passwordError!.isNotEmpty)
+                const SizedBox(height: 6),
+              if (_passwordError != null && _passwordError!.isNotEmpty)
+                InlineErrorText(message: _passwordError!),
               const SizedBox(height: 12),
 
               Align(
@@ -152,6 +270,23 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.black54)))
                       : const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Google login button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _handleGoogleLogin,
+                  icon: const Icon(Icons.login),
+                  label: const Text('Đăng nhập với Google'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2D3748),
+                    side: const BorderSide(color: Color(0xFF2D3748)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

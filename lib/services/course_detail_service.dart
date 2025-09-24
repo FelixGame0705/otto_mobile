@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'package:otto_mobile/models/course_detail_model.dart';
-import 'package:otto_mobile/services/http_service.dart';
+import 'package:ottobit/models/course_detail_model.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CourseDetailService {
   static final CourseDetailService _instance = CourseDetailService._internal();
@@ -14,7 +15,10 @@ class CourseDetailService {
     try {
       print('CourseDetailService: Making request to /v1/courses/$courseId');
       
-      final response = await _httpService.get('/v1/courses/$courseId');
+      final response = await _httpService.get(
+        '/v1/courses/$courseId',
+        throwOnError: false,
+      );
 
       print('CourseDetailService: Response status: ${response.statusCode}');
       print('CourseDetailService: Response body: ${response.body}');
@@ -25,7 +29,12 @@ class CourseDetailService {
         return CourseDetailApiResponse.fromJson(jsonData);
       } else {
         print('CourseDetailService: Error response: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to load course detail: ${response.statusCode}');
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load course detail: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('CourseDetailService: Exception: $e');

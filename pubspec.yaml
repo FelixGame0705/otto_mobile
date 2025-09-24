@@ -1,4 +1,4 @@
-name: otto_mobile
+name: ottobit
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -33,6 +33,7 @@ dependencies:
   
   # HTTP client for API calls
   http: ^1.1.0
+  google_sign_in: ^6.1.5
   
   # Local storage for JWT tokens and user data
   shared_preferences: ^2.2.2
@@ -43,10 +44,14 @@ dependencies:
   # File picker for import/export JSON
   file_picker: ^8.0.3
 
+  # Bluetooth Low Energy for micro:bit communication
+  flutter_blue_plus: ^1.32.10
+
   # Utilities
   collection: ^1.18.0
   equatable: ^2.0.5
   intl: ^0.19.0
+  share_plus: ^7.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -62,6 +67,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

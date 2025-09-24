@@ -3,8 +3,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import '../../widgets/phaser/status_dialog_widget.dart';
+import 'package:ottobit/core/services/storage_service.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;
@@ -12,7 +13,14 @@ class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialChallengeJson;
   final bool embedded;
   final ValueChanged<PhaserBridge>? onBridgeReady;
-  const PhaserRunnerScreen({super.key, this.initialProgram, this.initialMapJson, this.initialChallengeJson, this.embedded = false, this.onBridgeReady});
+  const PhaserRunnerScreen({
+    super.key,
+    this.initialProgram,
+    this.initialMapJson,
+    this.initialChallengeJson,
+    this.embedded = false,
+    this.onBridgeReady,
+  });
 
   @override
   State<PhaserRunnerScreen> createState() => _PhaserRunnerScreenState();
@@ -25,6 +33,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   bool _isGameReady = false;
   bool _isDialogShowing = false;
   bool _sentInitialLoad = false;
+  String _cachedCodeJson = '{}';
 
   @override
   void initState() {
@@ -42,40 +51,47 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         widget.onBridgeReady?.call(_bridge);
       }
     });
-    
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..addJavaScriptChannel('FlutterFromPhaser', onMessageReceived: (msg) {
-        try {
-          final data = jsonDecode(msg.message) as Map<String, dynamic>;
-          _bridge.handlePhaserMessage(data);
-        } catch (e) {
-          debugPrint('Error parsing Phaser message: $e');
-        }
-      })
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (String url) {
-          debugPrint('Phaser loaded: $url');
-          setState(() {
-            _isLoading = false;
-            _isGameReady = true;
-          });
-          // Initialize bridge sau khi page load
-          _bridge.initialize(_controller);
-          // Chỉ gửi payload sau khi nhận READY từ Phaser
-          debugPrint('⏳ Waiting for READY from Phaser before sending payload');
+      ..addJavaScriptChannel(
+        'FlutterFromPhaser',
+        onMessageReceived: (msg) {
+          try {
+            final data = jsonDecode(msg.message) as Map<String, dynamic>;
+            _bridge.handlePhaserMessage(data);
+          } catch (e) {
+            debugPrint('Error parsing Phaser message: $e');
+          }
         },
-        onWebResourceError: (WebResourceError error) {
-          debugPrint('WebView error: ${error.description}');
-          setState(() {
-            _isLoading = false;
-          });
-        },
-        onNavigationRequest: (NavigationRequest request) {
-          debugPrint('Navigation request: ${request.url}');
-          return NavigationDecision.navigate;
-        },
-      ))
+      )
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageFinished: (String url) {
+            debugPrint('Phaser loaded: $url');
+            setState(() {
+              _isLoading = false;
+              _isGameReady = true;
+            });
+            // Initialize bridge sau khi page load
+            _bridge.initialize(_controller);
+            // Chỉ gửi payload sau khi nhận READY từ Phaser
+            debugPrint(
+              '⏳ Waiting for READY from Phaser before sending payload',
+            );
+          },
+          onWebResourceError: (WebResourceError error) {
+            debugPrint('WebView error: ${error.description}');
+            setState(() {
+              _isLoading = false;
+            });
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            debugPrint('Navigation request: ${request.url}');
+            return NavigationDecision.navigate;
+          },
+        ),
+      )
       ..loadRequest(Uri.parse('https://phaser-map-three.vercel.app/'));
   }
 
@@ -86,6 +102,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         setState(() {
           _isGameReady = true;
         });
+        _refreshCachedCodeJson();
         _sendInitialPayloadIfAny();
         // Do not show READY popup
       }
@@ -95,7 +112,12 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('🎉 onVictory callback called with data: $data');
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showStatusDialog('VICTORY', 'Congratulations! You won!', Colors.green, data);
+          _showStatusDialog(
+            'VICTORY',
+            'Congratulations! You won!',
+            Colors.green,
+            data,
+          );
         });
       }
     };
@@ -118,23 +140,33 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('❌ onError callback called with data: $data');
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showStatusDialog('ERROR', 'Game Error Occurred', Colors.orange, data);
+          _showStatusDialog(
+            'ERROR',
+            'Game Error Occurred',
+            Colors.orange,
+            data,
+          );
         });
       }
     };
   }
 
-  void _showStatusDialog(String status, String title, Color color, Map<String, dynamic> data) {
+  void _showStatusDialog(
+    String status,
+    String title,
+    Color color,
+    Map<String, dynamic> data,
+  ) {
     debugPrint('🎭 Attempting to show dialog: $status - $title');
-    
+
     // Prevent multiple dialogs
     if (_isDialogShowing) {
       debugPrint('⚠️ Dialog already showing, skipping');
       return;
     }
-    
+
     _isDialogShowing = true;
-    
+    final String codeJsonString = _getCodeJsonStringSync();
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -150,14 +182,43 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           title: title,
           color: color,
           data: data,
+          bridge: _bridge,
+          challengeId: () {
+            final challengeId =
+                widget.initialChallengeJson?['id'] ??
+                widget.initialChallengeJson?['challengeId'];
+            debugPrint('🔍 Challenge ID for submission: $challengeId');
+            debugPrint(
+              '🔍 Full challenge data: ${widget.initialChallengeJson}',
+            );
+            return challengeId;
+          }(),
+          // Prefer cached/pre-encoded codeJson if available
+          codeJson: codeJsonString.isNotEmpty
+              ? codeJsonString
+              : (widget.initialProgram != null
+                    ? jsonEncode(widget.initialProgram!)
+                    : '{}'),
           onPlayAgain: () {
             debugPrint('🔄 Play Again pressed');
             _isDialogShowing = false;
             Navigator.pop(context);
-            _bridge.resetGame();
+            if (widget.initialMapJson != null &&
+                widget.initialChallengeJson != null) {
+              _bridge.restartScene(
+                mapJson: widget.initialMapJson!,
+                challengeJson: widget.initialChallengeJson!,
+              );
+            } else {
+              debugPrint('❌ Cannot restart: missing mapJson or challengeJson');
+            }
           },
           onClose: () {
             debugPrint('✅ Close pressed');
+            _bridge.restartScene(
+              mapJson: widget.initialMapJson!,
+              challengeJson: widget.initialChallengeJson!,
+            );
             _isDialogShowing = false;
             Navigator.pop(context);
           },
@@ -167,6 +228,33 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('🔚 Dialog closed');
       _isDialogShowing = false;
     });
+  }
+
+  void _refreshCachedCodeJson() async {
+    try {
+      if (widget.initialProgram != null && widget.initialProgram!.isNotEmpty) {
+        _cachedCodeJson = jsonEncode(widget.initialProgram!);
+        return;
+      }
+      final storage = ProgramStorageService();
+      final latest = await storage.loadFromPrefs();
+      if (latest != null && latest.isNotEmpty) {
+        final storedText = latest['codeJson'];
+        _cachedCodeJson = storedText is String && storedText.isNotEmpty
+            ? storedText
+            : jsonEncode(latest);
+      }
+    } catch (_) {}
+  }
+
+  String _getCodeJsonStringSync() {
+    if (widget.initialProgram != null && widget.initialProgram!.isNotEmpty) {
+      return jsonEncode(widget.initialProgram!);
+    }
+    if (_cachedCodeJson.isNotEmpty && _cachedCodeJson != '{}') {
+      return _cachedCodeJson;
+    }
+    return '{}';
   }
 
   Future<void> _loadMapAndRunProgram() async {
@@ -259,7 +347,9 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       appBar: AppBar(
         title: const Text('Phaser Robot Game'),
         actions: [
-          if (_isGameReady && widget.initialMapJson != null && widget.initialChallengeJson != null)
+          if (_isGameReady &&
+              widget.initialMapJson != null &&
+              widget.initialChallengeJson != null)
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _reloadMapAndChallenge,
@@ -295,28 +385,30 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         ],
       ),
       body: _buildBodyOnly(),
-      floatingActionButton: _isGameReady ? Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () => _loadMap('basic1'),
-            child: const Text('B1'),
-            tooltip: 'Load Basic1 Map',
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            onPressed: () => _loadMap('basic2'),
-            child: const Text('B2'),
-            tooltip: 'Load Basic2 Map',
-          ),
-          const SizedBox(height: 8),
-          FloatingActionButton(
-            onPressed: _runProgram,
-            child: const Icon(Icons.play_arrow),
-            tooltip: 'Run Program',
-          ),
-        ],
-      ) : null,
+      floatingActionButton: _isGameReady
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FloatingActionButton(
+                  onPressed: () => _loadMap('basic1'),
+                  child: const Text('B1'),
+                  tooltip: 'Load Basic1 Map',
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  onPressed: () => _loadMap('basic2'),
+                  child: const Text('B2'),
+                  tooltip: 'Load Basic2 Map',
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  onPressed: _runProgram,
+                  child: const Icon(Icons.play_arrow),
+                  tooltip: 'Run Program',
+                ),
+              ],
+            )
+          : null,
     );
   }
 

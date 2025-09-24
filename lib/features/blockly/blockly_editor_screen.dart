@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:otto_mobile/core/services/storage_service.dart';
-import 'package:otto_mobile/features/blockly/blockly_bridge.dart';
-import 'package:otto_mobile/features/phaser/phaser_runner_screen.dart';
-import 'package:otto_mobile/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/core/services/storage_service.dart';
+import 'package:ottobit/features/blockly/blockly_bridge.dart';
+import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
+import 'package:ottobit/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/services/microbit_ble_service.dart';
+import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
 
 class BlocklyEditorScreen extends StatefulWidget {
   final Map<String, dynamic>? initialMapJson;
@@ -25,13 +27,19 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
   Map<String, dynamic>? _compiledProgram;
   String? _lastXml;
   final _storage = ProgramStorageService();
+  int _lastCompileTick = 0;
   
   // Right Phaser pane resize
   bool _isDragging = false;
   double _rightPaneWidth = 420.0;
   final double _minRightPaneWidth = 280.0;
   final double _maxRightPaneWidth = 600.0;
-  int _currentTabIndex = 0;
+  bool _showPythonPreview = false;
+
+  // BLE micro:bit integration
+  final MicrobitBleService _bleService = MicrobitBleService();
+  String _receivedData = '';
+  bool _showMicrobitPanel = false;
 
   @override
   void initState() {
@@ -58,6 +66,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
         if (python != null) _pythonPreview = python;
         if (compiled != null) {
           _compiledProgram = compiled;
+          _lastCompileTick = DateTime.now().millisecondsSinceEpoch;
           // Auto-save để Runner có thể load lại khi cần
           final data = {
             ...compiled,
@@ -71,6 +80,25 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     
     // Đăng ký JavaScript channel để nhận messages từ Blockly
     _bridge?.registerInboundChannel();
+
+    // Setup BLE listeners
+    _setupBleListeners();
+  }
+
+  void _setupBleListeners() {
+    // Listen for received data from micro:bit
+    _bleService.receivedDataStream.listen((data) {
+      setState(() {
+        _receivedData += data;
+      });
+    });
+
+    // Listen for connection state changes
+    _bleService.connectionStateStream.listen((isConnected) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -89,49 +117,10 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     await _bridge?.importWorkspace('<xml xmlns="https://developers.google.com/blockly/xml"></xml>');
   }
 
-  Future<void> _importWorkspace() async {
-    final map = await _storage.importFromFile();
-    if (map == null) return;
-    final xml = map['__xml'] as String?; // optional embedding
-    if (xml != null) await _bridge?.importWorkspace(xml);
-  }
-
-  Future<void> _exportJson() async {
-    if (_compiledProgram == null) return;
-    await _storage.exportToFile(_compiledProgram!);
-  }
-
-  Future<void> _savePrefs() async {
-    if (_compiledProgram == null) return;
-    final data = {
-      ..._compiledProgram!,
-      if (_lastXml != null) '__xml': _lastXml,
-    };
-    await _storage.saveToPrefs(data);
-  }
-
-  Future<void> _loadPrefs() async {
-    final loaded = await _storage.loadFromPrefs();
-    if (loaded == null) return;
-    final xml = loaded['__xml'] as String?;
-    if (xml != null) await _bridge?.importWorkspace(xml);
-  }
-
-  Future<void> _compile() async {
-    await _bridge?.compileNow();
-  }
 
   Future<void> _sendToPhaser() async {
     if (!mounted) return;
-    var program = _compiledProgram;
-    
-    // Nếu chưa có compiled program, thử compile trước
-    if (program == null) {
-      await _bridge?.compileNow();
-      await Future.delayed(const Duration(milliseconds: 200));
-      program = _compiledProgram ?? await _storage.loadFromPrefs(); // fallback từ prefs
-    }
-    
+    final program = await _compileAndGetProgram();
     if (program == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No program to send. Please create some blocks first.')),
@@ -142,35 +131,202 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
     _embeddedPhaserBridge?.runProgram(program);
   }
 
-  PhaserBridge? _embeddedPhaserBridge;
-
-  void _switchTab() {
-    final controller = DefaultTabController.maybeOf(context);
-    if (controller != null) {
-      final next = (controller.index + 1) % controller.length;
-      controller.animateTo(next);
-      setState(() {
-        _currentTabIndex = next;
-      });
+  Future<void> _restartScene() async {
+    if (!mounted) return;
+    
+    if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
+      _embeddedPhaserBridge?.restartScene(
+        mapJson: widget.initialMapJson!,
+        challengeJson: widget.initialChallengeJson!,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot restart: missing map or challenge data.')),
+      );
     }
   }
 
-  Widget _buildLeftTabbedPane() {
+  PhaserBridge? _embeddedPhaserBridge;
+
+  void _togglePythonPreview() {
+    setState(() {
+      _showPythonPreview = !_showPythonPreview;
+    });
+  }
+
+  Future<Map<String, dynamic>?> _compileAndGetProgram() async {
+    final int before = _lastCompileTick;
+    await _bridge?.compileNow();
+    // wait briefly to allow onChange to capture compilation
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (_compiledProgram != null && _lastCompileTick != before) {
+      return _compiledProgram;
+    }
+    // fallback to persisted copy if compile did not trigger
+    final persisted = await _storage.loadFromPrefs();
+    return persisted;
+  }
+
+  void _toggleMicrobitPanel() {
+    setState(() {
+      _showMicrobitPanel = !_showMicrobitPanel;
+    });
+  }
+
+  Future<void> _sendToMicrobit() async {
+    if (!_bleService.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Not connected to micro:bit. Please connect first.')),
+      );
+      return;
+    }
+
+    try {
+      final program = await _compileAndGetProgram();
+      if (program == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No program to send. Please create some blocks first.')),
+        );
+        return;
+      }
+      // Convert fresh compiled program to string and send securely
+      String programData = program.toString();
+      await _bleService.sendDataSecurely('PROGRAM:$programData');
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Program sent to micro:bit!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send program: $e')),
+      );
+    }
+  }
+
+  Future<void> _openMicrobitConnection() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MicrobitConnectionScreen(),
+      ),
+    );
+    
+    // Refresh connection state after returning
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _clearReceivedData() {
+    setState(() {
+      _receivedData = '';
+    });
+  }
+
+  Widget _buildLeftPane() {
     return Column(
       children: [
         Expanded(
-          child: TabBarView(
-            physics: NeverScrollableScrollPhysics(),
-            children: [
-              WebViewWidget(controller: _controller),
-              SingleChildScrollView(
+          child: _showPythonPreview 
+            ? SingleChildScrollView(
                 padding: const EdgeInsets.all(12),
                 child: Text(
                   _pythonPreview.isEmpty ? '# Empty\n\nCreate some blocks to see Python code here!' : _pythonPreview,
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
                 ),
+              )
+            : _showMicrobitPanel
+              ? _buildMicrobitPanel()
+              : WebViewWidget(controller: _controller),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMicrobitPanel() {
+    return Column(
+      children: [
+        // Connection status header
+        Container(
+          padding: const EdgeInsets.all(12),
+          color: Theme.of(context).cardColor,
+          child: Row(
+            children: [
+              Icon(
+                _bleService.isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
+                color: _bleService.isConnected ? Colors.green : Colors.red,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _bleService.isConnected ? 'micro:bit Connected' : 'micro:bit Disconnected',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _bleService.isConnected ? Colors.green : Colors.red,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                onPressed: _openMicrobitConnection,
+                icon: const Icon(Icons.settings),
+                tooltip: 'Connection Settings',
               ),
             ],
+          ),
+        ),
+        
+        // Received data section
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Received Data',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: _clearReceivedData,
+                          icon: const Icon(Icons.clear),
+                          tooltip: 'Clear Data',
+                        ),
+                        IconButton(
+                          onPressed: _sendToMicrobit,
+                          icon: const Icon(Icons.send),
+                          tooltip: 'Send Program to micro:bit',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                      color: Colors.grey[50],
+                    ),
+                    child: SingleChildScrollView(
+                      child: Text(
+                        _receivedData.isEmpty ? 'No data received from micro:bit yet...' : _receivedData,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -212,58 +368,81 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      initialIndex: _currentTabIndex,
-      child: KeyboardListener(
-        focusNode: FocusNode(),
-        onKeyEvent: (KeyEvent event) {
-          if (event is KeyDownEvent && 
-              event.logicalKey == LogicalKeyboardKey.keyP && 
-              HardwareKeyboard.instance.isControlPressed) {
-            _switchTab();
-          }
-        },
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Blockly Editor'),
-            bottom: TabBar(
-              isScrollable: true,
-              indicatorSize: TabBarIndicatorSize.label,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              tabs: const [
-                Tab(text: 'Blockly'),
-                Tab(text: 'Python Preview'),
-              ],
-            ),
-            actions: [
-              IconButton(tooltip: 'New', onPressed: _newWorkspace, icon: const Icon(Icons.note_add_outlined)),
-              IconButton(tooltip: 'Import', onPressed: _importWorkspace, icon: const Icon(Icons.file_open)),
-              IconButton(tooltip: 'Save', onPressed: _savePrefs, icon: const Icon(Icons.save_outlined)),
-              IconButton(tooltip: 'Load', onPressed: _loadPrefs, icon: const Icon(Icons.download_outlined)),
-              IconButton(tooltip: 'Compile', onPressed: _compile, icon: const Icon(Icons.build_rounded)),
-              IconButton(tooltip: 'Export JSON', onPressed: _exportJson, icon: const Icon(Icons.file_download)),
-              IconButton(tooltip: 'Send to Phaser', onPressed: _sendToPhaser, icon: const Icon(Icons.send)),
-            ],
-          ),
-          body: Row(
-            children: [
-              Expanded(child: _buildLeftTabbedPane()),
-              _buildMiddleDivider(),
-              Container(
-                width: _rightPaneWidth,
-                color: Theme.of(context).cardColor,
-                child: PhaserRunnerScreen(
-                  embedded: true,
-                  onBridgeReady: (b) {
-                    _embeddedPhaserBridge = b;
-                  },
-                  initialMapJson: widget.initialMapJson,
-                  initialChallengeJson: widget.initialChallengeJson,
-                ),
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent && 
+            event.logicalKey == LogicalKeyboardKey.keyP && 
+            HardwareKeyboard.instance.isControlPressed) {
+          _togglePythonPreview();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Blockly Editor'),
+          actions: [
+            IconButton(
+              tooltip: 'Blockly',
+              onPressed: () {
+                setState(() {
+                  _showPythonPreview = false;
+                  _showMicrobitPanel = false;
+                });
+              },
+              icon: Icon(
+                Icons.view_module,
+                color: (!_showPythonPreview && !_showMicrobitPanel) ? Theme.of(context).primaryColor : null,
               ),
-            ],
-          ),
+            ),
+            IconButton(
+              tooltip: 'Python Preview',
+              onPressed: () {
+                setState(() {
+                  _showPythonPreview = true;
+                  _showMicrobitPanel = false;
+                });
+              },
+              icon: Icon(
+                Icons.code,
+                color: _showPythonPreview ? Theme.of(context).primaryColor : null,
+              ),
+            ),
+            IconButton(
+              tooltip: 'micro:bit Panel',
+              onPressed: _toggleMicrobitPanel,
+              icon: Icon(
+                Icons.bluetooth,
+                color: _showMicrobitPanel ? Theme.of(context).primaryColor : null,
+              ),
+            ),
+            IconButton(tooltip: 'New', onPressed: _newWorkspace, icon: const Icon(Icons.note_add_outlined)),
+            IconButton(tooltip: 'Restart Scene', onPressed: _restartScene, icon: const Icon(Icons.refresh)),
+            IconButton(tooltip: 'Send to Phaser', onPressed: _sendToPhaser, icon: const Icon(Icons.send)),
+            if (_bleService.isConnected)
+              IconButton(
+                tooltip: 'Send to micro:bit', 
+                onPressed: _sendToMicrobit, 
+                icon: const Icon(Icons.bluetooth_connected),
+              ),
+          ],
+        ),
+        body: Row(
+          children: [
+            Expanded(child: _buildLeftPane()),
+            _buildMiddleDivider(),
+            Container(
+              width: _rightPaneWidth,
+              color: Theme.of(context).cardColor,
+              child: PhaserRunnerScreen(
+                embedded: true,
+                onBridgeReady: (b) {
+                  _embeddedPhaserBridge = b;
+                },
+                initialMapJson: widget.initialMapJson,
+                initialChallengeJson: widget.initialChallengeJson,
+              ),
+            ),
+          ],
         ),
       ),
     );

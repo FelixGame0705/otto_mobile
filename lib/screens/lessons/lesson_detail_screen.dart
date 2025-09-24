@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/lesson_detail_model.dart';
-import 'package:otto_mobile/services/lesson_detail_service.dart';
-import 'package:otto_mobile/widgets/lessonDetail/lesson_detail_header.dart';
-import 'package:otto_mobile/widgets/lessonDetail/lesson_content_section.dart';
-import 'package:otto_mobile/widgets/lessonDetail/lesson_action_buttons.dart';
+import 'package:ottobit/models/lesson_detail_model.dart';
+import 'package:ottobit/services/lesson_detail_service.dart';
+import 'package:ottobit/widgets/lessonDetail/lesson_detail_header.dart';
+import 'package:ottobit/widgets/lessonDetail/lesson_content_section.dart';
+import 'package:ottobit/widgets/lessonDetail/lesson_action_buttons.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String lessonId;
@@ -34,7 +34,9 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     });
 
     try {
-      final response = await _lessonDetailService.getLessonDetail(widget.lessonId);
+      final response = await _lessonDetailService.getLessonDetail(
+        widget.lessonId,
+      );
       if (mounted) {
         setState(() {
           _lessonDetail = response.data;
@@ -51,25 +53,34 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     }
   }
 
-  void _handleStartLesson() {
+  Future<void> _handleStartLesson() async {
+    if (_isStarting) return;
     setState(() {
       _isStarting = true;
     });
-    
-    // Simulate starting lesson
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final msg = await _lessonDetailService.startLesson(widget.lessonId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.green),
+      );
+      // Reload lesson detail in case counters/status changed
+      await _loadLessonDetail();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
       if (mounted) {
         setState(() {
           _isStarting = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Bắt đầu học: ${_lessonDetail?.title}'),
-            backgroundColor: Colors.green,
-          ),
-        );
       }
-    });
+    }
   }
 
   void _handleViewChallenges() {
@@ -95,79 +106,74 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4299E1)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFF4299E1),
+                    ),
                   ),
                   SizedBox(height: 16),
                   Text(
                     'Đang tải bài học...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF718096),
-                    ),
+                    style: TextStyle(fontSize: 16, color: Color(0xFF718096)),
                   ),
                 ],
               ),
             )
           : _errorMessage.isNotEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text('Lỗi: $_errorMessage'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadLessonDetail,
-                        child: const Text('Thử lại'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Lỗi: $_errorMessage'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadLessonDetail,
+                    child: const Text('Thử lại'),
                   ),
-                )
-              : _lessonDetail == null
-                  ? const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.menu_book_outlined,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'Không tìm thấy bài học',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          // Lesson Header
-                          LessonDetailHeader(lesson: _lessonDetail!),
-                          
-                          // Lesson Content
-                          LessonContentSection(lesson: _lessonDetail!),
-                          
-                          // Action Buttons
-                          LessonActionButtons(
-                            onStartLesson: _handleStartLesson,
-                            onViewChallenges: _handleViewChallenges,
-                            isStarting: _isStarting,
-                            challengesCount: _lessonDetail!.challengesCount,
-                          ),
-                          
-                          // Bottom padding for safe area
-                          const SizedBox(height: 32),
-                        ],
-                      ),
+                ],
+              ),
+            )
+          : _lessonDetail == null
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.menu_book_outlined, size: 64, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text(
+                    'Không tìm thấy bài học',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
                     ),
+                  ),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Lesson Header
+                  LessonDetailHeader(lesson: _lessonDetail!),
+
+                  // Lesson Content
+                  LessonContentSection(lesson: _lessonDetail!),
+
+                  // Action Buttons
+                  LessonActionButtons(
+                    onStartLesson: _handleStartLesson,
+                    onViewChallenges: _handleViewChallenges,
+                    isStarting: _isStarting,
+                    challengesCount: _lessonDetail!.challengesCount,
+                  ),
+
+                  // Bottom padding for safe area
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
     );
   }
 }

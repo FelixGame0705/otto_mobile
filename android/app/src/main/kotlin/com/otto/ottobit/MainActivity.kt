@@ -1,4 +1,4 @@
-package com.example.otto_mobile
+package com.otto.ottobit
 
 import io.flutter.embedding.android.FlutterActivity
 

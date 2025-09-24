@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/course_model.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/course_service.dart';
-import 'package:otto_mobile/widgets/courses/course_search_bar.dart';
+import 'package:ottobit/models/course_model.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/course_service.dart';
+import 'package:ottobit/widgets/courses/course_search_bar.dart';
 
 class ExploreCoursesTab extends StatefulWidget {
   const ExploreCoursesTab({super.key});
@@ -121,7 +121,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
     if (width >= 1200) return 0.8;
     if (width >= 900) return 0.72;
     if (width >= 600) return 0.78;
-    return orientation == Orientation.landscape ? 0.8 : 0.6;
+    return orientation == Orientation.landscape ? 0.7 : 0.54;
   }
 
   @override

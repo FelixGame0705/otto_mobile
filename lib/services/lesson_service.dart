@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'package:otto_mobile/models/lesson_model.dart';
-import 'package:otto_mobile/services/http_service.dart';
+import 'package:ottobit/models/lesson_model.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonService {
   static final LessonService _instance = LessonService._internal();
@@ -17,6 +18,8 @@ class LessonService {
     bool includeDeleted = false,
     int pageNumber = 1,
     int pageSize = 10,
+    int sortBy = 1,
+    int sortDirection = 0,
   }) async {
     try {
       final queryParams = <String, String>{
@@ -24,6 +27,9 @@ class LessonService {
         'PageNumber': pageNumber.toString(),
         'PageSize': pageSize.toString(),
         'CourseId': courseId,
+        // Sorting
+        'SortBy': sortBy.toString(),
+        'SortDirection': sortDirection.toString(),
       };
 
       if (searchTerm != null && searchTerm.isNotEmpty) {
@@ -36,10 +42,14 @@ class LessonService {
         queryParams['DurationTo'] = durationTo.toString();
       }
 
-      print('LessonService: Making request to /v1/lessons');
+      print('LessonService: Making request to /v1/lessons/preview');
       print('LessonService: Query params: $queryParams');
 
-      final response = await _httpService.get('/v1/lessons', queryParams: queryParams);
+      final response = await _httpService.get(
+        '/v1/lessons/preview',
+        queryParams: queryParams,
+        throwOnError: false,
+      );
 
       print('LessonService: Response status: ${response.statusCode}');
       print('LessonService: Response body: ${response.body}');
@@ -49,8 +59,15 @@ class LessonService {
         print('LessonService: Parsed JSON: $jsonData');
         return LessonApiResponse.fromJson(jsonData);
       } else {
-        print('LessonService: Error response: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to load lessons: ${response.statusCode}');
+        print(
+          'LessonService: Error response: ${response.statusCode} - ${response.body}',
+        );
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load lessons: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('LessonService: Exception: $e');
@@ -61,7 +78,10 @@ class LessonService {
   Future<LessonApiResponse> getLessonById(String lessonId) async {
     try {
       print('LessonService: Making request to /v1/lessons/$lessonId');
-      final response = await _httpService.get('/v1/lessons/$lessonId');
+      final response = await _httpService.get(
+        '/v1/lessons/$lessonId',
+        throwOnError: false,
+      );
 
       print('LessonService: Response status: ${response.statusCode}');
       print('LessonService: Response body: ${response.body}');
@@ -71,12 +91,19 @@ class LessonService {
         print('LessonService: Parsed JSON: $jsonData');
         return LessonApiResponse.fromJson(jsonData);
       } else {
-        print('LessonService: Error response: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to load lesson: ${response.statusCode}');
+        print(
+          'LessonService: Error response: ${response.statusCode} - ${response.body}',
+        );
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load lesson: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('LessonService: Exception: $e');
-      throw Exception('Error fetching lesson: $e');
+      rethrow;
     }
   }
 }

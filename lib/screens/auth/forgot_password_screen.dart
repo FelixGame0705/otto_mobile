@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/routes/app_routes.dart';
-import 'package:otto_mobile/services/auth_service.dart';
-import 'package:otto_mobile/layout/app_scaffold.dart';
-import 'package:otto_mobile/widgets/common/section_card.dart';
-import 'package:otto_mobile/widgets/common/app_text_field.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/services/auth_service.dart';
+import 'package:ottobit/layout/app_scaffold.dart';
+import 'package:ottobit/widgets/common/section_card.dart';
+import 'package:ottobit/widgets/common/app_text_field.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -120,6 +120,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) return 'Vui lòng nhập email';
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Email không hợp lệ';
                     return null;
                   },
                 ),

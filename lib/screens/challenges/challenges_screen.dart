@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:otto_mobile/models/challenge_model.dart';
-import 'package:otto_mobile/services/challenge_service.dart';
-import 'package:otto_mobile/widgets/challenges/challenge_card.dart';
-import 'package:otto_mobile/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/models/challenge_model.dart';
+import 'package:ottobit/services/challenge_service.dart';
+import 'package:ottobit/widgets/challenges/challenge_card.dart';
+import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/widgets/ui/notifications.dart';
 
 class ChallengesScreen extends StatefulWidget {
   final String lessonId;
@@ -78,10 +79,32 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         _loading = false;
       });
     } catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = msg;
         _loading = false;
       });
+      if (msg.isNotEmpty) {
+        showErrorToast(context, msg);
+      }
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Không thể tải thử thách'),
+          content: Text(
+            msg.isNotEmpty
+                ? msg
+                : 'Đã xảy ra lỗi khi tải danh sách thử thách.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -118,7 +141,11 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
     final mq = MediaQuery.of(context);
     final w = mq.size.width;
     final o = mq.orientation;
-    final padH = w >= 900 ? 24 : w >= 600 ? 20 : 12;
+    final padH = w >= 900
+        ? 24
+        : w >= 600
+        ? 20
+        : 12;
 
     return Scaffold(
       appBar: AppBar(
@@ -173,70 +200,86 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error.isNotEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.error, color: Colors.red, size: 56),
-                            const SizedBox(height: 12),
-                            Text(_error),
-                            const SizedBox(height: 12),
-                            ElevatedButton(
-                              onPressed: () => _load(refresh: true),
-                              child: const Text('Thử lại'),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error, color: Colors.red, size: 56),
+                        const SizedBox(height: 12),
+                        Text(_error),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: () => _load(refresh: true),
+                          child: const Text('Thử lại'),
                         ),
-                      )
-                    : _items.isEmpty
-                        ? const Center(child: Text('Không có thử thách nào'))
-                        : GridView.builder(
-                            controller: _scroll,
-                            padding: EdgeInsets.symmetric(horizontal: padH.toDouble()),
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: _cols(w, o),
-                              childAspectRatio: _ratio(w, o),
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                            itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index == _items.length && _loadingMore) {
-                                return const Center(child: CircularProgressIndicator());
-                              }
-                              if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
-                                return Center(
-                                  child: Text(
-                                    'Đã hiển thị tất cả thử thách',
-                                    style: TextStyle(color: Colors.grey[600]),
-                                  ),
-                                );
-                              }
-                              if (index < _items.length) {
-                                final c = _items[index];
-                                return ChallengeCard(
-                                  challenge: c,
-                                  onTap: () {
-                                    // Mở Blockly Editor và gửi mapJson + challengeJson
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => BlocklyEditorScreen(
-                                          initialMapJson: c.mapJson,
-                                          initialChallengeJson: c.challengeJson,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              }
-                              return const SizedBox.shrink();
-                            },
+                      ],
+                    ),
+                  )
+                : _items.isEmpty
+                ? const Center(child: Text('Không có thử thách nào'))
+                : GridView.builder(
+                    controller: _scroll,
+                    padding: EdgeInsets.symmetric(horizontal: padH.toDouble()),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _cols(w, o),
+                      childAspectRatio: _ratio(w, o),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount:
+                        _items.length +
+                        (_loadingMore ? 1 : 0) +
+                        (!_hasMore && _items.isNotEmpty ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == _items.length && _loadingMore) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (index == _items.length + (_loadingMore ? 1 : 0) &&
+                          !_hasMore &&
+                          _items.isNotEmpty) {
+                        return Center(
+                          child: Text(
+                            'Đã hiển thị tất cả thử thách',
+                            style: TextStyle(color: Colors.grey[600]),
                           ),
+                        );
+                      }
+                      if (index < _items.length) {
+                        final c = _items[index];
+                        return ChallengeCard(
+                          challenge: c,
+                          onTap: () async {
+                            try {
+                              // Fetch latest challenge detail to ensure mapJson/challengeJson are present
+                              final detail = await _service.getChallengeDetail(
+                                c.id,
+                              );
+                              if (!mounted) return;
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => BlocklyEditorScreen(
+                                    initialMapJson: detail.mapJson,
+                                    initialChallengeJson: {
+                                      ...?detail.challengeJson,
+                                      'id': detail.id,
+                                    },
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              if (!mounted) return;
+                              final msg = e.toString().replaceFirst('Exception: ', '');
+                              showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
+                            }
+                          },
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
 }
-
-

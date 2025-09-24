@@ -1,6 +1,7 @@
 import 'dart:convert';
-import 'package:otto_mobile/models/course_model.dart';
-import 'package:otto_mobile/services/http_service.dart';
+import 'package:ottobit/models/course_model.dart';
+import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CourseService {
   static final CourseService _instance = CourseService._internal();
@@ -33,6 +34,7 @@ class CourseService {
       final response = await _httpService.get(
         '/v1/courses',
         queryParams: queryParams,
+        throwOnError: false,
       );
 
       print('CourseService: Response status: ${response.statusCode}');
@@ -44,7 +46,12 @@ class CourseService {
         return CourseApiResponse.fromJson(jsonData);
       } else {
         print('CourseService: Error response: ${response.statusCode} - ${response.body}');
-        throw Exception('Failed to load courses: ${response.statusCode}');
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load courses: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
       print('CourseService: Exception: $e');
