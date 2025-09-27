@@ -10,6 +10,9 @@
     <!-- Required for Android 12+ -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
     
+    <!-- BLE feature requirement -->
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
+    
     <application
         android:label="ottobit"
         android:name="${applicationName}"

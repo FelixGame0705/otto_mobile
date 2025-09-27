@@ -46,6 +46,9 @@ dependencies:
 
   # Bluetooth Low Energy for micro:bit communication
   flutter_blue_plus: ^1.32.10
+  
+  # Permission handling for BLE
+  permission_handler: ^11.3.1
 
   # Utilities
   collection: ^1.18.0
