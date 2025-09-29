@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CourseSearchBar extends StatelessWidget {
   final String searchTerm;
@@ -33,7 +34,7 @@ class CourseSearchBar extends StatelessWidget {
         onChanged: onSearchChanged,
         onSubmitted: (_) => onSearchPressed(),
         decoration: InputDecoration(
-          hintText: 'Tìm kiếm khóa học...',
+          hintText: 'courses.searchHint'.tr(),
           hintStyle: const TextStyle(
             color: Color(0xFFA0AEC0),
             fontSize: 16,

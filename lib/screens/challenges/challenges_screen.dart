@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/widgets/challenges/challenge_card.dart';
@@ -147,7 +148,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.lessonTitle ?? 'Thử thách'),
+        title: Text(widget.lessonTitle ?? 'challenges.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
         actions: [
@@ -167,8 +168,8 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                   child: TextField(
                     controller: _search,
                     onChanged: (v) => _term = v.trim(),
-                    decoration: const InputDecoration(
-                      hintText: 'Tìm thử thách...',
+                    decoration: InputDecoration(
+                      hintText: 'challenges.searchHint'.tr(),
                       border: OutlineInputBorder(),
                       isDense: true,
                       prefixIcon: Icon(Icons.search),
@@ -178,11 +179,11 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _load(refresh: true),
-                  child: const Text('Tìm'),
+                  child: Text('challenges.search'.tr()),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  tooltip: 'Xóa',
+                  tooltip: 'challenges.clear'.tr(),
                   onPressed: () {
                     _search.clear();
                     _term = '';
@@ -197,7 +198,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
-                : _error.isNotEmpty
+          : _error.isNotEmpty
                 ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -208,13 +209,13 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () => _load(refresh: true),
-                          child: const Text('Thử lại'),
+                          child: Text('common.retry'.tr()),
                         ),
                       ],
                     ),
                   )
                 : _items.isEmpty
-                ? const Center(child: Text('Không có thử thách nào'))
+                ? Center(child: Text('common.notFound'.tr()))
                 : GridView.builder(
                     controller: _scroll,
                     padding: EdgeInsets.symmetric(horizontal: padH.toDouble()),
@@ -237,7 +238,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                           _items.isNotEmpty) {
                         return Center(
                           child: Text(
-                            'Đã hiển thị tất cả thử thách',
+                            'challenges.allShown'.tr(),
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         );

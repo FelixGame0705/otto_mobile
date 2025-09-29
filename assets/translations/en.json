@@ -1,0 +1,210 @@
+{
+  "app": {
+    "name": "OttoBit"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back!",
+    "loginToContinue": "Sign in to continue",
+    "email": "Email",
+    "enterEmail": "Enter your email",
+    "password": "Password",
+    "enterPassword": "Enter your password",
+    "forgotPassword": "Forgot password?",
+    "login": "Login",
+    "loginWithGoogle": "Sign in with Google",
+    "noAccount": "Don't have an account?",
+    "registerNow": "Register now",
+    "loginSuccess": "Login successful!",
+    "loginFailed": "Login failed",
+    "googleLoginCanceled": "Google Sign-In canceled.",
+    "googleLoginFailed": "Google Sign-In failed",
+    "emailInvalid": "Invalid email",
+    "backToLogin": "Back to login",
+    "min6": "At least 6 characters",
+    "min2": "At least 2 characters",
+    "fullName": "Full name",
+    "enterFullName": "Enter your full name",
+    "confirmPassword": "Confirm password",
+    "confirmPassword.hint": "Re-enter password",
+    "passwordNotMatch": "Passwords do not match",
+    "agreeTerms": "I agree to the Terms of Use and Privacy Policy",
+    "haveAccount": "Already have an account?",
+    "register": {
+      "title": "Register",
+      "heading": "Create a new account",
+      "subheading": "Fill in the information to sign up",
+      "success": "Registration successful! Please check your email to verify your account.",
+      "failed": "Registration failed"
+    },
+    "networkError": "Network error: {0}",
+    "changePassword": {
+      "title": "Change password",
+      "current": "Current password",
+      "currentRequired": "Enter current password",
+      "new": "New password",
+      "newRequired": "Enter new password",
+      "confirm": "Confirm new password",
+      "notMatch": "Does not match"
+    },
+    "forgot": {
+      "desc": "Enter your email to receive reset instructions.",
+      "send": "Send reset email",
+      "sent": "Email sent!",
+      "check": "Please check your inbox.",
+      "resend": "Resend email"
+    }
+  },
+  "common": {
+    "retry": "Retry",
+    "error": "An error occurred",
+    "loading": "Loading...",
+    "notFound": "Not found",
+    "close": "Close",
+    "refresh": "Refresh",
+    "share": "Share",
+    "viewAllShown": "All items shown",
+    "viewDetails": "View details",
+    "cancel": "Cancel",
+    "search": "Search",
+    "clearSearch": "Clear search",
+    "register": "Register",
+    "all": "All",
+    "inProgress": "In progress",
+    "completed": "Completed",
+    "filter": "Filter:",
+    "noMatchingCourses": "No matching courses",
+    "progress": "Progress: {percent}%",
+    "startLearning": "Start learning",
+    "theory": "Theory",
+    "viewChallenges": "View challenges ({count})",
+    "markComplete": "Mark complete",
+    "addToFavorites": "Add to favorites",
+    "shareLesson": "Share lesson",
+    "lessonContent": "Lesson content",
+    "createdAt": "Created at:",
+    "lastUpdated": "Last updated:",
+    "challenges": "challenges"
+  },
+  "home": {
+    "myCourses": "My courses",
+    "explore": "Explore",
+    "store": "Store"
+  },
+  "course": {
+    "detailTitle": "Course detail",
+    "loading": "Loading course information...",
+    "notFound": "Course not found",
+    "viewLessons": "View lessons",
+    "title": "Course",
+    "enrolling": "Processing...",
+    "enrolled": "Enrolled",
+    "enrollNow": "Enroll now",
+    "info": "Course information",
+    "teacher": "Instructor",
+    "createdAt": "Created at",
+    "updatedAt": "Last updated",
+    "lessonsCount": "Lessons",
+    "lessonsUnit": "lessons",
+    "enrollmentsCount": "Enrollments",
+    "peopleUnit": "people",
+    "detailDescription": "Detailed description",
+    "createdBy": "Created by: {name}"
+  },
+  "courses": {
+    "searchHint": "Search courses...",
+    "allShown": "All courses shown"
+  },
+  "pagination": {
+    "showing": "Showing {start}-{end} of {total} courses"
+  },
+  "lessons": {
+    "title": "Lessons",
+    "loading": "Loading lessons...",
+    "empty": "No lessons",
+    "allShown": "All lessons shown",
+    "searchHint": "Search lessons...",
+    "order": "Lesson {n}"
+  },
+  "lesson": {
+    "loading": "Loading lesson...",
+    "notFound": "Lesson not found"
+  },
+  "challenges": {
+    "title": "Challenges",
+    "searchHint": "Search challenges...",
+    "search": "Search",
+    "clear": "Clear",
+    "cannotLoad": "Cannot load challenges",
+    "loadError": "An error occurred while loading challenges.",
+    "allShown": "All challenges shown"
+  },
+  "resource": {
+    "title": "Theory resources",
+    "retry": "Retry",
+    "notFound": "Resource not found",
+    "empty": "No resources yet."
+  },
+  "profile": {
+    "title": "Profile",
+    "userInfo": "User info",
+    "noUser": "No user data",
+    "language": "Language",
+    "security": "Security",
+    "changePassword": "Change password",
+    "phoneLabel": "Phone",
+    "idLabel": "ID",
+    "vi": "Vietnamese",
+    "en": "English",
+    "student": {
+      "title": "Student profile",
+      "registerButton": "Register as Student",
+      "registering": "Registering...",
+      "alreadyStudent": "Already a Student",
+      "success": "Student registration successful",
+      "failed": "Registration failed",
+      "error": "Error: {err}",
+      "dialogTitle": "Register student account",
+      "fullname": "Full name",
+      "fullnameHint": "Enter your full name",
+      "fullnameRequired": "Please enter your full name",
+      "fullnameMin": "Full name must be at least 2 characters",
+      "dob": "Date of birth",
+      "dobPick": "Pick date of birth",
+      "dobRequired": "Please select date of birth",
+      "dobError": "Error selecting date: {err}",
+      "enrollments": "Enrollments:",
+      "submissions": "Submissions:"
+    }
+  },
+  "challenge": {
+    "difficulty": "Difficulty",
+    "submissions": "Submissions",
+    "viewDetails": "View details"
+  },
+  "store": {
+    "title": "Store",
+    "filters": "Filters",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "search": "Search",
+    "brand": "Brand",
+    "priceMin": "Price from",
+    "priceMax": "Price to",
+    "ageMin": "Age from",
+    "ageMax": "Age to",
+    "sort": {
+      "name": "Sort: Name",
+      "price": "Sort: Price",
+      "created": "Sort: Latest"
+    },
+    "asc": "Ascending",
+    "desc": "Descending",
+    "inStock": "In stock",
+    "apply": "Apply",
+    "reset": "Reset",
+    "selected": "Selected",
+    "retry": "Retry",
+    "empty": "No robots to display."
+  }
+}
+

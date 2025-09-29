@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:ottobit/widgets/common/language_dropdown.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
@@ -206,19 +208,33 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Chào mừng trở lại!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
+              Text('auth.welcomeBack'.tr(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
               const SizedBox(height: 8),
-              const Text('Đăng nhập để tiếp tục', style: TextStyle(fontSize: 16, color: Color(0xFF718096))),
+              Text('auth.loginToContinue'.tr(), style: const TextStyle(fontSize: 16, color: Color(0xFF718096))),
+              const SizedBox(height: 8),
+              // Language switcher
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+      // Language dropdown with flags
+      SizedBox(
+        width: 240,
+        child: LanguageDropdown(
+          onLocaleChanged: (_) {},
+        ),
+      ),
+                ],
+              ),
               const SizedBox(height: 24),
 
               AppTextField(
                 controller: _emailController,
-                label: 'Email',
-                hint: 'Nhập email của bạn',
+                label: 'auth.email'.tr(),
+                hint: 'auth.enterEmail'.tr(),
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập email';
+                  if (value == null || value.isEmpty) return 'auth.enterEmail'.tr();
                   if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Email không hợp lệ';
                   return null;
                 },
@@ -231,12 +247,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
               AppTextField(
                 controller: _passwordController,
-                label: 'Mật khẩu',
-                hint: 'Nhập mật khẩu của bạn',
+                label: 'auth.password'.tr(),
+                hint: 'auth.enterPassword'.tr(),
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu';
+                  if (value == null || value.isEmpty) return 'auth.enterPassword'.tr();
                   if (value.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
                   return null;
                 },
@@ -251,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.forgotPassword),
-                  child: const Text('Quên mật khẩu?', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
+                  child: Text('auth.forgotPassword'.tr(), style: const TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -269,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.black54)))
-                      : const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                      : Text('auth.login'.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -281,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleGoogleLogin,
                   icon: const Icon(Icons.login),
-                  label: const Text('Đăng nhập với Google'),
+                  label: Text('auth.loginWithGoogle'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2D3748),
                     side: const BorderSide(color: Color(0xFF2D3748)),
@@ -294,10 +310,10 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Chưa có tài khoản? ', style: TextStyle(color: Color(0xFF718096))),
+                  Text('auth.noAccount'.tr() + ' ', style: const TextStyle(color: Color(0xFF718096))),
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                    child: const Text('Đăng ký ngay', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
+                    child: Text('auth.registerNow'.tr(), style: const TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),

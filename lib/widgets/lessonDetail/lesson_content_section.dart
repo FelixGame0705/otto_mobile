@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_detail_model.dart';
 
 class LessonContentSection extends StatelessWidget {
@@ -38,9 +39,9 @@ class LessonContentSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'Nội dung bài học',
-                  style: TextStyle(
+                Text(
+                  'common.lessonContent'.tr(),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2D3748),
@@ -90,13 +91,13 @@ class LessonContentSection extends StatelessWidget {
                 children: [
                   _buildInfoRow(
                     Icons.calendar_today,
-                    'Ngày tạo:',
+                    'common.createdAt'.tr(),
                     lesson.formattedCreatedAt,
                   ),
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     Icons.update,
-                    'Cập nhật cuối:',
+                    'common.lastUpdated'.tr(),
                     lesson.formattedUpdatedAt,
                   ),
                 ],

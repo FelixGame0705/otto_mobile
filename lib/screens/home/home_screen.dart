@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
 import 'package:ottobit/widgets/courses/explore_courses_tab.dart';
+import 'package:ottobit/screens/store/store_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,7 +52,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: SafeArea(
-          child: _currentIndex == 0 ? const _MyCoursesTab() : const _ExploreTab(),
+          child: _currentIndex == 0
+              ? const _MyCoursesTab()
+              : _currentIndex == 1
+                  ? const _ExploreTab()
+                  : const _StoreTab(),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -58,9 +64,10 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (i) => setState(() => _currentIndex = i),
         selectedItemColor: const Color(0xFF4299E1),
         unselectedItemColor: const Color(0xFF718096),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.library_books), label: 'Khóa học của tôi'),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Khám phá'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.library_books), label: 'home.myCourses'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.explore), label: 'home.explore'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.storefront), label: 'home.store'.tr()),
         ],
       ),
     );
@@ -88,4 +95,13 @@ class _ExploreTab extends StatelessWidget {
 }
 
 // removed in favor of ExploreCoursesTab
+
+class _StoreTab extends StatelessWidget {
+  const _StoreTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const StoreScreen();
+  }
+}
 

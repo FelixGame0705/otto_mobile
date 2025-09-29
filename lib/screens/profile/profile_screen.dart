@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/user_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/storage_service.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/widgets/common/section_card.dart';
+import 'package:ottobit/widgets/common/language_dropdown.dart';
 import 'package:ottobit/services/student_service.dart';
 import 'package:ottobit/models/student_model.dart';
 
@@ -45,16 +47,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Thông tin cá nhân',
+      title: 'profile.title'.tr(),
       gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
       alignment: Alignment.topCenter,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionCard(
-            title: 'Thông tin người dùng',
+            title: 'profile.userInfo'.tr(),
             child: _user == null
-                ? const Text('Chưa có dữ liệu người dùng')
+                ? Text('profile.noUser'.tr())
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -78,14 +80,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      if (_user!.phone.isNotEmpty) Text('SĐT: ${_user!.phone}'),
-                      Text('ID: ${_user!.id}', style: const TextStyle(color: Colors.black54)),
+                      if (_user!.phone.isNotEmpty) Text('${'profile.phoneLabel'.tr()}: ${_user!.phone}'),
+                      Text('${'profile.idLabel'.tr()}: ${_user!.id}', style: const TextStyle(color: Colors.black54)),
                     ],
                   ),
           ),
           const SizedBox(height: 16),
+          // Language switcher
           SectionCard(
-            title: 'Bảo mật',
+            title: 'profile.language'.tr(),
+            child: const LanguageDropdown(),
+          ),
+          const SizedBox(height: 16),
+          SectionCard(
+            title: 'profile.security'.tr(),
             child: Column(
               children: [
                 // Đăng ký làm Student
@@ -108,10 +116,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : const Icon(Icons.school),
                     label: Text(
                         _student != null
-                            ? 'Đã là Student'
+                            ? 'profile.student.alreadyStudent'.tr()
                             : _creatingStudent
-                                ? 'Đang đăng ký...'
-                                : 'Đăng ký làm Student',
+                                ? 'profile.student.registering'.tr()
+                                : 'profile.student.registerButton'.tr(),
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
@@ -132,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     icon: const Icon(Icons.password),
-                    label: const Text('Đổi mật khẩu', style: TextStyle(fontWeight: FontWeight.w600)),
+                    label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -167,18 +175,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final created = resp.data;
       if (created != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đăng ký Student thành công'), backgroundColor: Colors.green),
+          SnackBar(content: Text('profile.student.success'.tr()), backgroundColor: Colors.green),
         );
         await _loadStudent();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(resp.message.isNotEmpty ? resp.message : 'Đăng ký không thành công'), backgroundColor: Colors.orange),
+          SnackBar(content: Text(resp.message.isNotEmpty ? resp.message : 'profile.student.failed'.tr()), backgroundColor: Colors.orange),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text('profile.student.error'.tr(namedArgs: {'err': '$e'})), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _creatingStudent = false);
@@ -210,15 +218,15 @@ extension _StudentCard on _ProfileScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Hồ sơ Student', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text('profile.student.title'.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
-          _infoRow('Họ tên:', s.fullname),
+          _infoRow('${'profile.student.fullname'.tr()}:', s.fullname),
           const SizedBox(height: 6),
-          _infoRow('Ngày sinh:', '${s.dateOfBirth.day.toString().padLeft(2, '0')}/${s.dateOfBirth.month.toString().padLeft(2, '0')}/${s.dateOfBirth.year}'),
+          _infoRow('${'profile.student.dob'.tr()}:', '${s.dateOfBirth.day.toString().padLeft(2, '0')}/${s.dateOfBirth.month.toString().padLeft(2, '0')}/${s.dateOfBirth.year}'),
           const SizedBox(height: 6),
-          _infoRow('Enrollments:', s.enrollmentsCount.toString()),
+          _infoRow('profile.student.enrollments'.tr(), s.enrollmentsCount.toString()),
           const SizedBox(height: 6),
-          _infoRow('Submissions:', s.submissionsCount.toString()),
+          _infoRow('profile.student.submissions'.tr(), s.submissionsCount.toString()),
         ],
       ),
     );
@@ -272,7 +280,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi khi chọn ngày: $e'),
+            content: Text('profile.student.dobError'.tr(namedArgs: {'err': '$e'})),
             backgroundColor: Colors.red,
           ),
         );
@@ -292,9 +300,9 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(
-        'Đăng ký tài khoản học sinh',
-        style: TextStyle(fontWeight: FontWeight.bold),
+      title: Text(
+        'profile.student.dialogTitle'.tr(),
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: Form(
         key: _formKey,
@@ -304,18 +312,18 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
           children: [
             TextFormField(
               controller: _fullnameController,
-              decoration: const InputDecoration(
-                labelText: 'Họ và tên *',
-                hintText: 'Nhập họ và tên đầy đủ',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person),
+              decoration: InputDecoration(
+                labelText: '${'profile.student.fullname'.tr()} *',
+                hintText: 'profile.student.fullnameHint'.tr(),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.person),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Vui lòng nhập họ và tên';
+                  return 'profile.student.fullnameRequired'.tr();
                 }
                 if (value.trim().length < 2) {
-                  return 'Họ và tên phải có ít nhất 2 ký tự';
+                  return 'profile.student.fullnameMin'.tr();
                 }
                 return null;
               },
@@ -325,15 +333,15 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
               onTap: _selectDate,
               child: InputDecorator(
                 decoration: InputDecoration(
-                  labelText: 'Ngày sinh *',
-                  hintText: 'Chọn ngày sinh',
+                  labelText: '${'profile.student.dob'.tr()} *',
+                  hintText: 'profile.student.dobPick'.tr(),
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.calendar_today),
                 ),
                 child: Text(
                   _selectedDate != null
                       ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
-                      : 'Chọn ngày sinh',
+                      : 'profile.student.dobPick'.tr(),
                   style: TextStyle(
                     color: _selectedDate != null ? Colors.black : Colors.grey[600],
                   ),
@@ -341,11 +349,11 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
               ),
             ),
             if (_selectedDate == null)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 8.0),
                 child: Text(
-                  'Vui lòng chọn ngày sinh',
-                  style: TextStyle(color: Colors.red, fontSize: 12),
+                  'profile.student.dobRequired'.tr(),
+                  style: const TextStyle(color: Colors.red, fontSize: 12),
                 ),
               ),
           ],
@@ -354,7 +362,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('Hủy'),
+          child: Text('common.cancel'.tr()),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _submitForm,
@@ -368,7 +376,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                   width: 16,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
-              : const Text('Đăng ký'),
+              : Text('common.register'.tr()),
         ),
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/course_detail_model.dart';
 
 class CourseInfoSection extends StatelessWidget {
@@ -17,9 +18,9 @@ class CourseInfoSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Section Title
-          const Text(
-            'Thông tin khóa học',
-            style: TextStyle(
+          Text(
+            'course.info'.tr(),
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Color(0xFF2D3748),
@@ -31,7 +32,7 @@ class CourseInfoSection extends StatelessWidget {
           // Course Details
           _buildInfoRow(
             icon: Icons.person,
-            label: 'Giảng viên',
+            label: 'course.teacher'.tr(),
             value: course.createdByName,
             color: const Color(0xFF4299E1),
           ),
@@ -40,7 +41,7 @@ class CourseInfoSection extends StatelessWidget {
           
           _buildInfoRow(
             icon: Icons.calendar_today,
-            label: 'Ngày tạo',
+            label: 'course.createdAt'.tr(),
             value: course.formattedCreatedAt,
             color: const Color(0xFF48BB78),
           ),
@@ -49,7 +50,7 @@ class CourseInfoSection extends StatelessWidget {
           
           _buildInfoRow(
             icon: Icons.update,
-            label: 'Cập nhật lần cuối',
+            label: 'course.updatedAt'.tr(),
             value: course.formattedUpdatedAt,
             color: const Color(0xFFED8936),
           ),
@@ -58,8 +59,8 @@ class CourseInfoSection extends StatelessWidget {
           
           _buildInfoRow(
             icon: Icons.play_lesson,
-            label: 'Số bài học',
-            value: '${course.lessonsCount} bài',
+            label: 'course.lessonsCount'.tr(),
+            value: '${course.lessonsCount} ${'course.lessonsUnit'.tr()}',
             color: const Color(0xFF9F7AEA),
           ),
           
@@ -67,17 +68,17 @@ class CourseInfoSection extends StatelessWidget {
           
           _buildInfoRow(
             icon: Icons.people,
-            label: 'Số học viên',
-            value: '${course.enrollmentsCount} người',
+            label: 'course.enrollmentsCount'.tr(),
+            value: '${course.enrollmentsCount} ${'course.peopleUnit'.tr()}',
             color: const Color(0xFF38B2AC),
           ),
           
           const SizedBox(height: 20),
           
           // Description Section
-          const Text(
-            'Mô tả chi tiết',
-            style: TextStyle(
+          Text(
+            'course.detailDescription'.tr(),
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Color(0xFF2D3748),

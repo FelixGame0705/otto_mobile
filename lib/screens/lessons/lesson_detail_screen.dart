@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_detail_model.dart';
 import 'package:ottobit/services/lesson_detail_service.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_detail_header.dart';
@@ -96,24 +97,36 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     );
   }
 
+  void _handleViewTheory() {
+    if (_lessonDetail == null) return;
+    Navigator.pushNamed(
+      context,
+      '/lesson-resources',
+      arguments: {
+        'lessonId': _lessonDetail!.id,
+        'lessonTitle': _lessonDetail!.title,
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFC),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
+                  const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
                       Color(0xFF4299E1),
                     ),
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'Đang tải bài học...',
-                    style: TextStyle(fontSize: 16, color: Color(0xFF718096)),
+                    'lesson.loading'.tr(),
+                    style: const TextStyle(fontSize: 16, color: Color(0xFF718096)),
                   ),
                 ],
               ),
@@ -125,25 +138,25 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                 children: [
                   const Icon(Icons.error, size: 64, color: Colors.red),
                   const SizedBox(height: 16),
-                  Text('Lỗi: $_errorMessage'),
+                  Text('${'common.error'.tr()}: $_errorMessage'),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: _loadLessonDetail,
-                    child: const Text('Thử lại'),
+                    child: Text('common.retry'.tr()),
                   ),
                 ],
               ),
             )
           : _lessonDetail == null
-          ? const Center(
+          ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.menu_book_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
+                  const Icon(Icons.menu_book_outlined, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
                   Text(
-                    'Không tìm thấy bài học',
-                    style: TextStyle(
+                    'lesson.notFound'.tr(),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey,
@@ -165,6 +178,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   LessonActionButtons(
                     onStartLesson: _handleStartLesson,
                     onViewChallenges: _handleViewChallenges,
+                    onViewTheory: _handleViewTheory,
                     isStarting: _isStarting,
                     challengesCount: _lessonDetail!.challengesCount,
                   ),

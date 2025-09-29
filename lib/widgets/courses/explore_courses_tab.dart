@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/course_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/course_service.dart';
@@ -151,24 +152,24 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
           children: [
             const Icon(Icons.error, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Lỗi: $_errorMessage'),
+            Text('${'common.error'.tr()}: $_errorMessage'),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _loadCourses(isRefresh: true),
-              child: const Text('Thử lại'),
+              child: Text('common.retry'.tr()),
             ),
           ],
         ),
       );
     }
     if (_courses.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Không có khóa học nào', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
+            const Icon(Icons.school, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text('common.notFound'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
           ],
         ),
       );
@@ -201,7 +202,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Đã hiển thị tất cả khóa học', style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center),
+              child: Text('courses.allShown'.tr(), style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center),
             ),
           );
         }
@@ -269,7 +270,7 @@ class _CourseCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       elevation: 1,
                     ),
-                    child: const Text('Xem chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: Text('common.viewDetails'.tr(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

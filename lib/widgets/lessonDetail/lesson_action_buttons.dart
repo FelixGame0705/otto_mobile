@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LessonActionButtons extends StatelessWidget {
   final VoidCallback onStartLesson;
   final VoidCallback onViewChallenges;
+  final VoidCallback onViewTheory;
   final bool isStarting;
   final int challengesCount;
 
@@ -10,6 +12,7 @@ class LessonActionButtons extends StatelessWidget {
     super.key,
     required this.onStartLesson,
     required this.onViewChallenges,
+    required this.onViewTheory,
     this.isStarting = false,
     required this.challengesCount,
   });
@@ -36,7 +39,7 @@ class LessonActionButtons extends StatelessWidget {
                     )
                   : const Icon(Icons.play_arrow, size: 24),
               label: Text(
-                isStarting ? 'Đang tải...' : 'Bắt đầu học',
+                isStarting ? 'common.loading'.tr() : 'common.startLearning'.tr(),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -57,6 +60,35 @@ class LessonActionButtons extends StatelessWidget {
           
           const SizedBox(height: 12),
           
+          // Theory Resources Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onViewTheory,
+              icon: const Icon(Icons.menu_book_outlined, size: 20),
+              label: Text(
+                'common.theory'.tr(),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF4299E1),
+                side: const BorderSide(
+                  color: Color(0xFF4299E1),
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           // Challenges Button
           if (challengesCount > 0)
             SizedBox(
@@ -65,7 +97,7 @@ class LessonActionButtons extends StatelessWidget {
                 onPressed: onViewChallenges,
                 icon: const Icon(Icons.flag, size: 20),
                 label: Text(
-                  'Xem thử thách ($challengesCount)',
+                  'common.viewChallenges'.tr(namedArgs: {'count': '$challengesCount'}),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -94,16 +126,16 @@ class LessonActionButtons extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đánh dấu hoàn thành'),
+                      SnackBar(
+                        content: Text('common.markComplete'.tr()),
                         backgroundColor: Colors.green,
                       ),
                     );
                   },
                   icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: const Text(
-                    'Hoàn thành',
-                    style: TextStyle(fontSize: 12),
+                  label: Text(
+                    'common.markComplete'.tr(),
+                    style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF48BB78),
@@ -122,16 +154,16 @@ class LessonActionButtons extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Thêm vào yêu thích'),
+                      SnackBar(
+                        content: Text('common.addToFavorites'.tr()),
                         backgroundColor: Colors.orange,
                       ),
                     );
                   },
                   icon: const Icon(Icons.favorite_outline, size: 18),
-                  label: const Text(
-                    'Yêu thích',
-                    style: TextStyle(fontSize: 12),
+                  label: Text(
+                    'common.addToFavorites'.tr(),
+                    style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFED8936),

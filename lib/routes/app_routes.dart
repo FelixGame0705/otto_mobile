@@ -7,6 +7,8 @@ import 'package:ottobit/screens/profile/profile_screen.dart';
 import 'package:ottobit/screens/courses/course_detail_screen.dart';
 import 'package:ottobit/screens/lessons/lessons_screen.dart';
 import 'package:ottobit/screens/lessons/lesson_detail_screen.dart';
+import 'package:ottobit/screens/lessons/lesson_resources_screen.dart';
+import 'package:ottobit/screens/lessons/lesson_resource_detail_screen.dart';
 import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
 import 'package:ottobit/screens/challenges/challenges_screen.dart';
 import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
@@ -24,6 +26,8 @@ class AppRoutes {
   static const String lessons = '/lessons';
   static const String lessonDetail = '/lesson-detail';
   static const String challenges = '/challenges';
+  static const String lessonResources = '/lesson-resources';
+  static const String lessonResourceDetail = '/lesson-resource-detail';
   static const String changePassword = '/change-password';
   static const String phaser = '/phaser';
   static const String blockly = '/blockly';
@@ -92,6 +96,38 @@ class AppRoutes {
       return const Scaffold(
         body: Center(
           child: Text('Thiếu thông tin thử thách'),
+        ),
+      );
+    },
+    lessonResources: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final lessonId = args['lessonId'] as String?;
+        final lessonTitle = args['lessonTitle'] as String?;
+        if (lessonId != null) {
+          return LessonResourcesScreen(lessonId: lessonId, lessonTitle: lessonTitle);
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin tài nguyên bài học'),
+        ),
+      );
+    },
+    lessonResourceDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        return LessonResourceDetailScreen(resourceId: args);
+      }
+      if (args is Map<String, dynamic>) {
+        final id = args['resourceId'] as String?;
+        if (id != null) {
+          return LessonResourceDetailScreen(resourceId: id);
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin tài nguyên'),
         ),
       );
     },

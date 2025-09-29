@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CourseActionButtons extends StatelessWidget {
   final VoidCallback? onEnroll;
@@ -26,9 +27,9 @@ class CourseActionButtons extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onShare,
               icon: const Icon(Icons.share, size: 18),
-              label: const Text(
-                'Chia sẻ',
-                style: TextStyle(fontSize: 14),
+              label: Text(
+                'common.share'.tr(),
+                style: const TextStyle(fontSize: 14),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF4299E1),
@@ -63,10 +64,10 @@ class CourseActionButtons extends StatelessWidget {
                     ),
               label: Text(
                 isLoading
-                    ? 'Đang xử lý...'
+                    ? 'course.enrolling'.tr()
                     : isEnrolled
-                        ? 'Đã đăng ký'
-                        : 'Đăng ký ngay',
+                        ? 'course.enrolled'.tr()
+                        : 'course.enrollNow'.tr(),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

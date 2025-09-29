@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/models/course_detail_model.dart';
 import 'package:ottobit/services/course_detail_service.dart';
@@ -114,7 +115,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Chi tiết khóa học',
+      title: 'course.detailTitle'.tr(),
       showAppBar: false, // We'll use custom header
       gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
       child: _buildContent(),
@@ -123,16 +124,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+            const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4299E1)),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'Đang tải thông tin khóa học...',
+              'course.loading'.tr(),
               style: TextStyle(
                 fontSize: 16,
                 color: Color(0xFF718096),
@@ -155,7 +156,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Có lỗi xảy ra',
+              'common.error'.tr(),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -175,7 +176,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             ElevatedButton.icon(
               onPressed: _loadCourseDetail,
               icon: const Icon(Icons.refresh),
-              label: const Text('Thử lại'),
+              label: Text('common.retry'.tr()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4299E1),
                 foregroundColor: Colors.white,
@@ -187,18 +188,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
 
     if (_course == null) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.school_outlined,
               size: 64,
               color: Colors.grey,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'Không tìm thấy khóa học',
+              'course.notFound'.tr(),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -235,7 +236,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _handleShare,
                   icon: const Icon(Icons.share),
-                  label: const Text('Chia sẻ'),
+                label: Text('common.share'.tr()),
                 ),
               ),
             ),
@@ -257,7 +258,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   );
                 },
                 icon: const Icon(Icons.menu_book),
-                label: const Text('Xem danh sách bài học'),
+                label: Text('course.viewLessons'.tr()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF48BB78),
                   foregroundColor: Colors.white,

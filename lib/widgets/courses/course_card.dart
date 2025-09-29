@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/course_model.dart';
 
 class CourseCard extends StatelessWidget {
@@ -47,7 +48,7 @@ class CourseCard extends StatelessWidget {
             
             // Stats
             Text(
-              '${course.lessonsCount} bài học • ${course.enrollmentsCount} học viên',
+              '${course.lessonsCount} ${'course.lessonsUnit'.tr()} • ${course.enrollmentsCount} ${'course.peopleUnit'.tr()}',
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             
@@ -55,7 +56,7 @@ class CourseCard extends StatelessWidget {
             
             // Created by
             Text(
-              'Tạo bởi: ${course.createdByName}',
+              'course.createdBy'.tr(namedArgs: {'name': course.createdByName}),
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             
@@ -68,7 +69,7 @@ class CourseCard extends StatelessWidget {
                 onPressed: isLoading ? null : onEnroll,
                 child: isLoading
                     ? const CircularProgressIndicator()
-                    : Text(isEnrolled ? 'Đã đăng ký' : 'Đăng ký'),
+                    : Text(isEnrolled ? 'course.enrolled'.tr() : 'course.enrollNow'.tr()),
               ),
             ),
           ],

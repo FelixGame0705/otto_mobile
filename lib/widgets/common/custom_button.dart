@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -50,7 +51,7 @@ class CustomButton extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Text(
-                text,
+                text.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

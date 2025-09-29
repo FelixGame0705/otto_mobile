@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/challenge_model.dart';
 
 class ChallengeCard extends StatelessWidget {
@@ -45,9 +46,9 @@ class ChallengeCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _chip(Icons.bar_chart, 'Độ khó: ${challenge.difficulty}', const Color(0xFFED8936)),
+                  _chip(Icons.bar_chart, '${'challenge.difficulty'.tr()}: ${challenge.difficulty}', const Color(0xFFED8936)),
                   const SizedBox(height: 8),
-                  _chip(Icons.upload_file, 'Nộp: ${challenge.submissionsCount}', const Color(0xFF4299E1)),
+                  _chip(Icons.upload_file, '${'challenge.submissions'.tr()}: ${challenge.submissionsCount}', const Color(0xFF4299E1)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -56,7 +57,7 @@ class ChallengeCard extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: onTap,
-                  child: const Text('Xem chi tiết'),
+                  child: Text('challenge.viewDetails'.tr()),
                 ),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CoursePagination extends StatelessWidget {
   final int currentPage;
@@ -33,7 +34,11 @@ class CoursePagination extends StatelessWidget {
         children: [
           // Page Info
           Text(
-            'Hiển thị $startItem-$endItem trong tổng số $totalItems khóa học',
+            'pagination.showing'.tr(namedArgs: {
+              'start': '$startItem',
+              'end': '$endItem',
+              'total': '$totalItems',
+            }),
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF718096),
