@@ -93,9 +93,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('Không thể tải thử thách'),
           content: Text(
-            msg.isNotEmpty
-                ? msg
-                : 'Đã xảy ra lỗi khi tải danh sách thử thách.',
+            msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi tải danh sách thử thách.',
           ),
           actions: [
             TextButton(
@@ -262,14 +260,24 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                     initialChallengeJson: {
                                       ...?detail.challengeJson,
                                       'id': detail.id,
+                                      'lessonId': detail.lessonId,
+                                      'order': detail.order,
                                     },
                                   ),
                                 ),
                               );
                             } catch (e) {
                               if (!mounted) return;
-                              final msg = e.toString().replaceFirst('Exception: ', '');
-                              showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
+                              final msg = e.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              );
+                              showErrorToast(
+                                context,
+                                msg.isNotEmpty
+                                    ? msg
+                                    : 'Đã xảy ra lỗi khi mở thử thách.',
+                              );
                             }
                           },
                         );

@@ -28,11 +28,16 @@ class ProgramStorageService {
     );
     if (savePath == null) return;
     final file = File(savePath);
-    await file.writeAsString(const JsonEncoder.withIndent('  ').convert(program));
+    await file.writeAsString(
+      const JsonEncoder.withIndent('  ').convert(program),
+    );
   }
 
   Future<Map<String, dynamic>?> importFromFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['json']);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
     if (result == null || result.files.isEmpty) return null;
     final file = result.files.first;
     final bytes = file.bytes;
@@ -42,4 +47,8 @@ class ProgramStorageService {
   }
 }
 
-
+// Shared single instance accessor for prefs where needed outside async flows
+class ProgramStorageServiceShared {
+  static Future<SharedPreferences> get instance =>
+      SharedPreferences.getInstance();
+}

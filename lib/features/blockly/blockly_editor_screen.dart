@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:ottobit/core/services/storage_service.dart';
 import 'package:ottobit/features/blockly/blockly_bridge.dart';
 import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
@@ -25,7 +26,8 @@ class BlocklyEditorScreen extends StatefulWidget {
 
 enum PanelPosition { left, right, top, bottom }
 
-class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
+class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
+    with WidgetsBindingObserver {
   late final WebViewController _controller;
   BlocklyBridge? _bridge;
   String _pythonPreview = '';
@@ -46,9 +48,23 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
   String _receivedData = '';
   bool _showMicrobitPanel = false;
 
+  // Tutorial
+  final GlobalKey _keyToolbarBlockly = GlobalKey();
+  final GlobalKey _keyToolbarPython = GlobalKey();
+  final GlobalKey _keyToolbarMicrobit = GlobalKey();
+  final GlobalKey _keyToolbarSolution = GlobalKey();
+  final GlobalKey _keyToolbarNew = GlobalKey();
+  final GlobalKey _keyToolbarRestart = GlobalKey();
+  final GlobalKey _keyToolbarSend = GlobalKey();
+  final GlobalKey _keyLeftPane = GlobalKey();
+  final GlobalKey _keyRightPhaser = GlobalKey();
+  TutorialCoachMark? _tutorial;
+  bool _tutorialQueued = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -96,6 +112,11 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
     // Setup BLE listeners
     _setupBleListeners();
+
+    // Show tutorial if this is the first challenge of the lesson
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _queueTutorialAfterOrientationStable();
+    });
   }
 
   void _setupBleListeners() {
@@ -123,6 +144,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -166,6 +188,195 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
   PhaserBridge? _embeddedPhaserBridge;
   final ChallengeService _challengeService = ChallengeService();
+
+  bool get _isFirstChallengeOfLesson {
+    final order = widget.initialChallengeJson?["order"];
+    return order == 1 || order == "1";
+  }
+
+  Future<void> _queueTutorialAfterOrientationStable() async {
+    if (!_isFirstChallengeOfLesson) return;
+    final lessonId = widget.initialChallengeJson?["lessonId"]?.toString();
+    if (lessonId == null || lessonId.isEmpty) return;
+    final prefs = await ProgramStorageServiceShared.instance;
+    final key = 'tutorial_shown_lesson_' + lessonId;
+    final shown = prefs.getBool(key) ?? false;
+    if (shown) return;
+
+    _tutorialQueued = true;
+
+    // Wait a bit for any orientation transition/layout settle
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (!mounted || !_tutorialQueued) return;
+
+    if (MediaQuery.of(context).orientation == Orientation.landscape) {
+      _showTutorial();
+      _tutorialQueued = false;
+      await prefs.setBool(key, true);
+    }
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (!_tutorialQueued) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (!mounted || !_tutorialQueued) return;
+      if (MediaQuery.of(context).orientation == Orientation.landscape) {
+        _showTutorial();
+        _tutorialQueued = false;
+      }
+    });
+  }
+
+  void _showTutorial() {
+    final targets = <TargetFocus>[
+      TargetFocus(
+        identify: 'left-pane',
+        keyTarget: _keyLeftPane,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
+            child: const Text(
+              'Khu vực Workspace để kéo thả và lắp ghép các block.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'phaser-pane',
+        keyTarget: _keyRightPhaser,
+        shape: ShapeLightFocus.RRect,
+        radius: 12,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            padding: const EdgeInsets.fromLTRB(12, 12, 0, 0),
+            align: ContentAlign.top,
+            child: const Text(
+              'Dùng để chạy thử chương trình.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'solution',
+        keyTarget: _keyToolbarSolution,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Xem lời giải mẫu để tham khảo cách triển khai.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'blockly',
+        keyTarget: _keyToolbarBlockly,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Quay lại khu vực kéo thả Block để tiếp tục chỉnh sửa.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'python',
+        keyTarget: _keyToolbarPython,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Xem nhanh mã Python tương ứng với các Block.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'microbit',
+        keyTarget: _keyToolbarMicrobit,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Kết nối micro:bit và gửi chương trình để chạy thử.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'new',
+        keyTarget: _keyToolbarNew,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Tạo workspace mới trống để bắt đầu lại.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'restart',
+        keyTarget: _keyToolbarRestart,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Khởi động lại màn mô phỏng với dữ liệu thử thách ban đầu.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+      TargetFocus(
+        identify: 'send',
+        keyTarget: _keyToolbarSend,
+        paddingFocus: 6,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            child: const Text(
+              'Gửi chương trình hiện tại sang Phaser Runner để chạy.',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    ];
+
+    _tutorial = TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black.withOpacity(0.7),
+      hideSkip: false,
+      textSkip: 'Bỏ qua',
+      onFinish: () {},
+      onSkip: () {
+        return true;
+      },
+    );
+    _tutorial!.show(context: context);
+  }
 
   void _togglePythonPreview() {
     setState(() {
@@ -277,6 +488,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
 
   Widget _buildLeftPane() {
     return Column(
+      key: _keyLeftPane,
       children: [
         Expanded(
           child: _showPythonPreview
@@ -456,6 +668,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
           actions: [
             IconButton(
               tooltip: 'Show Solution',
+              key: _keyToolbarSolution,
               onPressed: _openSolution,
               icon: const Icon(Icons.help_outline),
             ),
@@ -473,6 +686,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
                     ? Theme.of(context).primaryColor
                     : null,
               ),
+              key: _keyToolbarBlockly,
             ),
             IconButton(
               tooltip: 'Python Preview',
@@ -488,6 +702,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
                     ? Theme.of(context).primaryColor
                     : null,
               ),
+              key: _keyToolbarPython,
             ),
             IconButton(
               tooltip: 'micro:bit Panel',
@@ -498,19 +713,23 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
                     ? Theme.of(context).primaryColor
                     : null,
               ),
+              key: _keyToolbarMicrobit,
             ),
             IconButton(
               tooltip: 'New',
+              key: _keyToolbarNew,
               onPressed: _newWorkspace,
               icon: const Icon(Icons.note_add_outlined),
             ),
             IconButton(
               tooltip: 'Restart Scene',
+              key: _keyToolbarRestart,
               onPressed: _restartScene,
               icon: const Icon(Icons.refresh),
             ),
             IconButton(
               tooltip: 'Send to Phaser',
+              key: _keyToolbarSend,
               onPressed: _sendToPhaser,
               icon: const Icon(Icons.send),
             ),
@@ -527,6 +746,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen> {
             Expanded(child: _buildLeftPane()),
             _buildMiddleDivider(),
             Container(
+              key: _keyRightPhaser,
               width: _rightPaneWidth,
               color: Theme.of(context).cardColor,
               child: PhaserRunnerScreen(
