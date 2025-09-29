@@ -102,4 +102,27 @@ class ChallengeService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getChallengeSolution(String challengeId) async {
+    try {
+      final path = '/v1/challenges/$challengeId/solution';
+      final response = await _httpService.get(path, throwOnError: false);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        final String dataString = (jsonData['data'] as String?) ?? '{}';
+        final Map<String, dynamic> program =
+            jsonDecode(dataString) as Map<String, dynamic>;
+        return program;
+      }
+      final friendly = ApiErrorMapper.fromBody(
+        response.body,
+        statusCode: response.statusCode,
+        fallback: 'Failed to load solution: ${response.statusCode}',
+      );
+      throw Exception(friendly);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

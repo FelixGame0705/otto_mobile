@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class MicrobitBleService {
   static final MicrobitBleService _instance = MicrobitBleService._internal();
@@ -14,13 +15,23 @@ class MicrobitBleService {
   static const String microbitTxCharacteristicUuid = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"; // TX - micro:bit to client (Indications)
   static const String microbitRxCharacteristicUuid = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"; // RX - client to micro:bit (Write)
   
+  // micro:bit Button service UUIDs
+  // Reference: https://lancaster-university.github.io/microbit-docs/ble/button-service/
+  static const String microbitButtonServiceUuid = "E95D9882-251D-470A-A062-FA1922DFA9A8";
+  static const String microbitButtonAStateUuid = "E95DDA90-251D-470A-A062-FA1922DFA9A8";
+  static const String microbitButtonBStateUuid = "E95DDA91-251D-470A-A062-FA1922DFA9A8";
+  
   // Maximum transmission unit (MTU) for micro:bit UART
   static const int maxUartDataLength = 20; // MTU of 23 minus 3 for GATT overhead
 
   BluetoothDevice? _connectedDevice;
   BluetoothCharacteristic? _txCharacteristic;
   BluetoothCharacteristic? _rxCharacteristic;
+  BluetoothCharacteristic? _buttonACharacteristic;
+  BluetoothCharacteristic? _buttonBCharacteristic;
   StreamSubscription<List<int>>? _rxSubscription;
+  StreamSubscription<List<int>>? _buttonASubscription;
+  StreamSubscription<List<int>>? _buttonBSubscription;
 
   // Connection state
   bool _isConnected = false;
@@ -31,6 +42,7 @@ class MicrobitBleService {
   final StreamController<bool> _connectionStateController = StreamController<bool>.broadcast();
   final StreamController<String> _receivedDataController = StreamController<String>.broadcast();
   final StreamController<List<BluetoothDevice>> _discoveredDevicesController = StreamController<List<BluetoothDevice>>.broadcast();
+  final StreamController<Map<String, int>> _buttonStateController = StreamController<Map<String, int>>.broadcast();
 
   // Getters
   bool get isConnected => _isConnected;
@@ -40,6 +52,56 @@ class MicrobitBleService {
   Stream<bool> get connectionStateStream => _connectionStateController.stream;
   Stream<String> get receivedDataStream => _receivedDataController.stream;
   Stream<List<BluetoothDevice>> get discoveredDevicesStream => _discoveredDevicesController.stream;
+  Stream<Map<String, int>> get buttonStateStream => _buttonStateController.stream;
+
+  // Check if device is a micro:bit
+  bool _isMicrobitDevice(ScanResult result) {
+    // Check by service UUIDs in advertisement data
+    if (result.advertisementData.serviceUuids.contains(Guid(microbitServiceUuid))) {
+      return true;
+    }
+    
+    // Check by device name patterns
+    String deviceName = result.device.platformName.toLowerCase();
+    if (deviceName.contains('microbit') || 
+        deviceName.contains('micro:bit') ||
+        deviceName.contains('bbc micro:bit') ||
+        deviceName.contains('microbit')) {
+      return true;
+    }
+    
+    // Check by manufacturer data (micro:bit uses Nordic Semiconductor)
+    if (result.advertisementData.manufacturerData.isNotEmpty) {
+      for (var entry in result.advertisementData.manufacturerData.entries) {
+        if (entry.key == 0x0059) { // Nordic Semiconductor manufacturer ID
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  // Request necessary permissions for BLE
+  Future<void> _requestPermissions() async {
+    // Request location permission (required for BLE scanning on Android)
+    var locationStatus = await Permission.location.status;
+    if (!locationStatus.isGranted) {
+      locationStatus = await Permission.location.request();
+      if (!locationStatus.isGranted) {
+        throw Exception('Location permission is required for BLE scanning');
+      }
+    }
+
+    // Request Bluetooth permissions for Android 12+
+    if (await Permission.bluetoothConnect.isDenied) {
+      await Permission.bluetoothConnect.request();
+    }
+    
+    if (await Permission.bluetoothScan.isDenied) {
+      await Permission.bluetoothScan.request();
+    }
+  }
 
   // Start scanning for micro:bit devices
   Future<void> startScan() async {
@@ -49,6 +111,9 @@ class MicrobitBleService {
       _isScanning = true;
       List<BluetoothDevice> discoveredDevices = [];
 
+      // Check and request permissions first
+      await _requestPermissions();
+
       // Check if Bluetooth is available
       if (!await FlutterBluePlus.isOn) {
         throw Exception('Bluetooth is not enabled');
@@ -57,47 +122,28 @@ class MicrobitBleService {
       // Clear previous results
       _discoveredDevicesController.add([]);
 
-      // Start scanning with broader parameters
+      // Start scanning without filter to find all BLE devices
+      // Then filter micro:bit devices in the results
       FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 15),
-        // Don't filter by service UUID initially to catch paired devices
-        // withServices: [Guid(microbitServiceUuid)],
+        // No filter - scan all BLE devices
       );
 
       // Listen for discovered devices
       FlutterBluePlus.scanResults.listen((results) {
         for (ScanResult result in results) {
-          // Check if device has micro:bit service or is a known micro:bit
-          bool isMicrobit = false;
+          // Filter for micro:bit devices only
+          bool isMicrobit = _isMicrobitDevice(result);
           
-          // Check by service UUIDs in advertisement data
-          if (result.advertisementData.serviceUuids.contains(Guid(microbitServiceUuid))) {
-            isMicrobit = true;
-          }
-          
-          // Check by device name patterns
-          String deviceName = result.device.platformName.toLowerCase();
-          if (deviceName.contains('microbit') || 
-              deviceName.contains('micro:bit') ||
-              deviceName.contains('bbc micro:bit')) {
-            isMicrobit = true;
-          }
-          
-          // Check by manufacturer data (micro:bit uses Nordic Semiconductor)
-          if (result.advertisementData.manufacturerData.isNotEmpty) {
-            for (var entry in result.advertisementData.manufacturerData.entries) {
-              if (entry.key == 0x0059) { // Nordic Semiconductor manufacturer ID
-                isMicrobit = true;
-                break;
-              }
-            }
-          }
-
           if (isMicrobit && !discoveredDevices.any((device) => device.remoteId == result.device.remoteId)) {
             discoveredDevices.add(result.device);
             _discoveredDevicesController.add(List.from(discoveredDevices));
+            print('Found micro:bit device: ${result.device.platformName} (${result.device.remoteId})');
           }
         }
+      }, onError: (error) {
+        print('BLE scan error: $error');
+        _isScanning = false;
       });
 
       // Stop scanning after timeout
@@ -130,12 +176,14 @@ class MicrobitBleService {
       
       for (BluetoothDevice device in connectedDevices) {
         try {
-          // Try to discover services to check if it's a micro:bit
-          List<BluetoothService> services = await device.discoverServices();
-          for (BluetoothService service in services) {
-            if (service.uuid.toString().toUpperCase() == microbitServiceUuid.toUpperCase()) {
-              microbitDevices.add(device);
-              break;
+          // Check if device is already connected and has micro:bit services
+          if (device.isConnected) {
+            List<BluetoothService> services = await device.discoverServices();
+            for (BluetoothService service in services) {
+              if (service.uuid.toString().toUpperCase() == microbitServiceUuid.toUpperCase()) {
+                microbitDevices.add(device);
+                break;
+              }
             }
           }
         } catch (e) {
@@ -212,18 +260,22 @@ class MicrobitBleService {
     
     // Find micro:bit UART service
     BluetoothService? uartService;
+    BluetoothService? buttonService;
+    
     for (BluetoothService service in services) {
-      if (service.uuid.toString().toUpperCase() == microbitServiceUuid.toUpperCase()) {
+      String serviceUuid = service.uuid.toString().toUpperCase();
+      if (serviceUuid == microbitServiceUuid.toUpperCase()) {
         uartService = service;
-        break;
+      } else if (serviceUuid == microbitButtonServiceUuid.toUpperCase()) {
+        buttonService = service;
       }
     }
 
     if (uartService == null) {
-      throw Exception('micro:bit UART service not found. Make sure the device is a micro:bit with BLE enabled.');
+      throw Exception('UART service not found. This device may not support UART communication.');
     }
 
-    // Get characteristics
+    // Get UART characteristics
     _txCharacteristic = uartService.characteristics.firstWhere(
       (char) => char.uuid.toString().toUpperCase() == microbitTxCharacteristicUuid.toUpperCase(),
       orElse: () => throw Exception('TX characteristic not found'),
@@ -234,18 +286,61 @@ class MicrobitBleService {
       orElse: () => throw Exception('RX characteristic not found'),
     );
 
+    // Get Button characteristics if available
+    if (buttonService != null) {
+      try {
+        _buttonACharacteristic = buttonService.characteristics.firstWhere(
+          (char) => char.uuid.toString().toUpperCase() == microbitButtonAStateUuid.toUpperCase(),
+        );
+        
+        _buttonBCharacteristic = buttonService.characteristics.firstWhere(
+          (char) => char.uuid.toString().toUpperCase() == microbitButtonBStateUuid.toUpperCase(),
+        );
+      } catch (e) {
+        // Button service might not be available, continue without it
+        print('Button service characteristics not found: $e');
+      }
+    }
+
     // Check if encryption is required for UART service
     // According to micro:bit docs, UART service requires encrypted link
     _isEncrypted = true; // micro:bit UART service requires encryption
 
+    // Enable notifications for TX characteristic (micro:bit to client)
+    await _txCharacteristic!.setNotifyValue(true);
+    
     // Subscribe to TX characteristic for incoming data (micro:bit to client)
     // TX characteristic uses Indications, so we listen to its stream
     _rxSubscription = _txCharacteristic!.lastValueStream.listen((data) {
       if (data.isNotEmpty) {
         String receivedString = utf8.decode(data);
+        print('Received from micro:bit: $receivedString');
         _receivedDataController.add(receivedString);
       }
     });
+
+    // Subscribe to Button characteristics if available
+    if (_buttonACharacteristic != null) {
+      await _buttonACharacteristic!.setNotifyValue(true);
+      _buttonASubscription = _buttonACharacteristic!.lastValueStream.listen((data) {
+        if (data.isNotEmpty) {
+          int buttonState = data[0];
+          print('Button A state: $buttonState');
+          _buttonStateController.add({'buttonA': buttonState});
+        }
+      });
+    }
+
+    if (_buttonBCharacteristic != null) {
+      await _buttonBCharacteristic!.setNotifyValue(true);
+      _buttonBSubscription = _buttonBCharacteristic!.lastValueStream.listen((data) {
+        if (data.isNotEmpty) {
+          int buttonState = data[0];
+          print('Button B state: $buttonState');
+          _buttonStateController.add({'buttonB': buttonState});
+        }
+      });
+    }
 
     // Set up connection state monitoring
     device.connectionState.listen((state) {
@@ -307,14 +402,6 @@ class MicrobitBleService {
     return chunks;
   }
 
-  // Check if device is in pairing mode
-  bool _isDeviceInPairingMode(ScanResult result) {
-    // Check if device name indicates pairing mode
-    String deviceName = result.device.platformName.toLowerCase();
-    return deviceName.contains('pairing') || 
-           deviceName.contains('microbit') ||
-           deviceName.contains('micro:bit');
-  }
 
   // Get device pairing status
   Future<bool> isDevicePaired(BluetoothDevice device) async {
@@ -347,9 +434,19 @@ class MicrobitBleService {
     _connectedDevice = null;
     _txCharacteristic = null;
     _rxCharacteristic = null;
+    _buttonACharacteristic = null;
+    _buttonBCharacteristic = null;
     _rxSubscription?.cancel();
     _rxSubscription = null;
-    _connectionStateController.add(false);
+    _buttonASubscription?.cancel();
+    _buttonASubscription = null;
+    _buttonBSubscription?.cancel();
+    _buttonBSubscription = null;
+    
+    // Only add event if stream is not closed
+    if (!_connectionStateController.isClosed) {
+      _connectionStateController.add(false);
+    }
   }
 
   // Dispose all streams
@@ -358,5 +455,6 @@ class MicrobitBleService {
     _connectionStateController.close();
     _receivedDataController.close();
     _discoveredDevicesController.close();
+    _buttonStateController.close();
   }
 }

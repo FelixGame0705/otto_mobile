@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+        background: #f7f9fc;
+        color: #111827;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #root {
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: none;
+      }
+      header h1 {
+        font-size: 16px;
+        margin: 0;
+        font-weight: 600;
+      }
+      main {
+        padding: 0;
+        display: flex;
+        gap: 0;
+        height: 100%;
+      }
+      .panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.02), 0 2px 4px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .card header {
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .card header h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+      }
+      .content {
+        padding: 0;
+        overflow: hidden;
+        flex: 1;
+      }
+      pre {
+        margin: 0;
+        white-space: pre;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        background: #0b1020;
+        color: #eaeefb;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .meta {
+        color: #6b7280;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <header>
+        <h1>Solution</h1>
+        <span class="meta" id="programName"></span>
+      </header>
+      <main>
+        <div id="blocklyDiv" style="flex: 1; height: 100%; width: 100%"></div>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        function pyVal(v) {
+          if (typeof v === "string") return v;
+          return JSON.stringify(v);
+        }
+        function condToPy(cond) {
+          if (!cond) return "True";
+          switch (cond.type) {
+            case "condition":
+              return (cond.function || "isGreen") + "()";
+            case "value":
+              return JSON.stringify(cond.value);
+            case "boolean":
+              return cond.value ? "True" : "False";
+            case "and":
+            case "or":
+              var left =
+                cond.conditions && cond.conditions[0]
+                  ? condToPy(cond.conditions[0])
+                  : "False";
+              var right =
+                cond.conditions && cond.conditions[1]
+                  ? condToPy(cond.conditions[1])
+                  : "False";
+              return (
+                "(" +
+                left +
+                (cond.type === "and" ? " and " : " or ") +
+                right +
+                ")"
+              );
+            case "compare":
+            case "variableComparison":
+              var opMap = {
+                EQ: " == ",
+                NEQ: " != ",
+                LT: " < ",
+                GT: " > ",
+                LTE: " <= ",
+                GTE: " >= ",
+              };
+              var op = opMap[cond.operator] || " == ";
+              if (cond.type === "variableComparison") {
+                return (
+                  "(" + (cond.variable || "x") + op + pyVal(cond.value) + ")"
+                );
+              } else {
+                return "(" + pyVal(cond.left) + op + pyVal(cond.right) + ")";
+              }
+            default:
+              return "True";
+          }
+        }
+        function emit(nodes, indent) {
+          var lines = [];
+          var ind = "  ".repeat(indent);
+          (nodes || []).forEach(function (n) {
+            switch (n.type) {
+              case "forward":
+                lines.push(ind + "forward(" + pyVal(n.count) + ")");
+                break;
+              case "turnRight":
+                lines.push(ind + "turnRight()");
+                break;
+              case "turnLeft":
+                lines.push(ind + "turnLeft()");
+                break;
+              case "turnBack":
+                lines.push(ind + "turnBack()");
+                break;
+              case "collect":
+                lines.push(
+                  ind +
+                    "collect(" +
+                    pyVal(n.count) +
+                    ", " +
+                    JSON.stringify(n.color) +
+                    ")"
+                );
+                break;
+              case "putBox":
+                lines.push(ind + "putBox(" + pyVal(n.count) + ")");
+                break;
+              case "takeBox":
+                lines.push(ind + "takeBox(" + pyVal(n.count) + ")");
+                break;
+              case "repeat":
+                lines.push(ind + "for count in range(" + pyVal(n.count) + "):");
+                if (n.condition) {
+                  lines.push(ind + "  while " + condToPy(n.condition) + ":");
+                  lines = lines.concat(emit(n.body, indent + 2));
+                } else {
+                  lines = lines.concat(emit(n.body, indent + 1));
+                }
+                break;
+              case "repeatRange":
+                var v = n.variable || "i";
+                lines.push(
+                  ind +
+                    "for " +
+                    v +
+                    " in range(" +
+                    pyVal(n.from) +
+                    ", " +
+                    pyVal(n.to) +
+                    ", " +
+                    pyVal(n.step) +
+                    "):"
+                );
+                if (n.condition) {
+                  lines.push(ind + "  while " + condToPy(n.condition) + ":");
+                  lines = lines.concat(emit(n.body, indent + 2));
+                } else {
+                  lines = lines.concat(emit(n.body, indent + 1));
+                }
+                break;
+              case "if":
+                lines.push(ind + "if " + condToPy(n.cond) + ":");
+                lines = lines.concat(emit(n.then, indent + 1));
+                break;
+              case "if_else_if":
+                if (n.conditions && n.conditions.length) {
+                  lines.push(ind + "if " + condToPy(n.conditions[0]) + ":");
+                  lines = lines.concat(
+                    emit((n.thens && n.thens[0]) || [], indent + 1)
+                  );
+                  for (var i = 1; i < n.conditions.length; i++) {
+                    lines.push(ind + "elif " + condToPy(n.conditions[i]) + ":");
+                    lines = lines.concat(
+                      emit((n.thens && n.thens[i]) || [], indent + 1)
+                    );
+                  }
+                  if (n.else && n.else.length) {
+                    lines.push(ind + "else:");
+                    lines = lines.concat(emit(n.else, indent + 1));
+                  }
+                }
+                break;
+              case "while":
+                lines.push(ind + "while " + condToPy(n.cond) + ":");
+                lines = lines.concat(emit(n.body, indent + 1));
+                break;
+              case "callFunction":
+                lines.push(ind + (n.functionName || "myFunction") + "()");
+                break;
+            }
+          });
+          return lines;
+        }
+        function toPython(program) {
+          var lines = [];
+          // emit functions first if present
+          if (
+            program &&
+            Array.isArray(program.functions) &&
+            program.functions.length
+          ) {
+            program.functions.forEach(function (fn) {
+              lines.push("def " + (fn.name || "myFunction") + "():");
+              lines = lines.concat(emit(fn.body || [], 1));
+              lines.push("");
+            });
+          }
+          lines = lines.concat(emit((program && program.actions) || [], 0));
+          return lines.join("\n");
+        }
+        function setPython(text) {
+          var el = document.getElementById("pythonOut");
+          if (el) el.textContent = text || "# Empty";
+        }
+        function setProgramName(name) {
+          var el = document.getElementById("programName");
+          if (el) el.textContent = name ? "(" + name + ")" : "";
+        }
+        window.showSolution = function (programJson) {
+          try {
+            var program =
+              typeof programJson === "string"
+                ? JSON.parse(programJson)
+                : programJson;
+            setProgramName(program && program.programName);
+            var py = toPython(program || {});
+            setPython(py);
+          } catch (e) {
+            setPython("# Failed to load solution: " + e);
+          }
+        };
+      })();
+    </script>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script>
+      (function () {
+        const C = Blockly;
+        // Minimal custom blocks subset to visualize program
+        if (!C.Blocks["start"])
+          C.Blocks["start"] = {
+            init: function () {
+              this.appendDummyInput().appendField("▶︎ Start");
+              this.setPreviousStatement(false);
+              this.setNextStatement(true, null);
+              this.setInputsInline(true);
+              this.setColour("#f5c431");
+            },
+          };
+        if (!C.Blocks["forward"])
+          C.Blocks["forward"] = {
+            init: function () {
+              this.appendDummyInput().appendField("move forward");
+              this.appendValueInput("COUNT").setCheck("Number");
+              this.setInputsInline(true);
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#4b92e3");
+            },
+          };
+        if (!C.Blocks["turn"])
+          C.Blocks["turn"] = {
+            init: function () {
+              this.appendDummyInput()
+                .appendField("turn")
+                .appendField(
+                  new C.FieldDropdown([
+                    ["right", "turnRight"],
+                    ["left", "turnLeft"],
+                    ["back", "turnBack"],
+                  ]),
+                  "DIR"
+                );
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#4b92e3");
+            },
+          };
+        if (!C.Blocks["collect"])
+          C.Blocks["collect"] = {
+            init: function () {
+              this.appendDummyInput().appendField("collect");
+              this.appendValueInput("COUNT").setCheck("Number");
+              this.appendDummyInput().appendField(
+                new C.FieldDropdown([
+                  ["green", "green"],
+                  ["yellow", "yellow"],
+                ]),
+                "COLOR"
+              );
+              this.setInputsInline(true);
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#4b92e3");
+            },
+          };
+        if (!C.Blocks["repeat_simple"])
+          C.Blocks["repeat_simple"] = {
+            init: function () {
+              this.appendValueInput("COUNT")
+                .setCheck("Number")
+                .appendField("repeat");
+              this.appendStatementInput("DO").appendField("do");
+              this.setInputsInline(true);
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#ff6b36");
+            },
+          };
+        if (!C.Blocks["repeat_range"])
+          C.Blocks["repeat_range"] = {
+            init: function () {
+              this.appendDummyInput()
+                .appendField("repeat")
+                .appendField(
+                  new C.FieldDropdown([
+                    ["i", "i"],
+                    ["a", "a"],
+                    ["b", "b"],
+                  ]),
+                  "VAR"
+                )
+                .appendField(" from(");
+              this.appendValueInput("FROM").setCheck("Number");
+              this.appendDummyInput().appendField(" to ");
+              this.appendValueInput("TO").setCheck("Number");
+              this.appendDummyInput().appendField(" by ");
+              this.appendValueInput("STEP").setCheck("Number");
+              this.appendDummyInput().appendField(")");
+              this.appendStatementInput("DO").appendField("do");
+              this.setInputsInline(true);
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#ff6b36");
+            },
+          };
+        if (!C.Blocks["if_color"])
+          C.Blocks["if_color"] = {
+            init: function () {
+              this.appendValueInput("CONDITION")
+                .setCheck("Boolean")
+                .appendField("if");
+              this.appendStatementInput("THEN");
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#8e44ad");
+            },
+          };
+        if (!C.Blocks["while_color"])
+          C.Blocks["while_color"] = {
+            init: function () {
+              this.appendValueInput("CONDITION")
+                .setCheck("Boolean")
+                .appendField("while");
+              this.appendStatementInput("DO").appendField("do");
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#4ecdc4");
+            },
+          };
+        if (!C.Blocks["if_else_if"])
+          C.Blocks["if_else_if"] = {
+            init: function () {
+              this.elseIfCount_ = 0;
+              this.maxElseIfs_ = 10;
+              this.appendValueInput("CONDITION")
+                .setCheck("Boolean")
+                .appendField("if");
+              this.appendStatementInput("THEN");
+              this.appendStatementInput("ELSE").appendField("else");
+              this.setPreviousStatement(true);
+              this.setNextStatement(true);
+              this.setColour("#8e44ad");
+            },
+          };
+        if (!C.Blocks["put_box"])
+          C.Blocks["put_box"] = {
+            init: function () {
+              this.appendDummyInput().appendField("put box");
+              this.appendValueInput("COUNT").setCheck("Number");
+              this.setInputsInline(true);
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#ff6b6b");
+            },
+          };
+        if (!C.Blocks["take_box"])
+          C.Blocks["take_box"] = {
+            init: function () {
+              this.appendDummyInput().appendField("take box");
+              this.appendValueInput("COUNT").setCheck("Number");
+              this.setInputsInline(true);
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#ff6b6b");
+            },
+          };
+        if (!C.Blocks["batteryCount"])
+          C.Blocks["batteryCount"] = {
+            init: function () {
+              this.appendDummyInput().appendField("batteryCount");
+              this.setOutput(true, "Number");
+              this.setColour("#45b7d1");
+            },
+          };
+        if (!C.Blocks["getNumberBox"])
+          C.Blocks["getNumberBox"] = {
+            init: function () {
+              this.appendDummyInput().appendField("getNumberBox");
+              this.setOutput(true, "Number");
+              this.setColour("#45b7d1");
+            },
+          };
+        if (!C.Blocks["warehouseCount"])
+          C.Blocks["warehouseCount"] = {
+            init: function () {
+              this.appendDummyInput().appendField("warehouseCount");
+              this.setOutput(true, "Number");
+              this.setColour("#45b7d1");
+            },
+          };
+        if (!C.Blocks["boolean_value"])
+          C.Blocks["boolean_value"] = {
+            init: function () {
+              this.appendDummyInput().appendField(
+                new C.FieldDropdown([
+                  ["true", "TRUE"],
+                  ["false", "FALSE"],
+                ]),
+                "VALUE"
+              );
+              this.setOutput(true, "Boolean");
+              this.setColour("#9b27b0");
+            },
+          };
+        if (!C.Blocks["check_pin_boolean"])
+          C.Blocks["check_pin_boolean"] = {
+            init: function () {
+              this.appendDummyInput()
+                .appendField("pin is")
+                .appendField(
+                  new C.FieldDropdown([
+                    ["🟢 green", "green"],
+                    ["🔴 red", "red"],
+                    ["🟡 yellow", "yellow"],
+                  ]),
+                  "COLOR"
+                );
+              this.setOutput(true, "Boolean");
+              this.setColour("#9b27b0");
+            },
+          };
+        if (!C.Blocks["pin_color_compare"])
+          C.Blocks["pin_color_compare"] = {
+            init: function () {
+              this.appendDummyInput()
+                .appendField("pin color")
+                .appendField(
+                  new C.FieldDropdown([
+                    ["=", "EQ"],
+                    ["≠", "NEQ"],
+                  ]),
+                  "OP"
+                )
+                .appendField(
+                  new C.FieldDropdown([
+                    ["🟢 green", "green"],
+                    ["🔴 red", "red"],
+                    ["🟡 yellow", "yellow"],
+                  ]),
+                  "COLOR"
+                );
+              this.setOutput(true, "Boolean");
+              this.setColour("#9b27b0");
+            },
+          };
+        if (!C.Blocks["logical_operation"])
+          C.Blocks["logical_operation"] = {
+            init: function () {
+              this.appendValueInput("A").setCheck("Boolean");
+              this.appendValueInput("B")
+                .setCheck("Boolean")
+                .appendField(
+                  new C.FieldDropdown([
+                    ["and", "AND"],
+                    ["or", "OR"],
+                  ]),
+                  "OP"
+                );
+              this.setOutput(true, "Boolean");
+              this.setInputsInline(true);
+              this.setColour("#9b27b0");
+            },
+          };
+        if (!C.Blocks["var_ref"])
+          C.Blocks["var_ref"] = {
+            init: function () {
+              this.appendDummyInput().appendField(
+                new C.FieldDropdown([
+                  ["i", "i"],
+                  ["a", "a"],
+                  ["b", "b"],
+                ]),
+                "VAR"
+              );
+              this.setOutput(true, "Number");
+              this.setColour("#9b27b0");
+            },
+          };
+        if (!C.Blocks["compare"])
+          C.Blocks["compare"] = {
+            init: function () {
+              this.appendValueInput("A").setCheck(null);
+              this.appendValueInput("B")
+                .setCheck(null)
+                .appendField(
+                  new C.FieldDropdown([
+                    ["=", "EQ"],
+                    ["≠", "NEQ"],
+                    ["<", "LT"],
+                    [">", "GT"],
+                    ["≤", "LTE"],
+                    ["≥", "GTE"],
+                  ]),
+                  "OP"
+                );
+              this.setOutput(true, "Boolean");
+              this.setInputsInline(true);
+              this.setColour("#9b27b0");
+            },
+          };
+        if (!C.Blocks["function_define"])
+          C.Blocks["function_define"] = {
+            init: function () {
+              this.appendDummyInput()
+                .appendField("📝")
+                .appendField("function")
+                .appendField(
+                  new C.FieldTextInput("myFunction1"),
+                  "FUNCTION_NAME"
+                );
+              this.appendStatementInput("BODY").appendField("do");
+              this.setPreviousStatement(false);
+              this.setNextStatement(false);
+              this.setColour("#ff9f43");
+            },
+          };
+        if (!C.Blocks["function_call"])
+          C.Blocks["function_call"] = {
+            init: function () {
+              this.appendDummyInput()
+                .appendField("🔧")
+                .appendField("call")
+                .appendField(
+                  new C.FieldTextInput("myFunction1"),
+                  "FUNCTION_NAME"
+                );
+              this.setPreviousStatement(true, null);
+              this.setNextStatement(true, null);
+              this.setColour("#ff9f43");
+            },
+          };
+
+        const workspace = Blockly.inject("blocklyDiv", {
+          readOnly: true,
+          scrollbars: true,
+          trashcan: false,
+          renderer: "zelos",
+        });
+
+        // Notify flutter webview is ready (after Blockly is initialized)
+        try {
+          SolutionFromFlutter.postMessage(JSON.stringify({ type: "ready" }));
+        } catch (_) {}
+
+        function makeNumberBlock(n) {
+          const b = workspace.newBlock("math_number");
+          b.setFieldValue(String(n ?? 0), "NUM");
+          b.initSvg();
+          b.render();
+          return b;
+        }
+        function attachNumber(parent, name, val) {
+          if (val === undefined || val === null) return;
+          const nb = makeNumberBlock(val);
+          const inp = parent.getInput(name);
+          if (inp && inp.connection)
+            inp.connection.connect(nb.outputConnection);
+        }
+
+        function buildCond(cond) {
+          if (!cond) return null;
+          if (cond.type === "boolean") {
+            const b = workspace.newBlock("boolean_value");
+            b.setFieldValue(cond.value ? "TRUE" : "FALSE", "VALUE");
+            b.initSvg();
+            b.render();
+            return b;
+          }
+          if (cond.type === "condition") {
+            const nm = String(cond.function || "").toLowerCase();
+            const color = nm.includes("green")
+              ? "green"
+              : nm.includes("red")
+              ? "red"
+              : "yellow";
+            const b = workspace.newBlock("check_pin_boolean");
+            b.setFieldValue(color, "COLOR");
+            b.initSvg();
+            b.render();
+            return b;
+          }
+          if (cond.type === "variableComparison") {
+            if (cond.variable === "pinColor") {
+              const b = workspace.newBlock("pin_color_compare");
+              b.setFieldValue(cond.operator || "EQ", "OP");
+              b.setFieldValue(cond.value || "green", "COLOR");
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            const cmp = workspace.newBlock("compare");
+            cmp.setFieldValue(cond.operator || "EQ", "OP");
+            let left = null;
+            if (cond.variable === "batteryCount")
+              left = workspace.newBlock("batteryCount");
+            else if (cond.variable === "warehouseCount")
+              left = workspace.newBlock("warehouseCount");
+            else if (cond.variable === "getNumberBox")
+              left = workspace.newBlock("getNumberBox");
+            if (left) {
+              left.initSvg();
+              left.render();
+              cmp.getInput("A").connection.connect(left.outputConnection);
+            }
+            const rb = makeNumberBlock(cond.value ?? 0);
+            cmp.getInput("B").connection.connect(rb.outputConnection);
+            cmp.initSvg();
+            cmp.render();
+            return cmp;
+          }
+          if (cond.type === "and" || cond.type === "or") {
+            const b = workspace.newBlock("logical_operation");
+            b.setFieldValue(cond.type === "and" ? "AND" : "OR", "OP");
+            const l = buildCond((cond.conditions || [])[0]);
+            const r = buildCond((cond.conditions || [])[1]);
+            if (l) b.getInput("A").connection.connect(l.outputConnection);
+            if (r) b.getInput("B").connection.connect(r.outputConnection);
+            b.initSvg();
+            b.render();
+            return b;
+          }
+          if (cond.type === "compare") {
+            const b = workspace.newBlock("compare");
+            b.setFieldValue(cond.operator || "EQ", "OP");
+            const la = makeNumberBlock(cond.left ?? 0);
+            const rb = makeNumberBlock(cond.right ?? 0);
+            b.getInput("A").connection.connect(la.outputConnection);
+            b.getInput("B").connection.connect(rb.outputConnection);
+            b.initSvg();
+            b.render();
+            return b;
+          }
+          return null;
+        }
+
+        function buildAction(n) {
+          if (!n) return null;
+          switch (n.type) {
+            case "forward": {
+              const b = workspace.newBlock("forward");
+              attachNumber(b, "COUNT", n.count ?? 1);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "turnRight": {
+              const b = workspace.newBlock("turn");
+              b.setFieldValue("turnRight", "DIR");
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "turnLeft": {
+              const b = workspace.newBlock("turn");
+              b.setFieldValue("turnLeft", "DIR");
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "turnBack": {
+              const b = workspace.newBlock("turn");
+              b.setFieldValue("turnBack", "DIR");
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "collect": {
+              const b = workspace.newBlock("collect");
+              attachNumber(b, "COUNT", n.count ?? 1);
+              b.setFieldValue(n.color || "green", "COLOR");
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "putBox": {
+              const b = workspace.newBlock("put_box");
+              attachNumber(b, "COUNT", n.count ?? 1);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "takeBox": {
+              const b = workspace.newBlock("take_box");
+              attachNumber(b, "COUNT", n.count ?? 1);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "repeat": {
+              const b = workspace.newBlock("repeat_simple");
+              attachNumber(b, "COUNT", n.count ?? 1);
+              const head = buildChain(n.body || []);
+              if (head)
+                b.getInput("DO").connection.connect(head.previousConnection);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "repeatRange": {
+              const b = workspace.newBlock("repeat_range");
+              b.setFieldValue(n.variable || "i", "VAR");
+              attachNumber(b, "FROM", n.from ?? 0);
+              attachNumber(b, "TO", n.to ?? 10);
+              attachNumber(b, "STEP", n.step ?? 1);
+              const head = buildChain(n.body || []);
+              if (head)
+                b.getInput("DO").connection.connect(head.previousConnection);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "if": {
+              const b = workspace.newBlock("if_color");
+              const c = buildCond(n.cond);
+              if (c)
+                b.getInput("CONDITION").connection.connect(c.outputConnection);
+              const head = buildChain(n.then || []);
+              if (head)
+                b.getInput("THEN").connection.connect(head.previousConnection);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "if_else_if": {
+              const b = workspace.newBlock("if_else_if");
+              const fc = buildCond((n.conditions || [])[0]);
+              if (fc)
+                b.getInput("CONDITION").connection.connect(fc.outputConnection);
+              const ft = buildChain((n.thens || [])[0] || []);
+              if (ft)
+                b.getInput("THEN").connection.connect(ft.previousConnection);
+              for (let i = 1; i < (n.conditions || []).length; i++) {
+                const ci = buildCond(n.conditions[i]);
+                const ti = buildChain((n.thens || [])[i] || []);
+                const ciIn = b.getInput("COND" + i);
+                const tiIn = b.getInput("THEN" + i);
+                if (ci && ciIn) ciIn.connection.connect(ci.outputConnection);
+                if (ti && tiIn) tiIn.connection.connect(ti.previousConnection);
+              }
+              if (Array.isArray(n.else) && n.else.length) {
+                const eh = buildChain(n.else);
+                if (eh)
+                  b.getInput("ELSE").connection.connect(eh.previousConnection);
+              }
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "while": {
+              const b = workspace.newBlock("while_color");
+              const c = buildCond(n.cond);
+              if (c)
+                b.getInput("CONDITION").connection.connect(c.outputConnection);
+              const head = buildChain(n.body || []);
+              if (head)
+                b.getInput("DO").connection.connect(head.previousConnection);
+              b.initSvg();
+              b.render();
+              return b;
+            }
+            case "callFunction": {
+              const b = workspace.newBlock("function_call");
+              b.setFieldValue(n.functionName || "myFunction1", "FUNCTION_NAME");
+              b.initSvg();
+              b.render();
+              return b;
+            }
+          }
+          return null;
+        }
+
+        function buildChain(nodes) {
+          let head = null,
+            prev = null;
+          (nodes || []).forEach((n) => {
+            const b = buildAction(n);
+            if (!b) return;
+            if (!head) head = b;
+            if (prev) prev.nextConnection.connect(b.previousConnection);
+            prev = b;
+          });
+          return head;
+        }
+        function pos(block, x, y) {
+          try {
+            block.moveBy(x, y);
+          } catch (_) {}
+        }
+        function renderProgram(p) {
+          workspace.clear();
+          let fy = 20;
+          if (Array.isArray(p.functions)) {
+            p.functions.forEach((fn) => {
+              const f = workspace.newBlock("function_define");
+              f.setFieldValue(fn.name || "myFunction1", "FUNCTION_NAME");
+              const head = buildChain(fn.body || []);
+              if (head)
+                f.getInput("BODY").connection.connect(head.previousConnection);
+              f.initSvg();
+              f.render();
+              pos(f, 30, fy);
+              const fh =
+                typeof f.getHeightWidth === "function"
+                  ? f.getHeightWidth().height || 0
+                  : 0;
+              fy += (fh > 0 ? fh : 100) + 16; // add small gap so Start doesn't touch
+            });
+          }
+          const start = workspace.newBlock("start");
+          start.initSvg();
+          start.render();
+          pos(start, 30, fy);
+          const head = buildChain(p.actions || []);
+          if (head) start.nextConnection.connect(head.previousConnection);
+          workspace.zoomToFit();
+        }
+
+        // Override previous python-based solution renderer with Blockly view
+        window.showSolution = function (programJson) {
+          try {
+            var p =
+              typeof programJson === "string"
+                ? JSON.parse(programJson)
+                : programJson;
+            var el = document.getElementById("programName");
+            if (el)
+              el.textContent =
+                p && p.programName ? "(" + p.programName + ")" : "";
+            renderProgram(p || { actions: [] });
+          } catch (e) {
+            console.error("Failed to load solution:", e);
+          }
+        };
+      })();
+    </script>
+  </body>
+</html>

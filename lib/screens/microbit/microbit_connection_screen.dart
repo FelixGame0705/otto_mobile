@@ -14,6 +14,7 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
   final MicrobitBleService _bleService = MicrobitBleService();
   List<BluetoothDevice> _discoveredDevices = [];
   String _receivedData = '';
+  Map<String, int> _buttonStates = {'buttonA': 0, 'buttonB': 0};
   final TextEditingController _commandController = TextEditingController();
 
   @override
@@ -36,6 +37,13 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
     _bleService.receivedDataStream.listen((data) {
       setState(() {
         _receivedData += data;
+      });
+    });
+
+    // Listen for button state changes
+    _bleService.buttonStateStream.listen((buttonData) {
+      setState(() {
+        _buttonStates.addAll(buttonData);
       });
     });
 
@@ -83,6 +91,7 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
         );
       }
     } catch (e) {
+      print('Scan error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -165,15 +174,25 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Nếu không thể kết nối với micro:bit đã paired:',
+                'Nếu không thể kết nối với micro:bit:',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
-              Text('1. Reset micro:bit (nút reset hoặc tháo pin)'),
-              Text('2. Đóng tất cả app khác đang kết nối với micro:bit'),
-              Text('3. Kiểm tra quyền Bluetooth và Location'),
-              Text('4. Nhấn "Refresh" để kiểm tra thiết bị đã paired'),
-              Text('5. Nhấn "Scan" để tìm thiết bị mới'),
+              Text('1. Đảm bảo micro:bit đã được flash code BLE'),
+              Text('2. Reset micro:bit (nút reset hoặc tháo pin)'),
+              Text('3. Đóng tất cả app khác đang kết nối với micro:bit'),
+              Text('4. Kiểm tra quyền Bluetooth và Location'),
+              Text('5. Nhấn "Refresh" để kiểm tra thiết bị đã paired'),
+              Text('6. Nhấn "Scan" để tìm thiết bị mới'),
+              SizedBox(height: 8),
+              Text(
+                'Code mẫu cho micro:bit:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 4),
+              Text('• Sử dụng MicroBitUARTService trong code'),
+              Text('• Enable BLE services trong MicroBitConfig.h'),
+              Text('• Đảm bảo micro:bit đang ở chế độ pairing'),
               SizedBox(height: 8),
               Text(
                 'Lưu ý: micro:bit chỉ có thể kết nối với một thiết bị tại một thời điểm.',
@@ -246,6 +265,87 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
     );
   }
 
+  Widget _buildButtonStatus() {
+    if (!_bleService.isConnected) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Button States',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildButtonIndicator('Button A', _buttonStates['buttonA'] ?? 0),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildButtonIndicator('Button B', _buttonStates['buttonB'] ?? 0),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButtonIndicator(String label, int state) {
+    String stateText;
+    Color stateColor;
+    
+    switch (state) {
+      case 0:
+        stateText = 'Not Pressed';
+        stateColor = Colors.grey;
+        break;
+      case 1:
+        stateText = 'Pressed';
+        stateColor = Colors.green;
+        break;
+      case 2:
+        stateText = 'Long Press';
+        stateColor = Colors.orange;
+        break;
+      default:
+        stateText = 'Unknown';
+        stateColor = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: stateColor),
+        borderRadius: BorderRadius.circular(8),
+        color: stateColor.withOpacity(0.1),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            stateText,
+            style: TextStyle(
+              color: stateColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDeviceList() {
     return Card(
       child: Padding(
@@ -291,10 +391,10 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
             if (_discoveredDevices.isEmpty)
               Column(
                 children: [
-                  const Text('No devices found.'),
+                  const Text('No micro:bit devices found.'),
                   const SizedBox(height: 8),
                   const Text('• Tap "Refresh" to check paired devices'),
-                  const Text('• Tap "Scan" to search for new micro:bit devices'),
+                  const Text('• Tap "Scan" to search for micro:bit devices'),
                   const Text('• Make sure micro:bit is powered on and BLE is enabled'),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
@@ -463,6 +563,8 @@ class _MicrobitConnectionScreenState extends State<MicrobitConnectionScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildConnectionStatus(),
+            const SizedBox(height: 16),
+            _buildButtonStatus(),
             const SizedBox(height: 16),
             _buildDeviceList(),
             const SizedBox(height: 16),
