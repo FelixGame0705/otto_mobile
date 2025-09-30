@@ -93,6 +93,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
         'lessonId': _lessonDetail!.id,
         'courseId': _lessonDetail!.courseId,
         'lessonTitle': _lessonDetail!.title,
+        'showBestStars': true, // Always show best stars from lesson detail
       },
     );
   }

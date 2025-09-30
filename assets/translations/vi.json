@@ -180,7 +180,25 @@
   "challenge": {
     "difficulty": "Độ khó",
     "submissions": "Nộp",
-    "viewDetails": "Xem chi tiết"
+    "viewDetails": "Xem chi tiết",
+    "bestStar": "Sao tốt nhất"
+  },
+  "product": {
+    "detail": "Chi tiết sản phẩm",
+    "notFound": "Không tìm thấy sản phẩm",
+    "technicalSpecs": "Thông số kỹ thuật",
+    "requirements": "Yêu cầu",
+    "minAge": "Độ tuổi tối thiểu",
+    "maxAge": "Độ tuổi tối đa",
+    "stock": "Kho",
+    "stockQuantity": "Kho {quantity}",
+    "brand": "Thương hiệu",
+    "relatedComponents": "Linh kiện liên quan",
+    "noComponents": "Không tìm thấy linh kiện liên quan",
+    "addToCart": "Thêm vào giỏ",
+    "addedToCart": "Đã thêm vào giỏ",
+    "price": "Giá",
+    "specifications": "Thông số kỹ thuật"
   },
   "store": {
     "title": "Cửa hàng",
@@ -193,6 +211,8 @@
     "priceMax": "Giá đến",
     "ageMin": "Độ tuổi từ",
     "ageMax": "Độ tuổi đến",
+    "robots": "Robot",
+    "components": "Linh kiện",
     "sort": {
       "name": "Sắp xếp: Tên",
       "price": "Sắp xếp: Giá",

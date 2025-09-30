@@ -12,8 +12,10 @@ import 'package:ottobit/screens/lessons/lesson_resource_detail_screen.dart';
 import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
 import 'package:ottobit/screens/challenges/challenges_screen.dart';
 import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/screens/detect/detect_capture_screen.dart';
 import 'package:ottobit/screens/auth/change_password_screen.dart';
 import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
+import 'package:ottobit/screens/products/product_detail_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -28,10 +30,12 @@ class AppRoutes {
   static const String challenges = '/challenges';
   static const String lessonResources = '/lesson-resources';
   static const String lessonResourceDetail = '/lesson-resource-detail';
+  static const String productDetail = '/product-detail';
   static const String changePassword = '/change-password';
   static const String phaser = '/phaser';
   static const String blockly = '/blockly';
   static const String microbitConnection = '/microbit-connection';
+  static const String detectCapture = '/detect-capture';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -85,11 +89,13 @@ class AppRoutes {
         final lessonId = args['lessonId'] as String?;
         final courseId = args['courseId'] as String?;
         final lessonTitle = args['lessonTitle'] as String?;
+        final showBestStars = args['showBestStars'] as bool? ?? false;
         if (lessonId != null) {
           return ChallengesScreen(
             lessonId: lessonId,
             courseId: courseId,
             lessonTitle: lessonTitle,
+            showBestStars: showBestStars,
           );
         }
       }
@@ -135,5 +141,27 @@ class AppRoutes {
     phaser: (context) => const PhaserRunnerScreen(),
     blockly: (context) => const BlocklyEditorScreen(),
     microbitConnection: (context) => const MicrobitConnectionScreen(),
+    detectCapture: (context) => const DetectCaptureScreen(),
+    productDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final productId = args['productId'] as String?;
+        final productType = args['productType'] as String? ?? 'robot';
+        if (productId != null) {
+          return ProductDetailScreen(
+            productId: productId,
+            productType: productType,
+          );
+        }
+      } else if (args is String) {
+        // Backward compatibility for old String argument
+        return ProductDetailScreen(productId: args);
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin sản phẩm'),
+        ),
+      );
+    },
   };
 }

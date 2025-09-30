@@ -179,7 +179,25 @@
   "challenge": {
     "difficulty": "Difficulty",
     "submissions": "Submissions",
-    "viewDetails": "View details"
+    "viewDetails": "View details",
+    "bestStar": "Best Star"
+  },
+  "product": {
+    "detail": "Product Details",
+    "notFound": "Product not found",
+    "technicalSpecs": "Technical Specifications",
+    "requirements": "Requirements",
+    "minAge": "Minimum Age",
+    "maxAge": "Maximum Age",
+    "stock": "Stock",
+    "stockQuantity": "Stock {quantity}",
+    "brand": "Brand",
+    "relatedComponents": "Related Components",
+    "noComponents": "No related components found",
+    "addToCart": "Add to Cart",
+    "addedToCart": "Added to cart",
+    "price": "Price",
+    "specifications": "Specifications"
   },
   "store": {
     "title": "Store",
@@ -192,6 +210,8 @@
     "priceMax": "Price to",
     "ageMin": "Age from",
     "ageMax": "Age to",
+    "robots": "Robots",
+    "components": "Components",
     "sort": {
       "name": "Sort: Name",
       "price": "Sort: Price",

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/robot_model.dart';
+import 'package:ottobit/models/product_model.dart';
+import 'package:ottobit/models/component_model.dart';
 import 'package:ottobit/services/robot_service.dart';
-import 'package:ottobit/widgets/ui/robot_card.dart';
+import 'package:ottobit/services/component_service.dart';
+import 'package:ottobit/widgets/products/product_card.dart';
 
 class StoreScreen extends StatefulWidget {
   const StoreScreen({super.key});
@@ -11,11 +14,15 @@ class StoreScreen extends StatefulWidget {
   State<StoreScreen> createState() => _StoreScreenState();
 }
 
-class _StoreScreenState extends State<StoreScreen> {
-  final RobotService _service = RobotService();
-  RobotPageData? _page;
+class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStateMixin {
+  final RobotService _robotService = RobotService();
+  final ComponentService _componentService = ComponentService();
+  RobotPageData? _robotPage;
+  ComponentListResponse? _componentPage;
   bool _loading = true;
   String? _error;
+  int _selectedTabIndex = 0; // 0 = robots, 1 = components
+  TabController? _tabController;
 
   // Filters
   final TextEditingController _searchCtrl = TextEditingController();
@@ -32,7 +39,22 @@ class _StoreScreenState extends State<StoreScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 0);
+    _tabController!.addListener(() {
+      if (_tabController!.indexIsChanging) {
+        setState(() {
+          _selectedTabIndex = _tabController!.index;
+        });
+        _load();
+      }
+    });
     _load();
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -42,23 +64,42 @@ class _StoreScreenState extends State<StoreScreen> {
     });
 
     try {
-      final res = await _service.getRobots(
-        page: 1,
-        size: 10,
-        searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
-        brand: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
-        minPrice: int.tryParse(_minPriceCtrl.text.trim()),
-        maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
-        minAge: int.tryParse(_minAgeCtrl.text.trim()),
-        maxAge: int.tryParse(_maxAgeCtrl.text.trim()),
-        inStock: _inStock,
-        orderBy: _orderBy,
-        orderDirection: _orderDirection,
-      );
-      setState(() {
-        _page = res.data;
-        _loading = false;
-      });
+      if (_selectedTabIndex == 0) {
+        // Load robots
+        final res = await _robotService.getRobots(
+          page: 1,
+          size: 10,
+          searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+          brand: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
+          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
+          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
+          minAge: int.tryParse(_minAgeCtrl.text.trim()),
+          maxAge: int.tryParse(_maxAgeCtrl.text.trim()),
+          inStock: _inStock,
+          orderBy: _orderBy,
+          orderDirection: _orderDirection,
+        );
+        setState(() {
+          _robotPage = res.data;
+          _loading = false;
+        });
+      } else {
+        // Load components
+        final res = await _componentService.getComponents(
+          page: 1,
+          size: 10,
+          searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
+          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
+          inStock: _inStock,
+          orderBy: _orderBy,
+          orderDirection: _orderDirection,
+        );
+        setState(() {
+          _componentPage = res.data;
+          _loading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _error = e.toString().replaceFirst('Exception: ', '');
@@ -71,85 +112,154 @@ class _StoreScreenState extends State<StoreScreen> {
   Widget build(BuildContext context) {
     final filter = _buildFilterBar();
 
-    if (_loading) {
-      return Column(
-        children: [filter, const Expanded(child: Center(child: CircularProgressIndicator()))],
-      );
-    }
-
-    if (_error != null) {
+    if (_tabController == null) {
       return Column(
         children: [
           filter,
-          Expanded(
-            child: ListView(
-              children: [
-                const SizedBox(height: 80),
-                const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                const SizedBox(height: 12),
-                Center(child: Text(_error!)),
-                const SizedBox(height: 12),
-                Center(
-                  child: ElevatedButton(
-                    onPressed: _load,
-                    child: Text('common.retry'.tr()),
-                  ),
-                ),
-              ],
+          const Expanded(
+            child: Center(
+              child: CircularProgressIndicator(),
             ),
           ),
         ],
       );
     }
 
-    final items = _page?.items ?? [];
-    if (items.isEmpty) {
-      return Column(
-        children: [
-          filter,
-          Expanded(
-            child: ListView(
-              children: [
-                const SizedBox(height: 160),
-                Center(child: Text('resource.empty'.tr())),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Shopee-style grid
     return Column(
       children: [
         filter,
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: _load,
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.68,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
+        // Tab Bar
+        Container(
+          color: Colors.white,
+          child: TabBar(
+            controller: _tabController!,
+            labelColor: const Color(0xFF00ba4a),
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: const Color(0xFF00ba4a),
+            tabs: [
+              Tab(
+                icon: const Icon(Icons.smart_toy_outlined),
+                text: 'store.robots'.tr(),
               ),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final robot = items[index];
-                return RobotCard(
-                  robot: robot,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${'store.selected'.tr()}: ${robot.name}')),
-                    );
-                  },
-                );
-              },
-            ),
+              Tab(
+                icon: const Icon(Icons.extension),
+                text: 'store.components'.tr(),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController!,
+            children: [
+              _buildRobotsTab(),
+              _buildComponentsTab(),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRobotsTab() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 12),
+            Text(_error!),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _load,
+              child: Text('common.retry'.tr()),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final items = _robotPage?.items ?? [];
+    if (items.isEmpty) {
+      return Center(child: Text('resource.empty'.tr()));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: GridView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.68,
+          crossAxisSpacing: 4,
+          mainAxisSpacing: 4,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final robot = items[index];
+          final product = _convertRobotToProduct(robot);
+          return ProductCard(
+            product: product,
+            productType: 'robot',
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildComponentsTab() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 12),
+            Text(_error!),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _load,
+              child: Text('common.retry'.tr()),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final items = _componentPage?.items ?? [];
+    if (items.isEmpty) {
+      return Center(child: Text('resource.empty'.tr()));
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: GridView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.68,
+          crossAxisSpacing: 4,
+          mainAxisSpacing: 4,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final component = items[index];
+          final product = _convertComponentToProduct(component);
+          return ProductCard(
+            product: product,
+            productType: 'component',
+          );
+        },
+      ),
     );
   }
 
@@ -342,6 +452,52 @@ class _StoreScreenState extends State<StoreScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Product _convertRobotToProduct(RobotItem robot) {
+    return Product(
+      id: robot.id,
+      name: robot.name,
+      model: robot.model,
+      brand: robot.brand,
+      description: robot.description ?? '',
+      imageUrl: robot.imageUrl,
+      price: robot.price,
+      stockQuantity: robot.stockQuantity,
+      technicalSpecs: robot.technicalSpecs ?? '',
+      requirements: robot.requirements ?? '',
+      minAge: robot.minAge,
+      maxAge: robot.maxAge,
+      createdAt: robot.createdAt,
+      updatedAt: robot.updatedAt,
+      isDeleted: robot.isDeleted,
+      imagesCount: robot.imagesCount,
+      courseRobotsCount: robot.courseRobotsCount,
+      studentRobotsCount: robot.studentRobotsCount,
+    );
+  }
+
+  Product _convertComponentToProduct(Component component) {
+    return Product(
+      id: component.id,
+      name: component.name,
+      model: 'Type ${component.type}',
+      brand: 'Component',
+      description: component.description,
+      imageUrl: component.imageUrl,
+      price: component.price,
+      stockQuantity: component.stockQuantity,
+      technicalSpecs: component.specifications,
+      requirements: '',
+      minAge: 0,
+      maxAge: 99,
+      createdAt: component.createdAt,
+      updatedAt: component.updatedAt,
+      isDeleted: component.isDeleted,
+      imagesCount: component.imagesCount,
+      courseRobotsCount: 0,
+      studentRobotsCount: 0,
     );
   }
 }

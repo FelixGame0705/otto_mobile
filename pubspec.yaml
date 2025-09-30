@@ -46,6 +46,9 @@ dependencies:
   # File picker for import/export JSON
   file_picker: ^8.0.3
 
+  # Camera/Gallery image picking for detect feature
+  image_picker: ^1.1.2
+
   # Bluetooth Low Energy for micro:bit communication
   flutter_blue_plus: ^1.32.10
 

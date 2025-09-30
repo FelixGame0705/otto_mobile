@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
+import 'package:ottobit/services/challenge_process_service.dart';
 import 'package:ottobit/widgets/challenges/challenge_card.dart';
 import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
@@ -10,12 +11,14 @@ class ChallengesScreen extends StatefulWidget {
   final String lessonId;
   final String? courseId;
   final String? lessonTitle;
+  final bool showBestStars; // Add flag to show best stars
 
   const ChallengesScreen({
     super.key,
     required this.lessonId,
     this.courseId,
     this.lessonTitle,
+    this.showBestStars = false, // Default to false
   });
 
   @override
@@ -24,10 +27,12 @@ class ChallengesScreen extends StatefulWidget {
 
 class _ChallengesScreenState extends State<ChallengesScreen> {
   final ChallengeService _service = ChallengeService();
+  final ChallengeProcessService _processService = ChallengeProcessService();
   final ScrollController _scroll = ScrollController();
   final TextEditingController _search = TextEditingController();
 
   List<Challenge> _items = [];
+  Map<String, int> _challengeBestStars = {}; // Map challenge ID to best star
   bool _loading = true;
   bool _loadingMore = false;
   String _error = '';
@@ -57,10 +62,12 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       if (refresh) {
         _page = 1;
         _items.clear();
+        _challengeBestStars.clear();
         _hasMore = true;
       }
     });
     try {
+      // Load challenges
       final res = await _service.getChallenges(
         lessonId: widget.lessonId,
         courseId: widget.courseId,
@@ -68,12 +75,34 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         pageNumber: _page,
         pageSize: 10,
       );
+      
+      // Load challenge processes if showBestStars is true
+      Map<String, int> bestStars = {};
+      if (widget.showBestStars) {
+        try {
+          final processRes = await _processService.getMyChallenges(
+            lessonId: widget.lessonId,
+            courseId: widget.courseId,
+            pageNumber: 1,
+            pageSize: 100, // Get all to ensure we have complete data
+          );
+          for (final process in processRes.data?.items ?? []) {
+            bestStars[process.challengeId] = process.bestStar;
+          }
+        } catch (e) {
+          print('Failed to load challenge processes: $e');
+          // Continue without best stars if process loading fails
+        }
+      }
+      
       setState(() {
         final list = res.data?.items ?? [];
         if (refresh) {
           _items = list;
+          _challengeBestStars = bestStars;
         } else {
           _items.addAll(list);
+          _challengeBestStars.addAll(bestStars);
         }
         _totalPages = res.data?.totalPages ?? 1;
         _hasMore = _page < _totalPages;
@@ -247,6 +276,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                         final c = _items[index];
                         return ChallengeCard(
                           challenge: c,
+                          bestStar: _challengeBestStars[c.id],
                           onTap: () async {
                             try {
                               // Fetch latest challenge detail to ensure mapJson/challengeJson are present

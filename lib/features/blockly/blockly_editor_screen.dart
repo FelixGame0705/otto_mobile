@@ -10,6 +10,7 @@ import 'package:ottobit/services/microbit_ble_service.dart';
 import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
 import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/features/blockly/solution_viewer_screen.dart';
+import 'package:ottobit/routes/app_routes.dart';
 
 class BlocklyEditorScreen extends StatefulWidget {
   final Map<String, dynamic>? initialMapJson;
@@ -666,6 +667,11 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         appBar: AppBar(
           title: const Text('Blockly Editor'),
           actions: [
+            IconButton(
+              tooltip: 'Detect from Image',
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.detectCapture),
+              icon: const Icon(Icons.photo_camera_back_outlined),
+            ),
             IconButton(
               tooltip: 'Show Solution',
               key: _keyToolbarSolution,

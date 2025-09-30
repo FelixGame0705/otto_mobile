@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:ottobit/models/robot_model.dart';
+import 'package:ottobit/models/product_model.dart';
+import 'package:ottobit/routes/app_routes.dart';
+import 'package:easy_localization/easy_localization.dart';
 
-class RobotCard extends StatelessWidget {
-  final RobotItem robot;
+class ProductCard extends StatelessWidget {
+  final Product product;
   final VoidCallback? onTap;
+  final String productType; // 'robot' or 'component'
 
-  const RobotCard({super.key, required this.robot, this.onTap});
+  const ProductCard({
+    super.key, 
+    required this.product, 
+    this.onTap,
+    this.productType = 'robot',
+  });
+
+  void _handleTap(BuildContext context) {
+    if (onTap != null) {
+      onTap!();
+    } else {
+      Navigator.pushNamed(
+        context,
+        AppRoutes.productDetail,
+        arguments: {
+          'productId': product.id,
+          'productType': productType,
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +41,7 @@ class RobotCard extends StatelessWidget {
     final smallGap = _clamp(screenWidth * 0.012, 4, 8);
 
     return InkWell(
-      onTap: onTap,
+      onTap: () => _handleTap(context),
       borderRadius: BorderRadius.circular(radius),
       child: Container(
         margin: EdgeInsets.all(outerGap),
@@ -45,10 +68,16 @@ class RobotCard extends StatelessWidget {
               ),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: robot.imageUrl != null && robot.imageUrl!.isNotEmpty
+                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
                     ? Image.network(
-                        robot.imageUrl!,
+                        product.imageUrl!,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: const Color(0xFFF3F4F6),
+                          child: const Center(
+                            child: Icon(Icons.smart_toy_outlined, color: Color(0xFF9CA3AF), size: 36),
+                          ),
+                        ),
                       )
                     : Container(
                         color: const Color(0xFFF3F4F6),
@@ -65,14 +94,14 @@ class RobotCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    robot.name,
+                    product.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
                   ),
                   SizedBox(height: smallGap),
                   Text(
-                    _formatCurrency(robot.price),
+                    _formatCurrency(product.price),
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFFEF4444)),
                   ),
                   SizedBox(height: smallGap),
@@ -80,14 +109,14 @@ class RobotCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          robot.brand,
+                          product.brand,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                         ),
                       ),
                       SizedBox(width: smallGap),
-                      Text('Kho ${robot.stockQuantity}',
+                      Text('product.stockQuantity'.tr(namedArgs: {'quantity': product.stockQuantity.toString()}),
                           style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
                     ],
                   ),
@@ -111,13 +140,9 @@ class RobotCard extends StatelessWidget {
     return '${buffer.toString()} đ';
   }
 
-  
-
   double _clamp(double value, double min, double max) {
     if (value < min) return min;
     if (value > max) return max;
     return value;
   }
 }
-
-
