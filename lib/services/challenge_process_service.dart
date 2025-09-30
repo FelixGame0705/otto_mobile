@@ -61,4 +61,25 @@ class ChallengeProcessService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> getMyChallengesByCourse({
+    required String courseId,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    final queryParams = <String, String>{
+      'CourseId': courseId,
+      'PageNumber': pageNumber.toString(),
+      'PageSize': pageSize.toString(),
+    };
+    final response = await _httpService.get(
+      '/v1/challenge-process/my-challenges',
+      queryParams: queryParams,
+      throwOnError: false,
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to load challenge processes by course: ${response.statusCode}');
+  }
 }
