@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
 
 class HomeExploreGrid extends StatelessWidget {
   const HomeExploreGrid({super.key});
@@ -10,8 +11,17 @@ class HomeExploreGrid extends StatelessWidget {
         icon: Icons.library_books,
         label: 'My Enrollments',
         onTap: () {
-          final controller = PrimaryScrollController.of(context);
-          controller.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => Scaffold(
+                appBar: AppBar(title: const Text('My Enrollments')),
+                body: const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: MyEnrollmentsGrid(),
+                ),
+              ),
+            ),
+          );
         },
         color: const Color(0xFF3B82F6),
       ),

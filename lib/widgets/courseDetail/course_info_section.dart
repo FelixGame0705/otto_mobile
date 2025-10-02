@@ -55,23 +55,23 @@ class CourseInfoSection extends StatelessWidget {
             color: const Color(0xFFED8936),
           ),
           
-          const SizedBox(height: 12),
+          // const SizedBox(height: 12),
           
-          _buildInfoRow(
-            icon: Icons.play_lesson,
-            label: 'course.lessonsCount'.tr(),
-            value: '${course.lessonsCount} ${'course.lessonsUnit'.tr()}',
-            color: const Color(0xFF9F7AEA),
-          ),
+          // _buildInfoRow(
+          //   icon: Icons.play_lesson,
+          //   label: 'course.lessonsCount'.tr(),
+          //   value: '${course.lessonsCount} ${'course.lessonsUnit'.tr()}',
+          //   color: const Color(0xFF9F7AEA),
+          // ),
           
-          const SizedBox(height: 12),
+          // const SizedBox(height: 12),
           
-          _buildInfoRow(
-            icon: Icons.people,
-            label: 'course.enrollmentsCount'.tr(),
-            value: '${course.enrollmentsCount} ${'course.peopleUnit'.tr()}',
-            color: const Color(0xFF38B2AC),
-          ),
+          // _buildInfoRow(
+          //   icon: Icons.people,
+          //   label: 'course.enrollmentsCount'.tr(),
+          //   value: '${course.enrollmentsCount} ${'course.peopleUnit'.tr()}',
+          //   color: const Color(0xFF38B2AC),
+          // ),
           
           const SizedBox(height: 20),
           

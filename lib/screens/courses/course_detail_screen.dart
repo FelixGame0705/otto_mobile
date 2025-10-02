@@ -117,7 +117,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     return AppScaffold(
       title: 'course.detailTitle'.tr(),
       showAppBar: false, // We'll use custom header
-      gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+      gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       child: _buildContent(),
     );
   }

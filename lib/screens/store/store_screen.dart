@@ -17,6 +17,7 @@ class StoreScreen extends StatefulWidget {
 class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStateMixin {
   final RobotService _robotService = RobotService();
   final ComponentService _componentService = ComponentService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   RobotPageData? _robotPage;
   ComponentListResponse? _componentPage;
   bool _loading = true;
@@ -31,6 +32,9 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   final TextEditingController _maxPriceCtrl = TextEditingController();
   final TextEditingController _minAgeCtrl = TextEditingController();
   final TextEditingController _maxAgeCtrl = TextEditingController();
+  // Slider states
+  RangeValues _priceRange = const RangeValues(0, 1000);
+  RangeValues _ageRange = const RangeValues(6, 18);
   bool _inStock = false;
   String _orderBy = 'Name';
   String _orderDirection = 'ASC';
@@ -49,6 +53,11 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       }
     });
     _load();
+    // Initialize controllers from sliders so current API calls keep working
+    _minPriceCtrl.text = _priceRange.start.round().toString();
+    _maxPriceCtrl.text = _priceRange.end.round().toString();
+    _minAgeCtrl.text = _ageRange.start.round().toString();
+    _maxAgeCtrl.text = _ageRange.end.round().toString();
   }
 
   @override
@@ -110,54 +119,44 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    final filter = _buildFilterBar();
-
     if (_tabController == null) {
-      return Column(
-        children: [
-          filter,
-          const Expanded(
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        ],
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
-    return Column(
-      children: [
-        filter,
-        // Tab Bar
-        Container(
-          color: Colors.white,
-          child: TabBar(
-            controller: _tabController!,
-            labelColor: const Color(0xFF00ba4a),
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: const Color(0xFF00ba4a),
-            tabs: [
-              Tab(
-                icon: const Icon(Icons.smart_toy_outlined),
-                text: 'store.robots'.tr(),
-              ),
-              Tab(
-                icon: const Icon(Icons.extension),
-                text: 'store.components'.tr(),
-              ),
-            ],
-          ),
+    return Scaffold(
+      key: _scaffoldKey,
+      drawer: Drawer(
+        width: 320,
+        child: SafeArea(
+          child: SingleChildScrollView(child: _buildFilterBar()),
         ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController!,
-            children: [
-              _buildRobotsTab(),
-              _buildComponentsTab(),
-            ],
-          ),
+      ),
+      appBar: AppBar(
+        title: Text('store.title'.tr()),
+        backgroundColor: const Color(0xFF00ba4a),
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.tune),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-      ],
+        bottom: TabBar(
+          controller: _tabController!,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          tabs: [
+            Tab(icon: const Icon(Icons.smart_toy_outlined), text: 'store.robots'.tr()),
+            Tab(icon: const Icon(Icons.extension), text: 'store.components'.tr()),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController!,
+        children: [
+          _buildRobotsTab(),
+          _buildComponentsTab(),
+        ],
+      ),
     );
   }
 
@@ -314,62 +313,56 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               ],
             ),
             const SizedBox(height: 8),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _minPriceCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'store.priceMin'.tr(),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.attach_money),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('store.price'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text('${_priceRange.start.round()} - ${_priceRange.end.round()}'),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _maxPriceCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'store.priceMax'.tr(),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.attach_money),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
+                RangeSlider(
+                  values: _priceRange,
+                  min: 0,
+                  max: 10000,
+                  divisions: 100,
+                  labels: RangeLabels('${_priceRange.start.round()}', '${_priceRange.end.round()}'),
+                  onChanged: (v) {
+                    setState(() {
+                      _priceRange = v;
+                      _minPriceCtrl.text = v.start.round().toString();
+                      _maxPriceCtrl.text = v.end.round().toString();
+                    });
+                  },
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _minAgeCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'store.ageMin'.tr(),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.child_care_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('store.age'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text('${_ageRange.start.round()} - ${_ageRange.end.round()}'),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _maxAgeCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: 'store.ageMax'.tr(),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.child_care_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
+                RangeSlider(
+                  values: _ageRange,
+                  min: 0,
+                  max: 100,
+                  divisions: 100,
+                  labels: RangeLabels('${_ageRange.start.round()}', '${_ageRange.end.round()}'),
+                  onChanged: (v) {
+                    setState(() {
+                      _ageRange = v;
+                      _minAgeCtrl.text = v.start.round().toString();
+                      _maxAgeCtrl.text = v.end.round().toString();
+                    });
+                  },
                 ),
               ],
             ),

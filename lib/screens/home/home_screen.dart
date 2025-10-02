@@ -90,13 +90,13 @@ class _HomeScreenState extends State<HomeScreen> {
       //       onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
       //     ),
       //   ],
-      // ),
+      // ),s
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color.fromARGB(255, 133, 255, 176), Color.fromARGB(255, 255, 255, 255)],
           ),
         ),
         child: SafeArea(

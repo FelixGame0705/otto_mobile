@@ -199,9 +199,9 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                     onChanged: (v) => _term = v.trim(),
                     decoration: InputDecoration(
                       hintText: 'challenges.searchHint'.tr(),
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                       isDense: true,
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
                 ),
@@ -209,16 +209,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                 ElevatedButton(
                   onPressed: () => _load(refresh: true),
                   child: Text('challenges.search'.tr()),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  tooltip: 'challenges.clear'.tr(),
-                  onPressed: () {
-                    _search.clear();
-                    _term = '';
-                    _load(refresh: true);
-                  },
-                  icon: const Icon(Icons.clear),
                 ),
               ],
             ),

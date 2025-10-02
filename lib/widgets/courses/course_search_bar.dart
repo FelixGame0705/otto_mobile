@@ -21,7 +21,7 @@ class CourseSearchBar extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -59,7 +59,7 @@ class CourseSearchBar extends StatelessWidget {
                   onPressed: onSearchPressed,
                 ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(32),
             borderSide: BorderSide.none,
           ),
           filled: true,

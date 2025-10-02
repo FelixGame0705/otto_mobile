@@ -193,7 +193,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
           ),
         ),
         child: SafeArea(child: _buildContent()),
