@@ -49,11 +49,14 @@ dependencies:
   # Camera/Gallery image picking for detect feature
   image_picker: ^1.1.2
 
-  # Bluetooth Low Energy for micro:bit communication
-  flutter_blue_plus: ^1.32.10
 
-  # Permission handling for BLE
+  # Path provider for file operations
+  path_provider: ^2.1.1
+
+  # Permission handler for Android storage access
   permission_handler: ^11.3.1
+  flutter_js: ^0.8.0
+
 
   # Utilities
   collection: ^1.18.0
@@ -94,6 +97,8 @@ flutter:
     - assets/images/
     - assets/blockly/
     - assets/translations/
+    - assets/firmware/
+    - assets/js/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

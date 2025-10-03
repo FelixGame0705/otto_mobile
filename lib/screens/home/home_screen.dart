@@ -7,6 +7,7 @@ import 'package:ottobit/widgets/home/home_dashboard.dart';
 import 'package:ottobit/widgets/home/home_appbar_profile.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/lesson_process_service.dart';
+import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -104,7 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ? const _MyCoursesTab()
               : _currentIndex == 1
                   ? const _ExploreTab()
-                  : const _StoreTab(),
+                  : _currentIndex == 2
+                      ? const _StoreTab()
+                      : const _UniversalHexTab(),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -116,6 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: const Icon(Icons.library_books), label: 'home.myCourses'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.explore), label: 'home.explore'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.storefront), label: 'home.store'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.build), label: 'Universal Hex'),
         ],
       ),
     );
@@ -150,6 +154,15 @@ class _StoreTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const StoreScreen();
+  }
+}
+
+class _UniversalHexTab extends StatelessWidget {
+  const _UniversalHexTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const UniversalHexScreen();
   }
 }
 

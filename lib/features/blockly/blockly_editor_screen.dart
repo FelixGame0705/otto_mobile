@@ -6,8 +6,6 @@ import 'package:ottobit/core/services/storage_service.dart';
 import 'package:ottobit/features/blockly/blockly_bridge.dart';
 import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
-import 'package:ottobit/services/microbit_ble_service.dart';
-import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
 import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/features/blockly/solution_viewer_screen.dart';
 import 'package:ottobit/routes/app_routes.dart';
@@ -45,7 +43,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   bool _showPythonPreview = false;
 
   // BLE micro:bit integration
-  final MicrobitBleService _bleService = MicrobitBleService();
+  // BLE service removed - using USB instead
   String _receivedData = '';
   bool _showMicrobitPanel = false;
 
@@ -121,19 +119,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   }
 
   void _setupBleListeners() {
-    // Listen for received data from micro:bit
-    _bleService.receivedDataStream.listen((data) {
-      setState(() {
-        _receivedData += data;
-      });
-    });
-
-    // Listen for connection state changes
-    _bleService.connectionStateStream.listen((isConnected) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    // BLE service removed - micro:bit integration disabled
   }
 
   @override
@@ -434,14 +420,14 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   }
 
   Future<void> _sendToMicrobit() async {
-    if (!_bleService.isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Not connected to micro:bit. Please connect first.'),
-        ),
-      );
-      return;
-    }
+    // BLE service removed - micro:bit integration disabled
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('micro:bit integration disabled - use Universal Hex tab instead'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
 
     try {
       final program = await _compileAndGetProgram();
@@ -457,7 +443,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       }
       // Convert fresh compiled program to string and send securely
       String programData = program.toString();
-      await _bleService.sendDataSecurely('PROGRAM:$programData');
+      // BLE service removed
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Program sent to micro:bit!')),
@@ -470,15 +456,13 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   }
 
   Future<void> _openMicrobitConnection() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MicrobitConnectionScreen()),
+    // MicrobitConnectionScreen removed - using USB instead
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Use Universal Hex tab for micro:bit programming'),
+        backgroundColor: Colors.blue,
+      ),
     );
-
-    // Refresh connection state after returning
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   void _clearReceivedData() {
@@ -523,19 +507,15 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
           child: Row(
             children: [
               Icon(
-                _bleService.isConnected
-                    ? Icons.bluetooth_connected
-                    : Icons.bluetooth_disabled,
-                color: _bleService.isConnected ? Colors.green : Colors.red,
+                Icons.bluetooth_disabled,
+                color: Colors.grey,
               ),
               const SizedBox(width: 8),
               Text(
-                _bleService.isConnected
-                    ? 'micro:bit Connected'
-                    : 'micro:bit Disconnected',
+                'micro:bit Disabled',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: _bleService.isConnected ? Colors.green : Colors.red,
+                  color: Colors.grey,
                 ),
               ),
               const Spacer(),
@@ -739,7 +719,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               onPressed: _sendToPhaser,
               icon: const Icon(Icons.send),
             ),
-            if (_bleService.isConnected)
+            if (false) // BLE service removed
               IconButton(
                 tooltip: 'Send to micro:bit',
                 onPressed: _sendToMicrobit,

@@ -14,8 +14,8 @@ import 'package:ottobit/screens/challenges/challenges_screen.dart';
 import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
 import 'package:ottobit/screens/detect/detect_capture_screen.dart';
 import 'package:ottobit/screens/auth/change_password_screen.dart';
-import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
 import 'package:ottobit/screens/products/product_detail_screen.dart';
+import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -34,8 +34,8 @@ class AppRoutes {
   static const String changePassword = '/change-password';
   static const String phaser = '/phaser';
   static const String blockly = '/blockly';
-  static const String microbitConnection = '/microbit-connection';
   static const String detectCapture = '/detect-capture';
+  static const String universalHex = '/universal-hex';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -140,8 +140,8 @@ class AppRoutes {
     changePassword: (context) => const ChangePasswordScreen(),
     phaser: (context) => const PhaserRunnerScreen(),
     blockly: (context) => const BlocklyEditorScreen(),
-    microbitConnection: (context) => const MicrobitConnectionScreen(),
     detectCapture: (context) => const DetectCaptureScreen(),
+    universalHex: (context) => const UniversalHexScreen(),
     productDetail: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is Map<String, dynamic>) {
