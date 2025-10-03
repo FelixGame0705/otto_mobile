@@ -8,6 +8,7 @@ import 'package:ottobit/widgets/common/section_card.dart';
 import 'package:ottobit/widgets/common/language_dropdown.dart';
 import 'package:ottobit/services/student_service.dart';
 import 'package:ottobit/models/student_model.dart';
+import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -127,6 +128,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 12),
                   _buildStudentProfileCard(),
                 ],
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            appBar: AppBar(title: const Text('My Courses')),
+                            body: const Padding(
+                              padding: EdgeInsets.only(top: 8),
+                              child: MyEnrollmentsGrid(),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF00ba4a), width: 2),
+                      foregroundColor: const Color(0xFF00ba4a),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.library_books),
+                    label: const Text('My Courses', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,

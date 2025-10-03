@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/services/challenge_process_service.dart';
-import 'package:ottobit/widgets/challenges/challenge_card.dart';
 import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
 
@@ -176,10 +175,12 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         : 12;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.lessonTitle ?? 'challenges.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
             onPressed: () => _load(refresh: true),
@@ -187,125 +188,295 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _search,
-                    onChanged: (v) => _term = v.trim(),
-                    decoration: InputDecoration(
-                      hintText: 'challenges.searchHint'.tr(),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.search),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.green.withOpacity(0.03),
+              Colors.greenAccent.withOpacity(0.02),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _search,
+                      onChanged: (v) => _term = v.trim(),
+                      decoration: InputDecoration(
+                        hintText: 'challenges.searchHint'.tr(),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: Color(0xFF00ba4a))),
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.search),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00ba4a), foregroundColor: Colors.white),
+                    onPressed: () => _load(refresh: true),
+                    child: Text('challenges.search'.tr()),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.green.withOpacity(0.12)),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () => _load(refresh: true),
-                  child: Text('challenges.search'.tr()),
-                ),
+                child: _loading
+                    ? _ChallengesGridShimmer(cols: _cols(w, o), ratio: _ratio(w, o))
+                    : _error.isNotEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.error, color: Colors.red, size: 56),
+                                const SizedBox(height: 12),
+                                Text(_error, textAlign: TextAlign.center),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: () => _load(refresh: true),
+                                  child: Text('common.retry'.tr()),
+                                ),
+                              ],
+                            ),
+                          )
+                        : _items.isEmpty
+                            ? Center(child: Text('common.notFound'.tr()))
+                            : ListView.separated(
+                                controller: _scroll,
+                                padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 8),
+                                itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
+                                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                itemBuilder: (context, index) {
+                                  if (index == _items.length && _loadingMore) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  }
+                                  if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
+                                    return Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        child: Text('challenges.allShown'.tr(), style: TextStyle(color: Colors.grey[600])),
+                                      ),
+                                    );
+                                  }
+                                  if (index < _items.length) {
+                                    final c = _items[index];
+                                    return _GameChallengeTile(
+                                      challenge: c,
+                                      bestStar: _challengeBestStars[c.id],
+                                      onTap: () async {
+                                        try {
+                                          final detail = await _service.getChallengeDetail(c.id);
+                                          if (!mounted) return;
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => BlocklyEditorScreen(
+                                                initialMapJson: detail.mapJson,
+                                                initialChallengeJson: {
+                                                  ...?detail.challengeJson,
+                                                  'id': detail.id,
+                                                  'lessonId': detail.lessonId,
+                                                  'order': detail.order,
+                                                },
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          final msg = e.toString().replaceFirst('Exception: ', '');
+                                          showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
+                                        }
+                                      },
+                                      index: index,
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChallengesGridShimmer extends StatelessWidget {
+  final int cols;
+  final double ratio;
+  const _ChallengesGridShimmer({required this.cols, required this.ratio});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      itemBuilder: (context, index) => Container(
+        height: 96,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemCount: 6,
+    );
+  }
+}
+
+class _GameChallengeTile extends StatelessWidget {
+  final Challenge challenge;
+  final int? bestStar;
+  final VoidCallback onTap;
+  final int index;
+  const _GameChallengeTile({required this.challenge, required this.bestStar, required this.onTap, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color accent = _palette(index);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withOpacity(0.2), width: 1.5),
+          boxShadow: [
+            BoxShadow(color: accent.withOpacity(0.12), blurRadius: 14, offset: const Offset(0, 6)),
+          ],
+        ),
+        child: Row(
+          children: [
+            _BadgeSphere(color: accent, label: challenge.order.toString()),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          challenge.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        ),
+                      ),
+                      if (bestStar != null) _StarRow(stars: bestStar!.clamp(0, 3)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _Pill(icon: Icons.speed, text: 'Lv ${challenge.difficulty}'),
+                      const SizedBox(width: 8),
+                      _Pill(icon: Icons.access_time, text: '${(challenge.order + 1) * 2}p'),
+                      const Spacer(),
+                      Text('${challenge.submissionsCount} tries', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _palette(int i) {
+    const colors = [Color(0xFF58CC02), Color(0xFF1CB0F6), Color(0xFFFF4B4B), Color(0xFFFFB800), Color(0xFFA560E8)];
+    return colors[i % colors.length];
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _Pill({required this.icon, required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(children: [Icon(icon, size: 14, color: const Color(0xFF6B7280)), const SizedBox(width: 4), Text(text, style: const TextStyle(fontSize: 12))]),
+    );
+  }
+}
+
+class _StarRow extends StatelessWidget {
+  final int stars;
+  const _StarRow({required this.stars});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (i) => Icon(i < stars ? Icons.star : Icons.star_border, size: 16, color: const Color(0xFFFFB800))),
+    );
+  }
+}
+
+class _BadgeSphere extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _BadgeSphere({required this.color, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            bottom: 2,
+            child: Container(width: 40, height: 8, decoration: BoxDecoration(color: Colors.black.withOpacity(0.08), borderRadius: BorderRadius.circular(8))),
+          ),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: [Colors.white, color.withOpacity(0.15)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              border: Border.all(color: color, width: 2),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.white.withOpacity(0.9), blurRadius: 2, offset: const Offset(-1, -1)),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-          : _error.isNotEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error, color: Colors.red, size: 56),
-                        const SizedBox(height: 12),
-                        Text(_error),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () => _load(refresh: true),
-                          child: Text('common.retry'.tr()),
-                        ),
-                      ],
-                    ),
-                  )
-                : _items.isEmpty
-                ? Center(child: Text('common.notFound'.tr()))
-                : GridView.builder(
-                    controller: _scroll,
-                    padding: EdgeInsets.symmetric(horizontal: padH.toDouble()),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: _cols(w, o),
-                      childAspectRatio: _ratio(w, o),
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount:
-                        _items.length +
-                        (_loadingMore ? 1 : 0) +
-                        (!_hasMore && _items.isNotEmpty ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _items.length && _loadingMore) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (index == _items.length + (_loadingMore ? 1 : 0) &&
-                          !_hasMore &&
-                          _items.isNotEmpty) {
-                        return Center(
-                          child: Text(
-                            'challenges.allShown'.tr(),
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                        );
-                      }
-                      if (index < _items.length) {
-                        final c = _items[index];
-                        return ChallengeCard(
-                          challenge: c,
-                          bestStar: _challengeBestStars[c.id],
-                          onTap: () async {
-                            try {
-                              // Fetch latest challenge detail to ensure mapJson/challengeJson are present
-                              final detail = await _service.getChallengeDetail(
-                                c.id,
-                              );
-                              if (!mounted) return;
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => BlocklyEditorScreen(
-                                    initialMapJson: detail.mapJson,
-                                    initialChallengeJson: {
-                                      ...?detail.challengeJson,
-                                      'id': detail.id,
-                                      'lessonId': detail.lessonId,
-                                      'order': detail.order,
-                                    },
-                                  ),
-                                ),
-                              );
-                            } catch (e) {
-                              if (!mounted) return;
-                              final msg = e.toString().replaceFirst(
-                                'Exception: ',
-                                '',
-                              );
-                              showErrorToast(
-                                context,
-                                msg.isNotEmpty
-                                    ? msg
-                                    : 'Đã xảy ra lỗi khi mở thử thách.',
-                              );
-                            }
-                          },
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
+            child: Center(
+              child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 18)),
+            ),
           ),
         ],
       ),

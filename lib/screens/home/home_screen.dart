@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/widgets/courses/explore_courses_tab.dart';
 import 'package:ottobit/screens/store/store_screen.dart';
 import 'package:ottobit/widgets/home/home_dashboard.dart';
-import 'package:ottobit/widgets/home/home_appbar_profile.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/lesson_process_service.dart';
-import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
+import 'package:ottobit/screens/profile/profile_screen.dart';
+import 'package:ottobit/widgets/home/home_shimmers.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,36 +20,25 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final EnrollmentService _enrollmentService = EnrollmentService();
   final LessonProcessService _lessonService = LessonProcessService();
+  bool _tabLoading = true;
 
-  String _fullName = 'Test User';
-  int _totalCourses = 0;
-  int _completedLessons = 0;
-  int _inProgressLessons = 0;
+  // Aggregates kept for potential future appbar profile usage
+  // Removed unused aggregates (can be restored when appbar profile returns)
 
   @override
   void initState() {
     super.initState();
     _loadAppBarProfile();
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) setState(() => _tabLoading = false);
+    });
   }
 
   Future<void> _loadAppBarProfile() async {
     try {
-      final enrolls = await _enrollmentService.getMyEnrollments(pageSize: 10);
-      final progress = await _lessonService.getMyProgress(pageSize: 10);
-      final items = ((progress['data']?['items']) as List?) ?? [];
-      int done = 0;
-      int doing = 0;
-      for (final e in items) {
-        final status = e['status'] as int?; // 3=completed, 2=in progress
-        if (status == 3) done++;
-        if (status == 2) doing++;
-      }
+      await _enrollmentService.getMyEnrollments(pageSize: 10);
+      await _lessonService.getMyProgress(pageSize: 10);
       if (!mounted) return;
-      setState(() {
-        _totalCourses = enrolls.items.length;
-        _completedLessons = done;
-        _inProgressLessons = doing;
-      });
     } catch (_) {
       // Keep silent in AppBar profile
     }
@@ -101,25 +90,35 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: SafeArea(
-          child: _currentIndex == 0
-              ? const _MyCoursesTab()
-              : _currentIndex == 1
-                  ? const _ExploreTab()
-                  : _currentIndex == 2
+          child: _tabLoading
+              ? _TabShimmer(index: _currentIndex)
+              : (_currentIndex == 0
+                  ? const _MyCoursesTab()
+                  : _currentIndex == 1
+                      ? const _ExploreTab()
+              : _currentIndex == 2
                       ? const _StoreTab()
-                      : const _UniversalHexTab(),
+                      : const _ProfileTab()),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+        onTap: (i) {
+          setState(() {
+            _currentIndex = i;
+            _tabLoading = true;
+          });
+          Future.delayed(const Duration(milliseconds: 400), () {
+            if (mounted) setState(() => _tabLoading = false);
+          });
+        },
         selectedItemColor: const Color(0xFF4299E1),
         unselectedItemColor: const Color(0xFF718096),
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.library_books), label: 'home.myCourses'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.explore), label: 'home.explore'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.storefront), label: 'home.store'.tr()),
-          BottomNavigationBarItem(icon: const Icon(Icons.build), label: 'Universal Hex'),
+          BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
@@ -157,12 +156,119 @@ class _StoreTab extends StatelessWidget {
   }
 }
 
-class _UniversalHexTab extends StatelessWidget {
-  const _UniversalHexTab();
+class _ProfileTab extends StatelessWidget {
+  const _ProfileTab();
 
   @override
   Widget build(BuildContext context) {
-    return const UniversalHexScreen();
+    return const ProfileScreen();
+  }
+}
+
+class _TabShimmer extends StatelessWidget {
+  final int index;
+  const _TabShimmer({required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    switch (index) {
+      case 0:
+        return const Padding(
+          padding: EdgeInsets.all(16),
+          child: SectionShimmer(),
+        );
+      case 1:
+        return const _ExploreTabShimmer();
+      case 2:
+        return const _StoreTabShimmer();
+      default:
+        return const _ProfileTabShimmer();
+    }
+  }
+}
+
+class _ExploreTabShimmer extends StatelessWidget {
+  const _ExploreTabShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: GridView.builder(
+        itemCount: 6,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.4,
+        ),
+        itemBuilder: (context, index) => Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StoreTabShimmer extends StatelessWidget {
+  const _StoreTabShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: GridView.builder(
+        itemCount: 8,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.9,
+        ),
+        itemBuilder: (context, index) => Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileTabShimmer extends StatelessWidget {
+  const _ProfileTabShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: Container(height: 48, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: Container(decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -8,13 +8,15 @@ class LessonProcessService {
 
   final HttpService _http = HttpService();
 
-  Future<Map<String, dynamic>> getMyProgress({int pageNumber = 1, int pageSize = 10}) async {
+  Future<Map<String, dynamic>> getMyProgress({int pageNumber = 1, int pageSize = 10, String? courseId}) async {
+    final params = <String, String>{
+      'PageNumber': pageNumber.toString(),
+      'PageSize': pageSize.toString(),
+      if (courseId != null && courseId.isNotEmpty) 'CourseId': courseId,
+    };
     final res = await _http.get(
       '/v1/lesson-process/my-progress',
-      queryParams: {
-        'PageNumber': pageNumber.toString(),
-        'PageSize': pageSize.toString(),
-      },
+      queryParams: params,
       throwOnError: false,
     );
     if (res.statusCode == 200) {

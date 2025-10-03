@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
-import 'package:ottobit/services/lesson_process_service.dart';
-import 'package:ottobit/widgets/home/ongoing_lessons_list.dart';
-import 'package:ottobit/widgets/home/ongoing_lessons_grid.dart';
-import 'package:ottobit/widgets/home/completed_challenges_grid.dart';
-import 'package:ottobit/widgets/home/completed_lessons_chart.dart';
 import 'package:ottobit/widgets/home/home_shimmers.dart';
-import 'package:ottobit/widgets/home/home_explore_grid.dart';
-import 'package:ottobit/widgets/home/home_hero_header.dart';
-import 'package:ottobit/widgets/home/home_stat_cards_row.dart';
-import 'package:ottobit/widgets/home/learning_corner_grid.dart';
+import 'package:ottobit/services/lesson_process_service.dart';
+import 'package:ottobit/services/learning_path_controller.dart';
+import 'package:ottobit/widgets/home/course_selector.dart';
+import 'package:ottobit/widgets/home/learning_path.dart';
+import 'package:ottobit/services/enrollment_service.dart';
+import 'package:ottobit/models/enrollment_model.dart';
+import 'package:ottobit/models/lesson_model.dart';
+import 'package:ottobit/models/lesson_resource_model.dart';
 
 class HomeDashboard extends StatefulWidget {
   const HomeDashboard({super.key});
@@ -19,14 +18,19 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  final LessonProcessService _lessonProcessService = LessonProcessService();
-  // Challenge completed API removed per requirements
-
   bool _loading = true;
   String? _error;
-  // Enrollments removed
-  List<OngoingLessonItem> _ongoingLessons = [];
-  List<CompletedChallengeItem> _completedChallenges = [];
+
+  // Learning path state
+  final EnrollmentService _enrollmentService = EnrollmentService();
+  final LearningPathController _pathController = LearningPathController();
+  List<Enrollment> _enrollments = [];
+  String? _selectedCourseId;
+  List<Lesson> _lessons = [];
+  final Map<String, List<LessonResourceItem>> _lessonIdToResources = {};
+  // Progress for locking
+  final Set<String> _completedLessonIds = <String>{};
+  int? _currentLessonOrder;
 
   @override
   void initState() {
@@ -40,21 +44,73 @@ class _HomeDashboardState extends State<HomeDashboard> {
       _error = null;
     });
     try {
-      // Enrollments call removed
+      // Load enrollments for course selector
+      try {
+        final enrollRes = await _enrollmentService.getMyEnrollments(pageSize: 20);
+        _enrollments = enrollRes.items;
+        if (_enrollments.isNotEmpty) {
+          _selectedCourseId ??= _enrollments.first.courseId;
+        }
+      } catch (e) {
+        // If enrollment API fails, continue with other sections
+        _enrollments = [];
+      }
 
-      final lessonProgRaw = await _lessonProcessService.getMyProgress(pageSize: 10);
-      final lessonItems = ((lessonProgRaw['data']?['items']) as List?) ?? [];
-      _ongoingLessons = lessonItems
-          .map((e) => OngoingLessonItem(
-                title: (e['lessonTitle'] ?? '').toString(),
-                currentChallenge: (e['currentChallengeOrder'] as int?) ?? 0,
-                totalChallenges: (e['totalChallenges'] as int?) ?? 0,
-                lessonId: (e['lessonId'] ?? '').toString(),
-              ))
-          .where((l) => l.totalChallenges == 0 || l.currentChallenge < l.totalChallenges)
-          .toList();
+      // Load learning path data for selected course
+      if (_selectedCourseId != null && _selectedCourseId!.isNotEmpty) {
+        _lessons = await _pathController.loadLessons(_selectedCourseId!);
+        _lessonIdToResources.clear();
+        for (final l in _lessons) {
+          try {
+            final res = await _pathController.loadLessonResourcesPreview(l.id, limit: 3);
+            _lessonIdToResources[l.id] = res;
+          } catch (_) {
+            _lessonIdToResources[l.id] = const <LessonResourceItem>[];
+          }
+        }
 
-      // Completed challenges listing via API is disabled
+        // Load progress to determine locking
+        _completedLessonIds.clear();
+        _currentLessonOrder = null;
+        try {
+          final lessonProgRaw = await LessonProcessService().getMyProgress(pageSize: 100, courseId: _selectedCourseId);
+          final lessonItems = ((lessonProgRaw['data']?['items']) as List?) ?? [];
+          // Compute completed from API status/ratio
+          final Set<String> seenLessonIds = {};
+          for (final e in lessonItems) {
+            final String lessonId = (e['lessonId'] ?? '').toString();
+            final int current = (e['currentChallengeOrder'] as int?) ?? 0;
+            final int total = (e['totalChallenges'] as int?) ?? 0;
+            seenLessonIds.add(lessonId);
+            if (lessonId.isNotEmpty && total > 0 && current >= total) {
+              _completedLessonIds.add(lessonId);
+            }
+          }
+
+          // Determine current: the first lesson in this course that is not completed
+          final sorted = [..._lessons]..sort((a, b) => a.order.compareTo(b.order));
+          _currentLessonOrder = null;
+          for (final l in sorted) {
+            if (!_completedLessonIds.contains(l.id)) {
+              _currentLessonOrder = l.order;
+              break;
+            }
+          }
+          // If API only returns available lessons, ensure lock for not-seen lessons beyond available
+          if (_currentLessonOrder == null && sorted.isNotEmpty) {
+            _currentLessonOrder = sorted.first.order;
+          }
+        } catch (_) {
+          // ignore progress errors; default mapping applies in widget
+        }
+      } else {
+        _lessons = [];
+        _lessonIdToResources.clear();
+        _completedLessonIds.clear();
+        _currentLessonOrder = null;
+      }
+
+      // Completed challenges section removed per new UX
 
       setState(() {
         _loading = false;
@@ -67,29 +123,18 @@ class _HomeDashboardState extends State<HomeDashboard> {
     }
   }
 
+  Future<void> _onSelectCourse(String courseId) async {
+    setState(() => _selectedCourseId = courseId);
+    await _load();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final fakeChartData = const [
-      {'label': 'Mon', 'value': 1},
-      {'label': 'Tue', 'value': 2},
-      {'label': 'Wed', 'value': 0},
-      {'label': 'Thu', 'value': 3},
-      {'label': 'Fri', 'value': 2},
-      {'label': 'Sat', 'value': 1},
-      {'label': 'Sun', 'value': 0},
-    ];
-
     if (_loading) {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: const [
           SectionShimmer(),
-          SizedBox(height: 16),
-          SectionShimmer(),
-          SizedBox(height: 16),
-          ShimmerBar(width: 160, height: 16),
-          SizedBox(height: 12),
-          ShimmerCard(height: 140),
         ],
       );
     }
@@ -109,54 +154,55 @@ class _HomeDashboardState extends State<HomeDashboard> {
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: EdgeInsets.zero,
+        padding: const EdgeInsets.all(16),
         children: [
-          const HomeHeroHeader(greetingName: 'Test User'),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const HomeExploreGrid(),
-                const SizedBox(height: 12),
-                const HomeStatCardsRow(joined: 5000, quickCourseTitle: ''),
-                const SizedBox(height: 16),
-                _section('Bài học đang học'),
-                // EnrollmentsProgressList(enrollments: _enrollments),
-                OngoingLessonsGrid(lessons: _ongoingLessons),
-                const SizedBox(height: 16),
-                // _section('Ongoing Lessons'),
-                // OngoingLessonsGrid(lessons: _ongoingLessons),
-                const SizedBox(height: 16),
-                _section('Completed Challenges'),
-                CompletedChallengesGrid(challenges: _completedChallenges),
-                const SizedBox(height: 16),
-                _section('Completed Lessons Over Time'),
-                CompletedLessonsChart(data: fakeChartData),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Text('Góc vui học tập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                    const Spacer(),
-                    TextButton(onPressed: () {}, child: const Text('Xem tất cả >')),
-                  ],
+          Text(
+            'Lộ trình học',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
                 ),
-                const LearningCornerGrid(),
-              ],
+          ),
+          const SizedBox(height: 12),
+          CourseSelector(
+            enrollments: _enrollments,
+            selectedCourseId: _selectedCourseId,
+            onSelect: (e) => _onSelectCourse(e.courseId),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.green.withOpacity(0.06),
+                  Colors.greenAccent.withOpacity(0.04),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.green.withOpacity(0.15)),
             ),
+            child: _selectedCourseId == null || _selectedCourseId!.isEmpty
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      SizedBox(height: 8),
+                      Text('Hãy chọn một khóa học để xem lộ trình'),
+                      SizedBox(height: 8),
+                    ],
+                  )
+                : LearningPath(
+                    lessons: _lessons,
+                    lessonResources: _lessonIdToResources,
+                    courseId: _selectedCourseId!,
+                    completedLessonIds: _completedLessonIds,
+                    currentLessonOrder: _currentLessonOrder,
+                  ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _section(String title) {
-    return Row(
-      children: [
-        Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        const SizedBox(width: 8),
-        Expanded(child: Divider(color: Colors.grey.shade300)),
-      ],
     );
   }
 }
