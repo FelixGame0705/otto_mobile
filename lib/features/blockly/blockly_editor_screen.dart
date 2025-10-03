@@ -9,6 +9,7 @@ import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/features/blockly/solution_viewer_screen.dart';
 import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
 
 class BlocklyEditorScreen extends StatefulWidget {
   final Map<String, dynamic>? initialMapJson;
@@ -99,6 +100,8 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               final data = {
                 ...compiled,
                 if (_lastXml != null) '__xml': _lastXml,
+                if (widget.initialChallengeJson != null)
+                  '__challenge': widget.initialChallengeJson,
               };
               _storage.saveToPrefs(data);
             }
@@ -718,6 +721,17 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               key: _keyToolbarSend,
               onPressed: _sendToPhaser,
               icon: const Icon(Icons.send),
+            ),
+            IconButton(
+              tooltip: 'Universal Hex',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const UniversalHexScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.usb),
             ),
             if (false) // BLE service removed
               IconButton(

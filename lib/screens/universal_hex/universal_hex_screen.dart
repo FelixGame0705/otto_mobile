@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ottobit/services/universal_hex_service.dart';
 import 'package:ottobit/services/usb_service.dart';
+import 'package:ottobit/services/insert_code_service.dart';
 
 class UniversalHexScreen extends StatefulWidget {
   const UniversalHexScreen({super.key});
@@ -13,6 +14,9 @@ class UniversalHexScreen extends StatefulWidget {
 class _UniversalHexScreenState extends State<UniversalHexScreen> {
   final TextEditingController _pythonController = TextEditingController();
   final UsbService _usbService = UsbService();
+  final TextEditingController _wifiSsidController = TextEditingController();
+  final TextEditingController _wifiPassController = TextEditingController();
+  String? _roomId;
   
   String? _v1Hex;
   String? _v2Hex;
@@ -28,6 +32,7 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
     super.initState();
     _loadFirmware();
     _initializeServices();
+    _roomId = 'room-' + DateTime.now().millisecondsSinceEpoch.toString();
   }
 
   Future<void> _initializeServices() async {
@@ -60,7 +65,16 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
       return;
     }
 
-    final pythonCode = _pythonController.text.trim();
+    // Prefer building from injected insertCode template if Blockly program exists
+    String pythonCode = _pythonController.text.trim();
+    if (pythonCode.isEmpty) {
+      try {
+        pythonCode = await InsertCodeService.buildMainPyFromLatestBlockly();
+        _pythonController.text = pythonCode;
+      } catch (_) {
+        // keep empty => will show error below
+      }
+    }
     if (pythonCode.isEmpty) {
       setState(() {
         _error = 'Please enter Python code';
@@ -98,6 +112,29 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
         _error = 'Failed to build Universal Hex: $e';
         _isBuilding = false;
       });
+    }
+  }
+
+  Future<void> _buildAndFlashFromBlockly() async {
+    setState(() { _error = null; });
+    try {
+      // Build full injected script from embedded template + Blockly program
+      final injected = await InsertCodeService.buildMainPyFromLatestBlockly(
+        wifiSsid: _wifiSsidController.text.trim().isEmpty ? null : _wifiSsidController.text.trim(),
+        wifiPass: _wifiPassController.text.trim().isEmpty ? null : _wifiPassController.text.trim(),
+        actionsRoomId: (_roomId == null || _roomId!.isEmpty) ? null : _roomId,
+      );
+      setState(() { _pythonController.text = injected; });
+
+      // Build
+      await _buildUniversalHex();
+
+      // Flash if device is selected and hex ready
+      if (_universalHex != null && _selectedDevice != null) {
+        await _flashHex();
+      }
+    } catch (e) {
+      setState(() { _error = 'Build/Flash failed: $e'; });
     }
   }
 
@@ -257,6 +294,13 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
         title: const Text('Universal Hex Builder'),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            tooltip: 'Build + Flash from Blockly',
+            onPressed: _buildAndFlashFromBlockly,
+            icon: const Icon(Icons.flash_on),
+          )
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -270,6 +314,58 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const Text(
+                      'WiFi Settings',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _wifiSsidController,
+                            decoration: const InputDecoration(
+                              labelText: 'WiFi SSID',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _wifiPassController,
+                            decoration: const InputDecoration(
+                              labelText: 'WiFi Password',
+                              border: OutlineInputBorder(),
+                            ),
+                            obscureText: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Room ID: ' + (_roomId ?? ''),
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _roomId = 'room-' + DateTime.now().millisecondsSinceEpoch.toString();
+                            });
+                          },
+                          child: const Text('Regenerate Room ID'),
+                        )
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     const Text(
                       'Python Code',
                       style: TextStyle(

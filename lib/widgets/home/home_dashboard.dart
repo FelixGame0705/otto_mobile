@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:ottobit/models/enrollment_model.dart';
-import 'package:ottobit/services/challenge_process_service.dart';
-import 'package:ottobit/services/enrollment_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/services/lesson_process_service.dart';
-import 'package:ottobit/widgets/home/enrollments_progress_list.dart';
 import 'package:ottobit/widgets/home/ongoing_lessons_list.dart';
 import 'package:ottobit/widgets/home/ongoing_lessons_grid.dart';
 import 'package:ottobit/widgets/home/completed_challenges_grid.dart';
@@ -22,13 +19,12 @@ class HomeDashboard extends StatefulWidget {
 }
 
 class _HomeDashboardState extends State<HomeDashboard> {
-  final EnrollmentService _enrollmentService = EnrollmentService();
   final LessonProcessService _lessonProcessService = LessonProcessService();
-  final ChallengeProcessService _challengeService = ChallengeProcessService();
+  // Challenge completed API removed per requirements
 
   bool _loading = true;
   String? _error;
-  List<Enrollment> _enrollments = [];
+  // Enrollments removed
   List<OngoingLessonItem> _ongoingLessons = [];
   List<CompletedChallengeItem> _completedChallenges = [];
 
@@ -44,8 +40,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
       _error = null;
     });
     try {
-      final enrollResp = await _enrollmentService.getMyEnrollments(pageSize: 10);
-      _enrollments = enrollResp.items;
+      // Enrollments call removed
 
       final lessonProgRaw = await _lessonProcessService.getMyProgress(pageSize: 10);
       final lessonItems = ((lessonProgRaw['data']?['items']) as List?) ?? [];
@@ -59,29 +54,14 @@ class _HomeDashboardState extends State<HomeDashboard> {
           .where((l) => l.totalChallenges == 0 || l.currentChallenge < l.totalChallenges)
           .toList();
 
-      if (_enrollments.isNotEmpty) {
-        final courseId = _enrollments.first.courseId;
-        if (courseId.isNotEmpty) {
-          final challengeRaw = await _challengeService.getMyChallengesByCourse(courseId: courseId, pageSize: 10);
-          final items = ((challengeRaw['data']?['items']) as List?) ?? [];
-          _completedChallenges = items
-              .where((e) => e['completedAt'] != null)
-              .map((e) => CompletedChallengeItem(
-                    title: (e['challengeTitle'] ?? '').toString(),
-                    lessonTitle: (e['lessonTitle'] ?? '').toString(),
-                    order: (e['challengeOrder'] ?? 0) as int,
-                    completedAt: (e['completedAt'] ?? '').toString(),
-                  ))
-              .toList();
-        }
-      }
+      // Completed challenges listing via API is disabled
 
       setState(() {
         _loading = false;
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorMapper.toFriendlyMessage(null, fallback: e.toString());
         _loading = false;
       });
     }
