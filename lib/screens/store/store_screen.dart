@@ -123,12 +123,16 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       return const Center(child: CircularProgressIndicator());
     }
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final int gridCount = _calculateCrossAxisCount(screenWidth);
+    final double aspect = _calculateChildAspectRatio(screenWidth);
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
-        width: 320,
+        width: screenWidth < 420 ? screenWidth * 0.9 : 320,
         child: SafeArea(
-          child: SingleChildScrollView(child: _buildFilterBar()),
+          child: SingleChildScrollView(child: _buildFilterBar(screenWidth)),
         ),
       ),
       appBar: AppBar(
@@ -153,14 +157,14 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       body: TabBarView(
         controller: _tabController!,
         children: [
-          _buildRobotsTab(),
-          _buildComponentsTab(),
+          _buildRobotsTab(gridCount, aspect, screenWidth),
+          _buildComponentsTab(gridCount, aspect, screenWidth),
         ],
       ),
     );
   }
 
-  Widget _buildRobotsTab() {
+  Widget _buildRobotsTab(int gridCount, double aspect, double screenWidth) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -191,12 +195,12 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     return RefreshIndicator(
       onRefresh: _load,
       child: GridView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.68,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
+        padding: EdgeInsets.symmetric(horizontal: screenWidth < 360 ? 4 : 8, vertical: screenWidth < 360 ? 4 : 8),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: gridCount,
+          childAspectRatio: aspect,
+          crossAxisSpacing: screenWidth < 360 ? 4 : 8,
+          mainAxisSpacing: screenWidth < 360 ? 4 : 8,
         ),
         itemCount: items.length,
         itemBuilder: (context, index) {
@@ -211,7 +215,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildComponentsTab() {
+  Widget _buildComponentsTab(int gridCount, double aspect, double screenWidth) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -242,12 +246,12 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     return RefreshIndicator(
       onRefresh: _load,
       child: GridView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.68,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
+        padding: EdgeInsets.symmetric(horizontal: screenWidth < 360 ? 4 : 8, vertical: screenWidth < 360 ? 4 : 8),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: gridCount,
+          childAspectRatio: aspect,
+          crossAxisSpacing: screenWidth < 360 ? 4 : 8,
+          mainAxisSpacing: screenWidth < 360 ? 4 : 8,
         ),
         itemCount: items.length,
         itemBuilder: (context, index) {
@@ -262,7 +266,25 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     );
   }
 
-  Widget _buildFilterBar() {
+  int _calculateCrossAxisCount(double width) {
+    if (width < 360) return 1; // very small phones
+    if (width < 600) return 2; // phones
+    if (width < 900) return 3; // small tablets / landscape phones
+    if (width < 1200) return 4; // tablets
+    if (width < 1600) return 5; // small desktops
+    return 6; // large desktops
+  }
+
+  double _calculateChildAspectRatio(double width) {
+    if (width < 360) return 0.85;
+    if (width < 600) return 0.68;
+    if (width < 900) return 0.7;
+    if (width < 1200) return 0.75;
+    if (width < 1600) return 0.78;
+    return 0.8;
+  }
+
+  Widget _buildFilterBar(double screenWidth) {
     return Material(
       elevation: 1,
       color: Colors.white,
@@ -285,10 +307,10 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               ],
             ),
             if (_showFilters) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
+            if (screenWidth < 420) ...[
+              Column(
+                children: [
+                  TextField(
                     controller: _searchCtrl,
                     decoration: InputDecoration(
                       hintText: 'store.search'.tr(),
@@ -297,10 +319,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                       border: const OutlineInputBorder(),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
+                  const SizedBox(height: 8),
+                  TextField(
                     controller: _brandCtrl,
                     decoration: InputDecoration(
                       hintText: 'store.brand'.tr(),
@@ -309,9 +329,37 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                       border: const OutlineInputBorder(),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'store.search'.tr(),
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.search),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _brandCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'store.brand'.tr(),
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.sell_outlined),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,10 +415,10 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
               ],
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
+            if (screenWidth < 420) ...[
+              Column(
+                children: [
+                  DropdownButtonFormField<String>(
                     value: _orderBy,
                     items: [
                       DropdownMenuItem(value: 'Name', child: Text('store.sort.name'.tr())),
@@ -383,10 +431,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                       border: OutlineInputBorder(),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
                     value: _orderDirection,
                     items: [
                       DropdownMenuItem(value: 'ASC', child: Text('store.asc'.tr())),
@@ -398,9 +444,44 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                       border: OutlineInputBorder(),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _orderBy,
+                      items: [
+                        DropdownMenuItem(value: 'Name', child: Text('store.sort.name'.tr())),
+                        DropdownMenuItem(value: 'Price', child: Text('store.sort.price'.tr())),
+                        DropdownMenuItem(value: 'CreatedAt', child: Text('store.sort.created'.tr())),
+                      ],
+                      onChanged: (v) => setState(() => _orderBy = v ?? 'Name'),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _orderDirection,
+                      items: [
+                        DropdownMenuItem(value: 'ASC', child: Text('store.asc'.tr())),
+                        DropdownMenuItem(value: 'DESC', child: Text('store.desc'.tr())),
+                      ],
+                      onChanged: (v) => setState(() => _orderDirection = v ?? 'ASC'),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [

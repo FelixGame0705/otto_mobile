@@ -206,6 +206,8 @@
     "expand": "Expand",
     "search": "Search",
     "brand": "Brand",
+    "price": "Price",
+    "age": "Age",
     "priceMin": "Price from",
     "priceMax": "Price to",
     "ageMin": "Age from",
