@@ -10,6 +10,11 @@ import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/features/blockly/solution_viewer_screen.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
+import 'package:ottobit/services/socket_service.dart';
+import 'package:ottobit/services/room_id_service.dart';
+import 'package:ottobit/services/insert_code_service.dart';
+import 'dart:convert';
+import 'dart:async';
 
 class BlocklyEditorScreen extends StatefulWidget {
   final Map<String, dynamic>? initialMapJson;
@@ -58,6 +63,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   final GlobalKey _keyToolbarSend = GlobalKey();
   final GlobalKey _keyLeftPane = GlobalKey();
   final GlobalKey _keyRightPhaser = GlobalKey();
+  final GlobalKey _keyUniversalHex = GlobalKey();
   TutorialCoachMark? _tutorial;
   bool _tutorialQueued = false;
 
@@ -119,14 +125,227 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _queueTutorialAfterOrientationStable();
     });
+
+    // Initialize Socket.IO connection
+    _initializeSocketConnection();
+    
+    // Start connection monitoring
+    _startConnectionMonitoring();
   }
 
   void _setupBleListeners() {
     // BLE service removed - micro:bit integration disabled
   }
 
+  /// Xử lý event actions từ Socket.IO
+  Future<void> _handleActionsEvent(dynamic data) async {
+    try {
+      debugPrint('🤖 Handling actions event: $data');
+      
+      if (data is! Map<String, dynamic>) {
+        debugPrint('❌ Invalid actions data format');
+        return;
+      }
+
+      final actions = data['actions'] as List<dynamic>?;
+      if (actions == null || actions.isEmpty) {
+        debugPrint('❌ No actions found in data');
+        return;
+      }
+
+      // Hiển thị Toast notification với thông tin chi tiết
+      if (mounted) {
+        final roomId = data['roomId'] as String?;
+        final timestamp = data['timestamp'] as int?;
+        final timeStr = timestamp != null 
+            ? DateTime.fromMillisecondsSinceEpoch(timestamp).toString().substring(11, 19)
+            : '';
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('🤖 Đã nhận ${actions.length} actions từ Socket.IO'),
+                if (roomId != null) Text('Room: $roomId', style: const TextStyle(fontSize: 12)),
+                if (timeStr.isNotEmpty) Text('Time: $timeStr', style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.blue,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+
+      // Kiểm tra PhaserBridge có sẵn sàng không
+      if (_embeddedPhaserBridge == null) {
+        debugPrint('❌ PhaserBridge not ready yet, cannot execute actions');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('⚠️ Phaser game chưa sẵn sàng, vui lòng thử lại'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Gửi RUN_PROGRAM_HEADLESS để compile program và thực thi actions
+      final program = await _compileAndGetProgram();
+      if (program != null) {
+        debugPrint('🤖 Sending RUN_PROGRAM_HEADLESS to compile and execute program...');
+        debugPrint('🤖 Program data: ${jsonEncode(program)}');
+        await _embeddedPhaserBridge!.runProgramHeadless(program);
+        
+        // Hiển thị Toast đang xử lý
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🔄 Đang xử lý chương trình...'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        debugPrint('❌ No program available to execute');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Không có chương trình để thực thi'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+      
+    } catch (e) {
+      debugPrint('❌ Error handling actions event: $e');
+      // Hiển thị Toast lỗi
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Lỗi xử lý actions: $e'),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Khởi tạo kết nối Socket.IO và join room
+  Future<void> _initializeSocketConnection() async {
+    try {
+      // Lấy room ID từ RoomIdService (sẽ tạo mới nếu chưa có)
+      _roomId = _roomIdService.getRoomId();
+      debugPrint('Using room ID: $_roomId');
+
+      // Set callback cho event actions
+      _socketService.setOnActionsReceived(_handleActionsEvent);
+
+      // Kiểm tra xem Socket.IO đã connect chưa
+      if (_socketService.isConnected) {
+        debugPrint('✅ Socket.IO already connected, skipping connection');
+        // Cập nhật UI
+        if (mounted) {
+          setState(() {});
+        }
+        return;
+      }
+
+      // Kết nối tới Socket.IO server với auto-reconnection
+      final connected = await _socketService.connect();
+      if (connected) {
+        debugPrint('Socket.IO connected successfully');
+        
+        // Hiển thị Toast kết nối thành công
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('✅ Đã kết nối Socket.IO'),
+              duration: const Duration(seconds: 2),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        
+        // Join room với ID đã tạo
+        final joined = await _socketService.joinRoom(_roomId!);
+        if (joined) {
+          debugPrint('Successfully joined room: $_roomId');
+          
+          // Hiển thị Toast join room thành công
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('🚪 Đã join room: $_roomId'),
+                duration: const Duration(seconds: 2),
+                backgroundColor: Colors.blue,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        } else {
+          debugPrint('Failed to join room: $_roomId');
+          
+          // Hiển thị Toast join room thất bại
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('❌ Không thể join room: $_roomId'),
+                duration: const Duration(seconds: 3),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+        
+        // Cập nhật UI
+        if (mounted) {
+          setState(() {});
+        }
+      } else {
+        debugPrint('Failed to connect to Socket.IO server - auto-reconnection will be attempted');
+        
+        // Hiển thị Toast đang thử kết nối lại
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('🔄 Đang thử kết nối Socket.IO...'),
+              duration: const Duration(seconds: 3),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error initializing Socket.IO connection: $e');
+      // Auto-reconnection sẽ được xử lý bởi SocketService
+    }
+  }
+
   @override
   void dispose() {
+    // KHÔNG disconnect Socket.IO khi chuyển màn hình
+    // Socket.IO sẽ được duy trì để nhận events từ server
+    // Chỉ disconnect khi app thực sự đóng (được xử lý ở main.dart)
+    
+    // Stop connection monitoring
+    _connectionMonitorTimer?.cancel();
+    
     // Restore all orientations when leaving this screen
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -178,10 +397,110 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
 
   PhaserBridge? _embeddedPhaserBridge;
   final ChallengeService _challengeService = ChallengeService();
+  
+  // Socket.IO integration
+  final SocketService _socketService = SocketService.instance;
+  final RoomIdService _roomIdService = RoomIdService.instance;
+  String? _roomId;
+  Timer? _connectionMonitorTimer;
 
   bool get _isFirstChallengeOfLesson {
     final order = widget.initialChallengeJson?["order"];
     return order == 1 || order == "1";
+  }
+
+  /// Trigger build and flash from Blockly trong Universal Hex dialog
+  void _triggerBuildAndFlashFromBlockly() {
+    // Gọi method buildAndFlashFromBlockly thông qua callback
+    _buildAndFlashFromBlocklyCallback();
+  }
+
+  /// Bắt đầu monitoring connection status
+  void _startConnectionMonitoring() {
+    _connectionMonitorTimer?.cancel();
+    _connectionMonitorTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
+      // Cập nhật UI để reflect connection status
+      setState(() {});
+      
+      // Log connection status for debugging
+      if (!_socketService.isConnected) {
+        debugPrint('⚠️ Socket.IO connection lost - auto-reconnection in progress');
+      }
+    });
+  }
+
+  /// Callback để build and flash from Blockly
+  Future<void> _buildAndFlashFromBlocklyCallback() async {
+    try {
+      // Lấy Python code từ Blockly program hiện tại
+      final program = await _compileAndGetProgram();
+      if (program == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ No Blockly program available to build from'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Lấy room ID hiện tại
+      final roomId = _roomIdService.getRoomId();
+      
+      // Build Python code từ Blockly program
+      final pythonCode = await InsertCodeService.buildMainPyFromLatestBlockly(
+        wifiSsid: null, // Có thể lấy từ dialog sau
+        wifiPass: null, // Có thể lấy từ dialog sau
+        actionsRoomId: roomId,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Generated Python code from Blockly program (${pythonCode.length} chars)'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Tìm UniversalHexScreen widget và gọi method buildAndFlashFromBlockly
+      final universalHexState = _keyUniversalHex.currentState;
+      if (universalHexState != null) {
+        // Gọi method buildAndFlashFromBlockly
+        await (universalHexState as dynamic).buildAndFlashFromBlockly();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🔄 Building Universal Hex from Blockly program...'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+      
+      debugPrint('🤖 Generated Python code: $pythonCode');
+      
+    } catch (e) {
+      debugPrint('❌ Error building from Blockly: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error building from Blockly: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _queueTutorialAfterOrientationStable() async {
@@ -416,11 +735,6 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
     }
   }
 
-  void _toggleMicrobitPanel() {
-    setState(() {
-      _showMicrobitPanel = !_showMicrobitPanel;
-    });
-  }
 
   Future<void> _sendToMicrobit() async {
     // BLE service removed - micro:bit integration disabled
@@ -430,32 +744,6 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         backgroundColor: Colors.orange,
       ),
     );
-    return;
-
-    try {
-      final program = await _compileAndGetProgram();
-      if (program == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'No program to send. Please create some blocks first.',
-            ),
-          ),
-        );
-        return;
-      }
-      // Convert fresh compiled program to string and send securely
-      String programData = program.toString();
-      // BLE service removed
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Program sent to micro:bit!')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to send program: $e')));
-    }
   }
 
   Future<void> _openMicrobitConnection() async {
@@ -648,7 +936,28 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Blockly Editor'),
+          title: Row(
+            children: [
+              const Text('Blockly Editor'),
+              const SizedBox(width: 8),
+              // Socket.IO connection indicator
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _socketService.isConnected ? Colors.green : Colors.red,
+                ),
+              ),
+              if (_roomId != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  'Room: ${_roomId!.toString()}...',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ],
+          ),
           actions: [
             IconButton(
               tooltip: 'Detect from Image',
@@ -693,17 +1002,17 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               ),
               key: _keyToolbarPython,
             ),
-            IconButton(
-              tooltip: 'micro:bit Panel',
-              onPressed: _toggleMicrobitPanel,
-              icon: Icon(
-                Icons.bluetooth,
-                color: _showMicrobitPanel
-                    ? Theme.of(context).primaryColor
-                    : null,
-              ),
-              key: _keyToolbarMicrobit,
-            ),
+            // IconButton(
+            //   tooltip: 'micro:bit Panel',
+            //   onPressed: _toggleMicrobitPanel,
+            //   icon: Icon(
+            //     Icons.bluetooth,
+            //     color: _showMicrobitPanel
+            //         ? Theme.of(context).primaryColor
+            //         : null,
+            //   ),
+            //   key: _keyToolbarMicrobit,
+            // ),
             IconButton(
               tooltip: 'New',
               key: _keyToolbarNew,
@@ -724,21 +1033,9 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             ),
             IconButton(
               tooltip: 'Universal Hex',
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const UniversalHexScreen(),
-                  ),
-                );
-              },
+              onPressed: _showUniversalHexDialog,
               icon: const Icon(Icons.usb),
             ),
-            if (false) // BLE service removed
-              IconButton(
-                tooltip: 'Send to micro:bit',
-                onPressed: _sendToMicrobit,
-                icon: const Icon(Icons.bluetooth_connected),
-              ),
           ],
         ),
         body: Row(
@@ -759,6 +1056,75 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Hiển thị Universal Hex dialog
+  void _showUniversalHexDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.7),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.95,
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              // Header với nút đóng
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00ba4a),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.usb, color: Colors.white),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Universal Hex Builder',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Build + Flash from Blockly',
+                      onPressed: () {
+                        // Gọi method buildAndFlashFromBlockly từ UniversalHexScreen
+                        _triggerBuildAndFlashFromBlockly();
+                      },
+                      icon: const Icon(Icons.flash_on, color: Colors.white),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      tooltip: 'Close Universal Hex',
+                    ),
+                  ],
+                ),
+              ),
+              // Universal Hex content
+              Expanded(
+                child: UniversalHexScreen(
+                  key: _keyUniversalHex,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

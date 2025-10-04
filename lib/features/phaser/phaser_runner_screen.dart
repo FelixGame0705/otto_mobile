@@ -112,9 +112,10 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('🎉 onVictory callback called with data: $data');
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          final message = data['message'] as String? ?? 'Congratulations! You won!';
           _showStatusDialog(
             'VICTORY',
-            'Congratulations! You won!',
+            message,
             Colors.green,
             data,
           );
@@ -126,7 +127,8 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('💀 onDefeat callback called with data: $data');
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showStatusDialog('LOSE', 'Game Over!', Colors.red, data);
+          final message = data['message'] as String? ?? 'Game Over!';
+          _showStatusDialog('LOSE', message, Colors.red, data);
         });
       }
     };
@@ -148,6 +150,12 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           );
         });
       }
+    };
+
+    _bridge.onProgramCompiled = (data) {
+      debugPrint('🤖 onProgramCompiled callback called with data: $data');
+      // Không cần hiển thị dialog cho program compiled
+      // Chỉ log để debug
     };
   }
 

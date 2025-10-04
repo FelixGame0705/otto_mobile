@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 class BlocklyToInsertCode {
   // Embedded insertCode.py template
@@ -13,8 +14,8 @@ WIFI_TIMEOUT_MS = 10000
 RESPONSE_TIMEOUT_MS = 8000
 RESPONSE_CHECK_INTERVAL = 50
 MAX_RESPONSE_CHECKS = 40
-WIFI_SSID = "Phuc Quan"
-WIFI_PASS = "09092003@"
+WIFI_SSID = "Heo"
+WIFI_PASS = "giadinhheo123@"
 
 # Action queue to record steps: f,r,l,b and final v/d
 ACTION_QUEUE = []
@@ -393,22 +394,6 @@ def isRed():
     c = _cell_counts()
     return c.get("red", 0) > 0
 
-_victory_required = {"yellow":0, "red":0, "green":0}
-for v in challengeJson.get("victory", {}).get("byType", []):
-    for k in ("yellow", "red", "green"):
-        try:
-            _victory_required[k] += int(v.get(k, 0))
-        except:
-            pass
-_victory_collected = {"yellow":0, "red":0, "green":0}
-
-def _check_victory():
-    return (
-        _victory_collected["yellow"] >= _victory_required["yellow"] and
-        _victory_collected["red"] >= _victory_required["red"] and
-        _victory_collected["green"] >= _victory_required["green"]
-    )
-
 _vars = {"i": 0}
 def _eval_condition(cond):
     try:
@@ -443,57 +428,21 @@ def _eval_condition(cond):
         return False
     return False
 
-def _repeat_range(var_name, start, end, step, body_fn):
-    try:
-        s = int(start)
-        e = int(end)
-        st = int(step) if int(step) != 0 else 1
-    except:
-        s = start
-        e = end
-        st = 1
-    if s <= e and st < 0:
-        st = -st
-    if s >= e and st > 0:
-        st = -st
-    _vars[str(var_name)] = s
-    iters = 0
-    max_iters = 1000
-    def _done(v):
-        return (st > 0 and v > e) or (st < 0 and v < e)
-    v = s
-    while not _done(v) and iters < max_iters:
-        _vars[str(var_name)] = v
-        try:
-            body_fn()
-        except:
-            pass
-        v = v + st
-        iters += 1
-    _vars[str(var_name)] = v
-
-
 def _collect_color(color, n=1):
     col = str(color or "").lower()
-    if col not in ("yellow", "green", "red"):
+    action = {"yellow": "collectYellow", "green": "collectGreen", "red": "collectRed"}.get(col)
+    if not action:
         return
+    
     for _ in range(int(n)):
+        append_action(action)
         c = _cell_counts()
         if not c.get("allowed", True):
             continue
         if c.get(col, 0) > 0:
             c[col] -= 1
-            try:
-                _victory_collected[col] += 1
-            except:
-                pass
-
 
 def user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound):
-    startSound()
-    # BODY WILL BE REPLACED
-    finishSound()
-
 
 class UARTComm:
     def __init__(self):
@@ -550,24 +499,21 @@ class UARTComm:
                         pass
             sleep(20)
         return response
-
-r = Robot()
-uart_comm = UARTComm()
-display.scroll("READY")
-
+    
 def handle_wifi_connection(timeout_ms=3000):
-    display.show(Image.ARROW_E)
+    display.show(Image.ALL_CLOCKS, loop=True, wait=False)
     # Check AT
     resp, _ = uart_comm.send_line("AT")
     if not resp_has(resp, ("OK",)):
-        display.scroll("AT NG")
-        display.show(Image.NO)
+        display.scroll("WIFI FAIL")
+        display.show(Image.SAD)
         return False
     # Set station mode
     uart_comm.send_line("AT+CWMODE=1")
     # Already connected?
     resp, _ = uart_comm.send_line("AT+CWJAP?")
     if (WIFI_SSID in resp) and resp_has(resp, ("GOT IP", "OK")):
+        display.scroll("WIFI OK")
         display.show(Image.HAPPY)
         return True
     # Join AP (short wait)
@@ -585,6 +531,7 @@ def handle_wifi_connection(timeout_ms=3000):
         return False
 
 def send_actions_queue():
+    display.show(Image.ALL_CLOCKS, loop=True, wait=False)
     actions_json = ('"' + '","'.join(ACTION_QUEUE) + '"') if len(ACTION_QUEUE) > 0 else ''
     body = '{"id":"' + ACTIONS_ROOM_ID + '","actions":[' + actions_json + ']}'
     req = (
@@ -600,52 +547,55 @@ def send_actions_queue():
     resp, _ = uart_comm.send_line('AT+CIPSTART="TCP","{}",{}'.format(ACTIONS_API_HOST, ACTIONS_API_PORT))
     resp += uart_comm.read_for(3000)
     if not resp_has(resp, ("CONNECT", "OK")):
-        display.scroll("HTTP NG")
+        display.scroll("S FAIL")
         return False
     # Send request length
     resp, _ = uart_comm.send_line("AT+CIPSEND={}".format(len(req)))
     resp += uart_comm.read_for(1500)
     if not resp_has(resp, (">",)):
-        display.scroll("SEND NG")
+        display.scroll("S FAIL")
         uart_comm.send_line("AT+CIPCLOSE")
         return False
     # Send HTTP request
     uart_comm.write_raw(req)
-    http_resp = uart_comm.read_for(5000)
+    http_resp = uart_comm.read_for(3000)
     uart_comm.send_line("AT+CIPCLOSE")
     if resp_has(http_resp, ("HTTP/1.1",)):
-        display.scroll("QUEUE OK")
+        display.scroll("S OK")
         try:
             ACTION_QUEUE[:] = []
         except:
             pass
         return True
-    display.scroll("QUEUE NG")
+    display.scroll("S FAIL")
     return False
 
-def show_ready():
+r = Robot()
+uart_comm = UARTComm()
+isConnected = handle_wifi_connection(20000)
+if isConnected:
     display.scroll("READY")
+else:
+    display.scroll("NO WIFI")
 while True:
     if button_a.was_pressed():
-        run_route(r)
-        display.clear()
-        if (len(ACTION_QUEUE) > 0) and handle_wifi_connection(20000):
-            # Send actions queue after connecting WiFi
-            try:
-                send_actions_queue()
-            except:
-                pass
-        sleep(3000)
-        show_ready()
+        if isConnected:
+            run_route(r)
+            display.clear()
+            if len(ACTION_QUEUE) > 0:
+                try:
+                    send_actions_queue()
+                except:
+                    pass
+        else:
+            display.scroll("NO WIFI")
+        
     elif button_b.was_pressed():
-        send_actions_queue()
-        r.clear_all()
-        display.show(Image.SKULL)
-        display.clear()
-        sleep(3000)
-        show_ready()
-        sleep(500)
-        reset()
+        isConnected = handle_wifi_connection(20000)
+        if isConnected:
+            display.scroll("READY")
+        else:
+            display.scroll("NO WIFI")
     sleep(100)
 ''';
 
@@ -753,12 +703,6 @@ while True:
     } else {
       _emitNodes(out, actions.whereType<Map<String, dynamic>>().toList(), indent: 1);
     }
-    out.writeln('    if _check_victory():');
-    out.writeln('        append_action(\'victory\')');
-    out.writeln('        display.show(Image.YES)');
-    out.writeln('    else:');
-    out.writeln('        append_action(\'defeat\')');
-    out.writeln('        display.show(Image.NO)');
     out.writeln('    finishSound()');
     return out.toString();
   }
@@ -898,6 +842,16 @@ while True:
       default:
         return op; // Assume already a Python operator
     }
+  }
+
+  /// Tạo room ID ngẫu nhiên cho Socket.IO (rút gọn)
+  static String generateRoomId() {
+    final random = Random();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final randomNum = random.nextInt(999);
+    // Chỉ lấy 4 chữ số cuối của timestamp để rút gọn (vì đã có "room-")
+    final shortTimestamp = timestamp.toString().substring(timestamp.toString().length - 4);
+    return 'room-$shortTimestamp$randomNum';
   }
 }
 

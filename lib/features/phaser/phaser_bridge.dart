@@ -15,6 +15,7 @@ class PhaserBridge {
   Function(Map<String, dynamic>)? onProgress;
   Function(Map<String, dynamic>)? onError;
   Function(Map<String, dynamic>)? onReady;
+  Function(Map<String, dynamic>)? onProgramCompiled;
 
   // Pending requests for async operations
   final Map<String, Completer<dynamic>> _pendingRequests = {};
@@ -130,6 +131,20 @@ class PhaserBridge {
                 channel: 'PhaserChannel',
                 type: 'event',
                 event: 'ready', // normalize to lowercase for Dart side
+                data: data
+              }));
+            }
+          });
+
+
+          // Program Compiled Actions listener
+          window.PhaserChannel.on('PROGRAM_COMPILED_ACTIONS', function(data) {
+            console.log('🤖 Program compiled actions received:', data);
+            if (window.FlutterFromPhaser) {
+              window.FlutterFromPhaser.postMessage(JSON.stringify({
+                channel: 'PhaserChannel',
+                type: 'event',
+                event: 'program_compiled',
                 data: data
               }));
             }
@@ -508,6 +523,23 @@ class PhaserBridge {
             debugPrint('✅ READY received: $data');
             onReady?.call(data);
             break;
+          case 'program_compiled':
+            debugPrint('🤖 PROGRAM_COMPILED received: $data');
+            onProgramCompiled?.call(data);
+            
+            // Xử lý kết quả thắng/thua từ PROGRAM_COMPILED_ACTIONS
+            final result = data['result'] as Map<String, dynamic>?;
+            if (result != null) {
+              final isVictory = result['isVictory'] as bool? ?? false;
+              if (isVictory) {
+                debugPrint('🎉 Victory from PROGRAM_COMPILED: $result');
+                onVictory?.call(result);
+              } else {
+                debugPrint('💀 Defeat from PROGRAM_COMPILED: $result');
+                onDefeat?.call(result);
+              }
+            }
+            break;
           case 'connection_test':
             debugPrint('🔍 Connection test result: $data');
             break;
@@ -640,7 +672,32 @@ class PhaserBridge {
     return await callGameMethod<bool>('loadMap', {'mapKey': mapKey});
   }
 
-  // Cleanup
+  /// Chạy program headless để compile và lấy kết quả
+  Future<void> runProgramHeadless(Map<String, dynamic> program) async {
+    if (_controller == null) {
+      debugPrint('❌ PhaserBridge not initialized');
+      return;
+    }
+
+    try {
+      developer.log('🤖 Running program headless: ${program['programName']}');
+      String programJson = jsonEncode(program);
+      await _controller!.runJavaScript('''
+        console.log('🤖 Sending RUN_PROGRAM_HEADLESS event...');
+        if (window.PhaserChannel) {
+          window.PhaserChannel.sendEvent('RUN_PROGRAM_HEADLESS', { program: $programJson });
+          console.log('✅ RUN_PROGRAM_HEADLESS event sent');
+        } else {
+          console.log('❌ PhaserChannel not available');
+          throw new Error('PhaserChannel not available');
+        }
+      ''');
+    } catch (e) {
+      debugPrint('❌ Error sending RUN_PROGRAM_HEADLESS: $e');
+      onError?.call({'error': e.toString(), 'type': 'run_program_headless_error'});
+    }
+  }
+
   void dispose() {
     _pendingRequests.clear();
     
@@ -657,5 +714,6 @@ class PhaserBridge {
     onProgress = null;
     onError = null;
     onReady = null;
+    onProgramCompiled = null;
   }
 }

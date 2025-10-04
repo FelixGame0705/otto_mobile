@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:ottobit/services/universal_hex_service.dart';
 import 'package:ottobit/services/usb_service.dart';
 import 'package:ottobit/services/insert_code_service.dart';
+import 'package:ottobit/services/room_id_service.dart';
 
 class UniversalHexScreen extends StatefulWidget {
-  const UniversalHexScreen({super.key});
+  final String? initialPythonCode;
+  const UniversalHexScreen({super.key, this.initialPythonCode});
 
   @override
   State<UniversalHexScreen> createState() => _UniversalHexScreenState();
@@ -16,6 +18,7 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
   final UsbService _usbService = UsbService();
   final TextEditingController _wifiSsidController = TextEditingController();
   final TextEditingController _wifiPassController = TextEditingController();
+  final RoomIdService _roomIdService = RoomIdService.instance;
   String? _roomId;
   
   String? _v1Hex;
@@ -32,7 +35,12 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
     super.initState();
     _loadFirmware();
     _initializeServices();
-    _roomId = 'room-' + DateTime.now().millisecondsSinceEpoch.toString();
+    _roomId = _roomIdService.getRoomId();
+    
+    // Set initial Python code nếu có
+    if (widget.initialPythonCode != null) {
+      _pythonController.text = widget.initialPythonCode!;
+    }
   }
 
   Future<void> _initializeServices() async {
@@ -115,28 +123,6 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
     }
   }
 
-  Future<void> _buildAndFlashFromBlockly() async {
-    setState(() { _error = null; });
-    try {
-      // Build full injected script from embedded template + Blockly program
-      final injected = await InsertCodeService.buildMainPyFromLatestBlockly(
-        wifiSsid: _wifiSsidController.text.trim().isEmpty ? null : _wifiSsidController.text.trim(),
-        wifiPass: _wifiPassController.text.trim().isEmpty ? null : _wifiPassController.text.trim(),
-        actionsRoomId: (_roomId == null || _roomId!.isEmpty) ? null : _roomId,
-      );
-      setState(() { _pythonController.text = injected; });
-
-      // Build
-      await _buildUniversalHex();
-
-      // Flash if device is selected and hex ready
-      if (_universalHex != null && _selectedDevice != null) {
-        await _flashHex();
-      }
-    } catch (e) {
-      setState(() { _error = 'Build/Flash failed: $e'; });
-    }
-  }
 
   Future<void> _flashHex() async {
     if (_universalHex == null) {
@@ -279,6 +265,30 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
     );
   }
 
+  /// Public method để build and flash from Blockly
+  Future<void> buildAndFlashFromBlockly() async {
+    setState(() { _error = null; });
+    try {
+      // Build full injected script from embedded template + Blockly program
+      final injected = await InsertCodeService.buildMainPyFromLatestBlockly(
+        wifiSsid: _wifiSsidController.text.trim().isEmpty ? null : _wifiSsidController.text.trim(),
+        wifiPass: _wifiPassController.text.trim().isEmpty ? null : _wifiPassController.text.trim(),
+        actionsRoomId: (_roomId == null || _roomId!.isEmpty) ? null : _roomId,
+      );
+      setState(() { _pythonController.text = injected; });
+
+      // Build
+      await _buildUniversalHex();
+
+      // Flash if device is selected and hex ready
+      if (_universalHex != null && _selectedDevice != null) {
+        await _flashHex();
+      }
+    } catch (e) {
+      setState(() { _error = 'Build/Flash failed: $e'; });
+    }
+  }
+
   @override
   void dispose() {
     _pythonController.dispose();
@@ -289,20 +299,7 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Universal Hex Builder'),
-        backgroundColor: const Color(0xFF00ba4a),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            tooltip: 'Build + Flash from Blockly',
-            onPressed: _buildAndFlashFromBlockly,
-            icon: const Icon(Icons.flash_on),
-          )
-        ],
-      ),
-      body: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -358,7 +355,7 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
                         TextButton(
                           onPressed: () {
                             setState(() {
-                              _roomId = 'room-' + DateTime.now().millisecondsSinceEpoch.toString();
+                              _roomId = _roomIdService.generateNewRoomId();
                             });
                           },
                           child: const Text('Regenerate Room ID'),
@@ -522,7 +519,6 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
             ],
           ],
         ),
-      ),
     );
   }
 }
