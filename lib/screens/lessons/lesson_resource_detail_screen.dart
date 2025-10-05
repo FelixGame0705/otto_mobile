@@ -52,8 +52,16 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7FAFC),
       appBar: AppBar(
-        title: Text(_item?.title ?? 'resource.title'.tr()),
+        backgroundColor: const Color(0xFFF7FAFC),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: const Color(0xFF1F2937),
+        title: Text(
+          _item?.title ?? 'resource.title'.tr(),
+          style: const TextStyle(color: Color(0xFF1F2937)),
+        ),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -68,6 +76,12 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
                       const SizedBox(height: 12),
                       ElevatedButton(
                         onPressed: _load,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00ba4a),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
                         child: Text('common.retry'.tr()),
                       ),
                     ],
@@ -76,38 +90,54 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
               : _item == null
                   ? Center(child: Text('resource.notFound'.tr()))
                   : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          LessonResourceMeta(item: _item!),
-                          AspectRatio(
-                            aspectRatio: 14 / 9,
-                            child: LessonResourceView(url: _item!.fileUrl),
-                          ),
-                          const SizedBox(height: 8),
-                          // Note composer (manual time selection or pick current if supported)
-                          LessonNoteComposer(
-                            lessonId: _item!.lessonId,
-                            lessonResourceId: _item!.id,
-                            getCurrentSeconds: null,
-                            onSaved: () => _notesKey.currentState?.reload(),
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              'Ghi chú của tôi',
-                              style: TextStyle(fontWeight: FontWeight.w700),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            LessonResourceMeta(item: _item!),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              child: AspectRatio(
+                                aspectRatio: 14 / 9,
+                                child: LessonResourceView(url: _item!.fileUrl),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          LessonNoteList(
-                            key: _notesKey,
-                            lessonId: _item!.lessonId,
-                            lessonResourceId: _item!.id,
-                            onJumpTo: null,
-                          ),
-                          const SizedBox(height: 24),
-                        ],
+                            // Note composer (manual time selection or pick current if supported)
+                            LessonNoteComposer(
+                              lessonId: _item!.lessonId,
+                              lessonResourceId: _item!.id,
+                              getCurrentSeconds: null,
+                              onSaved: () => _notesKey.currentState?.reload(),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.sticky_note_2_outlined, size: 18, color: Color(0xFF475569)),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Ghi chú của tôi',
+                                    style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F2937)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            LessonNoteList(
+                              key: _notesKey,
+                              lessonId: _item!.lessonId,
+                              lessonResourceId: _item!.id,
+                              onJumpTo: null,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
                       ),
                     ),
     );

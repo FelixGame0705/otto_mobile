@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/user_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/widgets/common/section_card.dart';
 import 'package:ottobit/widgets/common/language_dropdown.dart';
@@ -28,11 +29,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUser();
   }
 
+  Future<void> _openEditProfile() async {
+    final fullNameController = TextEditingController(text: _user?.fullName ?? '');
+    final avatarController = TextEditingController(text: _user?.avatar ?? '');
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cập nhật hồ sơ'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: fullNameController,
+                decoration: const InputDecoration(labelText: 'Họ và tên'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: avatarController,
+                decoration: const InputDecoration(labelText: 'Avatar URL'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Huỷ')),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Lưu')),
+          ],
+        );
+      },
+    );
+    if (result == true) {
+      final res = await AuthService.updateProfile(
+        fullName: fullNameController.text.trim().isEmpty ? null : fullNameController.text.trim(),
+        avatarUrl: avatarController.text.trim().isEmpty ? null : avatarController.text.trim(),
+      );
+      if (!mounted) return;
+      if (res.isSuccess) {
+        setState(() { _user = res.user; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res.message ?? 'Cập nhật thành công')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res.message ?? 'Cập nhật thất bại'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   Future<void> _loadUser() async {
     final user = await StorageService.getUser();
-    setState(() {
-      _user = user;
-    });
+    setState(() { _user = user; });
+    // Fetch latest profile from server
+    final res = await AuthService.getProfile();
+    if (res.isSuccess && res.user != null) {
+      setState(() { _user = res.user; });
+    }
     await _loadStudent();
   }
 
@@ -62,27 +114,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           CircleAvatar(
-                            radius: 28,
-                            backgroundColor: const Color.fromARGB(255, 193, 193, 193),
-                            child: const Icon(Icons.person, color: Color(0xFF2D3748)),
+                            radius: 36,
+                            backgroundColor: const Color(0xFFE2E8F0),
+                            backgroundImage: (_user!.avatar != null && _user!.avatar!.isNotEmpty)
+                                ? NetworkImage(_user!.avatar!)
+                                : null,
+                            child: (_user!.avatar == null || _user!.avatar!.isEmpty)
+                                ? const Icon(Icons.person, color: Color(0xFF2D3748), size: 36)
+                                : null,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(_user!.fullName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                Text(_user!.email, style: const TextStyle(color: Color(0xFF718096))),
+                                Text(
+                                  _user!.fullName,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1F2937),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.email_outlined, size: 16, color: Color(0xFF475569)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _user!.email,
+                                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (_user!.phone.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0FDF4),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.phone_outlined, size: 16, color: Color(0xFF16A34A)),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _user!.phone,
+                                          style: const TextStyle(fontSize: 12, color: Color(0xFF166534)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      if (_user!.phone.isNotEmpty) Text('${'profile.phoneLabel'.tr()}: ${_user!.phone}'),
-                      Text('${'profile.idLabel'.tr()}: ${_user!.id}', style: const TextStyle(color: Colors.black54)),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _openEditProfile,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF00ba4a),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              icon: const Icon(Icons.edit_outlined),
+                              label: const Text('Chỉnh sửa hồ sơ', style: TextStyle(fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () async { await _loadUser(); },
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            ),
+                            child: const Icon(Icons.refresh, color: Color(0xFF334155)),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
           ),
@@ -93,42 +221,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: const LanguageDropdown(),
           ),
           const SizedBox(height: 16),
+          // Quick actions
           SectionCard(
-            title: 'profile.security'.tr(),
+            title: 'Quick actions',
             child: Column(
               children: [
-                // Đăng ký làm Student
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: _creatingStudent || _student != null ? null : _handleCreateStudent,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF4299E1), width: 2),
-                      foregroundColor: const Color(0xFF4299E1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: _creatingStudent
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.school),
-                    label: Text(
-                        _student != null
-                            ? 'profile.student.alreadyStudent'.tr()
-                            : _creatingStudent
-                                ? 'profile.student.registering'.tr()
-                                : 'profile.student.registerButton'.tr(),
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                if (_student != null) ...[
-                  const SizedBox(height: 12),
-                  _buildStudentProfileCard(),
-                ],
-                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -174,6 +271,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF3182CE), width: 2),
+                      foregroundColor: const Color(0xFF3182CE),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SectionCard(
+            title: 'profile.security'.tr(),
+            child: Column(
+              children: [
+                // Đăng ký làm Student
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _creatingStudent || _student != null ? null : _handleCreateStudent,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF4299E1), width: 2),
+                      foregroundColor: const Color(0xFF4299E1),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: _creatingStudent
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.school),
+                    label: Text(
+                        _student != null
+                            ? 'profile.student.alreadyStudent'.tr()
+                            : _creatingStudent
+                                ? 'profile.student.registering'.tr()
+                                : 'profile.student.registerButton'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                if (_student != null) ...[
+                  const SizedBox(height: 12),
+                  _buildStudentProfileCard(),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
                   child: ElevatedButton.icon(
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.changePassword),
                     style: ElevatedButton.styleFrom(
@@ -184,21 +334,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     icon: const Icon(Icons.password),
                     label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF3182CE), width: 2),
-                      foregroundColor: const Color(0xFF3182CE),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.receipt_long),
-                    label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

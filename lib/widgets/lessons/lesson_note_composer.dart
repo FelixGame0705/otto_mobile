@@ -79,7 +79,7 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
-              const Text('Chọn thời gian', style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text('Chọn thời gian', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF00ba4a))),
               SizedBox(
                 height: 200,
                 child: CupertinoTimerPicker(
@@ -159,10 +159,21 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
           const SizedBox(height: 8),
           Row(
             children: [
-              OutlinedButton.icon(
+              ElevatedButton.icon(
                 onPressed: _openTimePicker,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF334155),
+                  elevation: 3,
+                  shadowColor: Colors.black12,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                ),
                 icon: const Icon(Icons.access_time),
-                label: const Text('Chọn thời gian'),
+                label: const Text('Chọn thời gian', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -182,8 +193,16 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
             alignment: Alignment.centerRight,
             child: ElevatedButton.icon(
               onPressed: _submitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00ba4a),
+                foregroundColor: Colors.white,
+                elevation: 4,
+                shadowColor: Colors.black26,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
               icon: const Icon(Icons.save_outlined, size: 18),
-              label: _submitting ? const Text('Đang lưu...') : const Text('Lưu'),
+              label: _submitting ? const Text('Đang lưu...') : const Text('Lưu', style: TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
         ],
