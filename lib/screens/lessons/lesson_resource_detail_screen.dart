@@ -4,6 +4,8 @@ import 'package:ottobit/models/lesson_resource_model.dart';
 import 'package:ottobit/services/lesson_resource_service.dart';
 import 'package:ottobit/widgets/lessons/lesson_resource_meta.dart';
 import 'package:ottobit/widgets/lessons/lesson_resource_view.dart';
+import 'package:ottobit/widgets/lessons/lesson_note_composer.dart';
+import 'package:ottobit/widgets/lessons/lesson_note_list.dart';
 
 class LessonResourceDetailScreen extends StatefulWidget {
   final String resourceId;
@@ -16,6 +18,7 @@ class LessonResourceDetailScreen extends StatefulWidget {
 
 class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen> {
   final LessonResourceService _service = LessonResourceService();
+  final GlobalKey<LessonNoteListState> _notesKey = GlobalKey<LessonNoteListState>();
   LessonResourceItem? _item;
   bool _loading = true;
   String? _error;
@@ -72,13 +75,40 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
                 )
               : _item == null
                   ? Center(child: Text('resource.notFound'.tr()))
-                  : Column(
-                      children: [
-                        LessonResourceMeta(item: _item!),
-                        Expanded(
-                          child: LessonResourceView(url: _item!.fileUrl),
-                        ),
-                      ],
+                  : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          LessonResourceMeta(item: _item!),
+                          AspectRatio(
+                            aspectRatio: 14 / 9,
+                            child: LessonResourceView(url: _item!.fileUrl),
+                          ),
+                          const SizedBox(height: 8),
+                          // Note composer (manual time selection or pick current if supported)
+                          LessonNoteComposer(
+                            lessonId: _item!.lessonId,
+                            lessonResourceId: _item!.id,
+                            getCurrentSeconds: null,
+                            onSaved: () => _notesKey.currentState?.reload(),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'Ghi chú của tôi',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          LessonNoteList(
+                            key: _notesKey,
+                            lessonId: _item!.lessonId,
+                            lessonResourceId: _item!.id,
+                            onJumpTo: null,
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
                     ),
     );
   }
