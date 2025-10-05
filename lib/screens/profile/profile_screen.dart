@@ -159,6 +159,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFED8936), width: 2),
+                      foregroundColor: const Color(0xFFED8936),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.shopping_cart),
+                    label: Text('cart.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
                   child: ElevatedButton.icon(
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.changePassword),
                     style: ElevatedButton.styleFrom(
@@ -169,6 +184,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     icon: const Icon(Icons.password),
                     label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF3182CE), width: 2),
+                      foregroundColor: const Color(0xFF3182CE),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

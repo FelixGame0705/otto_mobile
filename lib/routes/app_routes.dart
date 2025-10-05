@@ -16,6 +16,11 @@ import 'package:ottobit/screens/detect/detect_capture_screen.dart';
 import 'package:ottobit/screens/auth/change_password_screen.dart';
 import 'package:ottobit/screens/products/product_detail_screen.dart';
 import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
+import 'package:ottobit/screens/cart/cart_screen.dart';
+import 'package:ottobit/screens/order/checkout_screen.dart';
+import 'package:ottobit/screens/order/orders_screen.dart';
+import 'package:ottobit/screens/order/order_detail_screen.dart';
+import 'package:ottobit/models/cart_model.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -36,6 +41,10 @@ class AppRoutes {
   static const String blockly = '/blockly';
   static const String detectCapture = '/detect-capture';
   static const String universalHex = '/universal-hex';
+  static const String cart = '/cart';
+  static const String checkout = '/checkout';
+  static const String orders = '/orders';
+  static const String orderDetail = '/order-detail';
 
   static Map<String, WidgetBuilder> get routes => {
     login: (context) => const LoginScreen(),
@@ -162,6 +171,31 @@ class AppRoutes {
           child: Text('Thiếu thông tin sản phẩm'),
         ),
       );
+    },
+    cart: (context) => const CartScreen(),
+    checkout: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final cartItems = args['cartItems'] as List<CartItem>?;
+        final cartSummary = args['cartSummary'] as CartSummary?;
+        if (cartItems != null) {
+          return CheckoutScreen(
+            cartItems: cartItems,
+            cartSummary: cartSummary,
+          );
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin giỏ hàng'),
+        ),
+      );
+    },
+    orders: (context) => const OrdersScreen(),
+    orderDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) return OrderDetailScreen(orderId: args);
+      return const Scaffold(body: Center(child: Text('Thiếu mã đơn hàng')));
     },
   };
 }

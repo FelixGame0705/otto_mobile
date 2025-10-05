@@ -5,8 +5,10 @@ import 'package:ottobit/screens/store/store_screen.dart';
 import 'package:ottobit/widgets/home/home_dashboard.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/lesson_process_service.dart';
+import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/screens/profile/profile_screen.dart';
 import 'package:ottobit/widgets/home/home_shimmers.dart';
+import 'package:ottobit/routes/app_routes.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,7 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final EnrollmentService _enrollmentService = EnrollmentService();
   final LessonProcessService _lessonService = LessonProcessService();
+  final CartService _cartService = CartService();
   bool _tabLoading = true;
+  int _cartItemCount = 0;
 
   // Aggregates kept for potential future appbar profile usage
   // Removed unused aggregates (can be restored when appbar profile returns)
@@ -29,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadAppBarProfile();
+    _loadCartCount();
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) setState(() => _tabLoading = false);
     });
@@ -41,6 +46,19 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
     } catch (_) {
       // Keep silent in AppBar profile
+    }
+  }
+
+  Future<void> _loadCartCount() async {
+    try {
+      final response = await _cartService.getCartSummary();
+      if (mounted) {
+        setState(() {
+          _cartItemCount = response.data?.itemsCount ?? 0;
+        });
+      }
+    } catch (_) {
+      // Keep silent if cart fails to load
     }
   }
 
@@ -121,6 +139,44 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'Profile'),
         ],
       ),
+      floatingActionButton: _cartItemCount > 0
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.cart);
+              },
+              backgroundColor: const Color(0xFF48BB78),
+              child: Stack(
+                children: [
+                  const Icon(Icons.shopping_cart, color: Colors.white),
+                  if (_cartItemCount > 0)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          _cartItemCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            )
+          : null,
     );
   }
 

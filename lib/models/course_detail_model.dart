@@ -6,6 +6,8 @@ class CourseDetail {
   final String title;
   final String description;
   final String imageUrl;
+  final int price;
+  final int type; // 1 = free, 2 = paid
   final DateTime createdAt;
   final DateTime updatedAt;
   final int lessonsCount;
@@ -18,6 +20,8 @@ class CourseDetail {
     required this.title,
     required this.description,
     required this.imageUrl,
+    required this.price,
+    required this.type,
     required this.createdAt,
     required this.updatedAt,
     required this.lessonsCount,
@@ -32,10 +36,12 @@ class CourseDetail {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      type: (json['type'] as num?)?.toInt() ?? 1,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      lessonsCount: json['lessonsCount'] ?? 0,
-      enrollmentsCount: json['enrollmentsCount'] ?? 0,
+      lessonsCount: (json['lessonsCount'] as num?)?.toInt() ?? 0,
+      enrollmentsCount: (json['enrollmentsCount'] as num?)?.toInt() ?? 0,
       createdByName: json['createdByName'] ?? '',
     );
   }
@@ -47,6 +53,8 @@ class CourseDetail {
       'title': title,
       'description': description,
       'imageUrl': imageUrl,
+      'price': price,
+      'type': type,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'lessonsCount': lessonsCount,
@@ -62,6 +70,14 @@ class CourseDetail {
   String get formattedUpdatedAt {
     return DateFormat('dd/MM/yyyy').format(updatedAt);
   }
+
+  String get formattedPrice {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return '${formatter.format(price)} VNĐ';
+  }
+
+  bool get isFree => type == 1;
+  bool get isPaid => type == 2;
 }
 
 class CourseDetailApiResponse {

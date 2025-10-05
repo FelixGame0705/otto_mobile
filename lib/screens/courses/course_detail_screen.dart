@@ -8,6 +8,8 @@ import 'package:ottobit/widgets/courseDetail/course_info_section.dart';
 import 'package:ottobit/widgets/courseDetail/course_action_buttons.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/enrollment_service.dart';
+import 'package:ottobit/services/cart_service.dart';
+import 'package:ottobit/models/cart_model.dart';
 import 'package:share_plus/share_plus.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -26,17 +28,21 @@ class CourseDetailScreen extends StatefulWidget {
 
 class _CourseDetailScreenState extends State<CourseDetailScreen> {
   final CourseDetailService _courseDetailService = CourseDetailService();
+  final CartService _cartService = CartService();
 
   CourseDetail? _course;
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isEnrolled = false;
   bool _isEnrolling = false;
+  bool _isInCart = false;
+  bool _isAddingToCart = false;
 
   @override
   void initState() {
     super.initState();
     _loadCourseDetail();
+    _checkCartStatus();
   }
 
   Future<void> _loadCourseDetail() async {
@@ -59,6 +65,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _isLoading = false;
         });
         print('State updated with course: ${_course?.title}');
+        
+        // Check cart status for paid courses
+        if (_course != null && _course!.isPaid) {
+          _checkCartStatus();
+        }
       }
     } catch (e) {
       print('Error loading course detail: $e');
@@ -102,6 +113,65 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _checkCartStatus() async {
+    if (_course == null || !_course!.isPaid) return;
+    
+    try {
+      final response = await _cartService.checkItemExists(_course!.id);
+      if (mounted) {
+        setState(() {
+          _isInCart = response.data ?? false;
+        });
+      }
+    } catch (e) {
+      print('Error checking cart status: $e');
+    }
+  }
+
+  Future<void> _handleAddToCart() async {
+    if (_course == null || !_course!.isPaid) return;
+
+    setState(() {
+      _isAddingToCart = true;
+    });
+
+    try {
+      final request = AddToCartRequest(
+        courseId: _course!.id,
+        unitPrice: _course!.price,
+      );
+      
+      await _cartService.addToCart(request);
+      
+      if (mounted) {
+        setState(() {
+          _isInCart = true;
+          _isAddingToCart = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('cart.addedSuccessfully'.tr()),
+            backgroundColor: const Color(0xFF48BB78),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isAddingToCart = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('cart.addError'.tr() + ': $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -223,10 +293,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           // Action Buttons
           if (!widget.hideEnroll)
             CourseActionButtons(
-              onEnroll: _handleEnroll,
+              onEnroll: _course!.isFree ? _handleEnroll : null,
+              onAddToCart: _course!.isPaid ? _handleAddToCart : null,
               onShare: _handleShare,
               isEnrolled: _isEnrolled,
-              isLoading: _isEnrolling,
+              isLoading: _isEnrolling || _isAddingToCart,
+              isPaid: _course!.isPaid,
+              isInCart: _isInCart,
+              price: _course!.isPaid ? _course!.formattedPrice : null,
             )
           else
             Padding(
@@ -241,36 +315,37 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
             ),
           
-          // Lessons Button
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.lessons,
-                    arguments: {
-                      'courseId': widget.courseId,
-                      'courseTitle': _course?.title,
-                    },
-                  );
-                },
-                icon: const Icon(Icons.menu_book),
-                label: Text('course.viewLessons'.tr()),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF48BB78),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+          // Lessons Button (hidden in read-only mode)
+          if (!widget.hideEnroll)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.lessons,
+                      arguments: {
+                        'courseId': widget.courseId,
+                        'courseTitle': _course?.title,
+                      },
+                    );
+                  },
+                  icon: const Icon(Icons.menu_book),
+                  label: Text('course.viewLessons'.tr()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF48BB78),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 2,
                   ),
-                  elevation: 2,
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
