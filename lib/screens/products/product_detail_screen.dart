@@ -224,11 +224,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildProductImage() {
     final List<String> gallery = [];
-    if (_product?.imageUrl != null && _product!.imageUrl!.isNotEmpty) {
-      gallery.add(_product!.imageUrl!);
+    final productImageUrl = _product?.imageUrl;
+    
+    if (productImageUrl != null && productImageUrl.isNotEmpty && productImageUrl.trim().isNotEmpty) {
+      gallery.add(productImageUrl);
     }
     if (_images.isNotEmpty) {
-      gallery.addAll(_images.map((e) => e.url));
+      gallery.addAll(_images.map((e) => e.url).where((url) => url.isNotEmpty));
     }
 
     if (gallery.isEmpty) {
@@ -302,15 +304,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           style: const TextStyle(
             fontSize: 16,
             color: Color(0xFF6B7280),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          _formatCurrency(_product!.price),
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFEF4444),
           ),
         ),
         const SizedBox(height: 16),
@@ -678,19 +671,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text('common.close'.tr()),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Add to cart or selection logic here
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${'product.addedToCart'.tr()}: ${component.name}'),
-                  backgroundColor: const Color(0xFF48BB78),
-                ),
-              );
-            },
-            child: Text('product.addToCart'.tr()),
           ),
         ],
       ),

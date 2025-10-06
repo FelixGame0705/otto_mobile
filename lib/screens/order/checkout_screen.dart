@@ -227,12 +227,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Text('order.title'.tr(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                         Text('${widget.cartItems.length} ${'items'.tr()}', style: TextStyle(color: Colors.grey[700])),
                       ],
-                    ),
-                    Chip(
-                      label: Text(_paymentMethod == 'bank_transfer' ? 'order.bankTransfer'.tr() : 'order.cod'.tr()),
-                      backgroundColor: const Color(0xFFEDE9FE),
-                      labelStyle: const TextStyle(color: Color(0xFF6D28D9), fontWeight: FontWeight.w600),
-                    ),
+                    )
                   ],
                 ),
               ),

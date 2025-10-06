@@ -126,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = i;
             _tabLoading = true;
           });
+          _loadCartCount(); // Refresh cart count on tab change
           Future.delayed(const Duration(milliseconds: 400), () {
             if (mounted) setState(() => _tabLoading = false);
           });

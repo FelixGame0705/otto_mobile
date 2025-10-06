@@ -239,7 +239,7 @@
     "adding": "Đang thêm...",
     "addedSuccessfully": "Đã thêm vào giỏ hàng thành công!",
     "addError": "Không thể thêm vào giỏ hàng",
-    "removeItem": "Xóa sản phẩm",
+    "removeItem": "Xóa",
     "itemRemoved": "Đã xóa sản phẩm khỏi giỏ hàng",
     "removeError": "Không thể xóa sản phẩm",
     "clearCart": "Xóa tất cả",

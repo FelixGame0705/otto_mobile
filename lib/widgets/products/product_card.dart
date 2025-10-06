@@ -68,23 +68,7 @@ class ProductCard extends StatelessWidget {
               ),
               child: AspectRatio(
                 aspectRatio: 1,
-                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        product.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: const Color(0xFFF3F4F6),
-                          child: const Center(
-                            child: Icon(Icons.smart_toy_outlined, color: Color(0xFF9CA3AF), size: 36),
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: const Color(0xFFF3F4F6),
-                        child: const Center(
-                          child: Icon(Icons.smart_toy_outlined, color: Color(0xFF9CA3AF), size: 36),
-                        ),
-                      ),
+                child: _buildProductImage(),
               ),
             ),
             // Content
@@ -98,11 +82,6 @@ class ProductCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
-                  ),
-                  SizedBox(height: smallGap),
-                  Text(
-                    _formatCurrency(product.price),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFFEF4444)),
                   ),
                   SizedBox(height: smallGap),
                   Row(
@@ -129,15 +108,43 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  String _formatCurrency(int value) {
-    final s = value.toString();
-    final buffer = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      final idx = s.length - i;
-      buffer.write(s[i]);
-      if (idx > 1 && idx % 3 == 1) buffer.write('.');
+
+  Widget _buildProductImage() {
+    final imageUrl = product.imageUrl;
+    
+    if (imageUrl == null || imageUrl.isEmpty || imageUrl.trim().isEmpty) {
+      return Container(
+        color: const Color(0xFFF3F4F6),
+        child: const Center(
+          child: Icon(Icons.smart_toy_outlined, color: Color(0xFF9CA3AF), size: 36),
+        ),
+      );
     }
-    return '${buffer.toString()} đ';
+    
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: const Color(0xFFF3F4F6),
+          child: const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF9CA3AF)),
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: const Color(0xFFF3F4F6),
+          child: const Center(
+            child: Icon(Icons.broken_image_outlined, color: Color(0xFF9CA3AF), size: 36),
+          ),
+        );
+      },
+    );
   }
 
   double _clamp(double value, double min, double max) {
