@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/enrollment_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/enrollment_service.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class MyEnrollmentsGrid extends StatefulWidget {
   const MyEnrollmentsGrid({super.key});
@@ -225,7 +226,10 @@ class _EnrollmentCard extends StatelessWidget {
               'courseId': enrollment.courseId,
               'hideEnroll': true,
             },
-          );
+          ).then((_) {
+            // Refresh cart count when returning from course detail
+            HomeScreen.refreshCartCount(context);
+          });
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(

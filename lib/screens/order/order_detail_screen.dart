@@ -4,6 +4,7 @@ import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/models/order_model.dart';
 import 'package:ottobit/services/order_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -120,7 +121,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   'courseId': it.courseId,
                   'hideEnroll': true,
                 },
-              );
+              ).then((_) {
+                // Refresh cart count when returning from course detail
+                HomeScreen.refreshCartCount(context);
+              });
             },
           ),
         )),

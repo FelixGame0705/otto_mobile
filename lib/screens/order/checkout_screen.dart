@@ -5,6 +5,7 @@ import 'package:ottobit/models/cart_model.dart';
 import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/services/order_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -173,6 +174,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
 
+        // Refresh cart count in home screen
+        HomeScreen.refreshCartCount(context);
+        
         // Navigate to orders list
         Navigator.of(context).pushReplacementNamed(AppRoutes.orders);
         

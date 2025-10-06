@@ -4,6 +4,7 @@ import 'package:ottobit/models/course_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/course_service.dart';
 import 'package:ottobit/widgets/courses/course_search_bar.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class ExploreCoursesTab extends StatefulWidget {
   const ExploreCoursesTab({super.key});
@@ -262,7 +263,12 @@ class _CourseCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.courseDetail, arguments: course.id),
+                    onPressed: () {
+                      Navigator.pushNamed(context, AppRoutes.courseDetail, arguments: course.id).then((_) {
+                        // Refresh cart count when returning from course detail
+                        HomeScreen.refreshCartCount(context);
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4299E1),
                       foregroundColor: Colors.white,

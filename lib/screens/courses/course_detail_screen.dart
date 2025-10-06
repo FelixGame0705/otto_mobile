@@ -10,6 +10,7 @@ import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/models/cart_model.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 import 'package:share_plus/share_plus.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -44,6 +45,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     _loadCourseDetail();
     _checkCartStatus();
   }
+
 
   Future<void> _loadCourseDetail() async {
     print('=== Loading Course Detail ===');
@@ -151,6 +153,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _isInCart = true;
           _isAddingToCart = false;
         });
+        
+        // Refresh cart count in home screen
+        HomeScreen.refreshCartCount(context);
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

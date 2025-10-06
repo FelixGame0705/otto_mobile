@@ -52,7 +52,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         _load();
       }
     });
-    _load();
+    _loadBoth(); // Load both robots and components initially
     // Initialize controllers from sliders so current API calls keep working
     _minPriceCtrl.text = _priceRange.start.round().toString();
     _maxPriceCtrl.text = _priceRange.end.round().toString();
@@ -64,6 +64,53 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadBoth() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      // Load both robots and components in parallel
+      final futures = await Future.wait([
+        _robotService.getRobots(
+          page: 1,
+          size: 10,
+          searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+          brand: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
+          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
+          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
+          minAge: int.tryParse(_minAgeCtrl.text.trim()),
+          maxAge: int.tryParse(_maxAgeCtrl.text.trim()),
+          inStock: _inStock,
+          orderBy: _orderBy,
+          orderDirection: _orderDirection,
+        ),
+        _componentService.getComponents(
+          page: 1,
+          size: 10,
+          searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
+          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
+          inStock: _inStock,
+          orderBy: _orderBy,
+          orderDirection: _orderDirection,
+        ),
+      ]);
+
+      setState(() {
+        _robotPage = (futures[0] as dynamic).data;
+        _componentPage = (futures[1] as dynamic).data;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -498,7 +545,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
-                  onPressed: _load,
+                  onPressed: _loadBoth,
                   icon: const Icon(Icons.filter_list),
                   label: Text('store.apply'.tr()),
                 ),
@@ -516,7 +563,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                       _orderBy = 'Name';
                       _orderDirection = 'ASC';
                     });
-                    _load();
+                    _loadBoth();
                   },
                   child: Text('store.reset'.tr()),
                 )

@@ -4,9 +4,12 @@ import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/models/cart_model.dart';
 import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class CartScreen extends StatefulWidget {
-  const CartScreen({super.key});
+  final VoidCallback? onCartChanged;
+  
+  const CartScreen({super.key, this.onCartChanged});
 
   @override
   State<CartScreen> createState() => _CartScreenState();
@@ -26,6 +29,13 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     _loadCart();
+  }
+
+  @override
+  void dispose() {
+    // Refresh cart count in home screen when leaving cart
+    HomeScreen.refreshCartCount(context);
+    super.dispose();
   }
 
   Future<void> _loadCart() async {
@@ -77,6 +87,10 @@ class _CartScreenState extends State<CartScreen> {
         
         // Reload summary to update totals
         _loadCart();
+        
+        // Refresh cart count in home screen
+        HomeScreen.refreshCartCount(context);
+        widget.onCartChanged?.call();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -131,6 +145,10 @@ class _CartScreenState extends State<CartScreen> {
           _cartItems.clear();
           _cartSummary = null;
         });
+        
+        // Refresh cart count in home screen
+        HomeScreen.refreshCartCount(context);
+        widget.onCartChanged?.call();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

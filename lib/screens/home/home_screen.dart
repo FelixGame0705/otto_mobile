@@ -7,8 +7,8 @@ import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/lesson_process_service.dart';
 import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/screens/profile/profile_screen.dart';
+import 'package:ottobit/screens/cart/cart_screen.dart';
 import 'package:ottobit/widgets/home/home_shimmers.dart';
-import 'package:ottobit/routes/app_routes.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,9 +16,14 @@ class HomeScreen extends StatefulWidget {
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
+
+  static void refreshCartCount(BuildContext context) {
+    final state = context.findAncestorStateOfType<_HomeScreenState>();
+    state?._loadCartCount();
+  }
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   final EnrollmentService _enrollmentService = EnrollmentService();
   final LessonProcessService _lessonService = LessonProcessService();
@@ -32,11 +37,26 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadAppBarProfile();
     _loadCartCount();
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) setState(() => _tabLoading = false);
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      _loadCartCount();
+    }
   }
 
   Future<void> _loadAppBarProfile() async {
@@ -143,7 +163,17 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _cartItemCount > 0
           ? FloatingActionButton(
               onPressed: () {
-                Navigator.pushNamed(context, AppRoutes.cart);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CartScreen(
+                      onCartChanged: null, // Will be set by the static method
+                    ),
+                  ),
+                ).then((_) {
+                  // Refresh cart count when returning from cart
+                  _loadCartCount();
+                });
               },
               backgroundColor: const Color(0xFF48BB78),
               child: Stack(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/models/course_model.dart';
 import 'package:ottobit/services/course_service.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class HomeHeroHeader extends StatefulWidget {
   final String greetingName;
@@ -120,6 +121,9 @@ class _HomeHeroHeaderState extends State<HomeHeroHeader> with SingleTickerProvid
                   Navigator.of(context).pushNamed(AppRoutes.courseDetail, arguments: {
                     'courseId': course.id,
                     'hideEnroll': false,
+                  }).then((_) {
+                    // Refresh cart count when returning from course detail
+                    HomeScreen.refreshCartCount(context);
                   });
                 }),
               ],
