@@ -21,6 +21,7 @@ import 'package:ottobit/screens/order/checkout_screen.dart';
 import 'package:ottobit/screens/order/orders_screen.dart';
 import 'package:ottobit/screens/order/order_detail_screen.dart';
 import 'package:ottobit/models/cart_model.dart';
+import 'package:ottobit/screens/order/payment_webview_screen.dart';
 import 'package:ottobit/screens/onboarding/onboarding_screen.dart';
 import 'package:ottobit/screens/splash/splash_screen.dart';
 
@@ -47,6 +48,7 @@ class AppRoutes {
   static const String checkout = '/checkout';
   static const String orders = '/orders';
   static const String orderDetail = '/order-detail';
+  static const String paymentWebview = '/payment-webview';
   static const String onboarding = '/onboarding';
   static const String splash = '/splash';
 
@@ -56,7 +58,14 @@ class AppRoutes {
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
     forgotPassword: (context) => const ForgotPasswordScreen(),
-    home: (context) => const HomeScreen(),
+    home: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      int initialIndex = 0;
+      if (args is Map<String, dynamic>) {
+        initialIndex = (args['initialIndex'] as int?) ?? 0;
+      }
+      return HomeScreen(initialIndex: initialIndex);
+    },
     profile: (context) => const ProfileScreen(),
     courseDetail: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
@@ -202,6 +211,20 @@ class AppRoutes {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is String) return OrderDetailScreen(orderId: args);
       return const Scaffold(body: Center(child: Text('Thiếu mã đơn hàng')));
+    },
+    paymentWebview: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final paymentUrl = args['paymentUrl'] as String?;
+        final returnUrl = args['returnUrl'] as String?;
+        final cancelUrl = args['cancelUrl'] as String?;
+        final amount = args['amount'] as int?;
+        final description = args['description'] as String?;
+        if (paymentUrl != null && returnUrl != null && cancelUrl != null) {
+          return PaymentWebViewScreen(paymentUrl: paymentUrl, returnUrl: returnUrl, cancelUrl: cancelUrl, amount: amount, description: description);
+        }
+      }
+      return const Scaffold(body: Center(child: Text('Thiếu tham số thanh toán')));
     },
   };
 }

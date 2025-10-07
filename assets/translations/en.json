@@ -249,7 +249,7 @@
     "adding": "Adding...",
     "addedSuccessfully": "Added to cart successfully!",
     "addError": "Failed to add to cart",
-    "removeItem": "Remove Item",
+    "removeItem": "Remove",
     "itemRemoved": "Item removed from cart",
     "removeError": "Failed to remove item",
     "clearCart": "Clear Cart",

@@ -101,6 +101,42 @@ class OrderService {
       throw Exception('Error getting order: $e');
     }
   }
+
+  Future<String> initiatePayOS({
+    required String paymentTransactionId,
+    required String returnUrl,
+    required String cancelUrl,
+  }) async {
+    try {
+      final body = {
+        'paymentTransactionId': paymentTransactionId,
+        'returnUrl': returnUrl,
+        'cancelUrl': cancelUrl,
+      };
+      final response = await _httpService.post(
+        '/v1/payos/initiate',
+        body: body,
+        throwOnError: false,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonData['data'] as Map<String, dynamic>;
+        final url = (data['paymentUrl'] ?? '').toString();
+        if (url.isEmpty) {
+          throw Exception('Missing paymentUrl');
+        }
+        return url;
+      }
+      final friendly = ApiErrorMapper.fromBody(
+        response.body,
+        statusCode: response.statusCode,
+        fallback: 'Failed to initiate payment: ${response.statusCode}',
+      );
+      throw Exception(friendly);
+    } catch (e) {
+      throw Exception('Error initiating payment: $e');
+    }
+  }
 }
 
 

@@ -11,6 +11,11 @@ import 'package:ottobit/services/student_service.dart';
 import 'package:ottobit/utils/constants.dart';
 import 'package:ottobit/models/student_model.dart';
 import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:typed_data';
+// removed ui/rendering imports used by old editor
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,27 +35,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUser();
   }
 
+  // Removed old direct upload method; using editor + bytes upload instead
+
+  // Upload raw image bytes to Cloudinary
+  Future<String?> _uploadBytesToCloudinary(Uint8List bytes) async {
+    try {
+      final uri = Uri.parse('https://api.cloudinary.com/v1_1/${AppConstants.cloudinaryCloudName}/image/upload');
+      final req = http.MultipartRequest('POST', uri)
+        ..fields['upload_preset'] = AppConstants.cloudinaryUploadPreset
+        ..files.add(http.MultipartFile.fromBytes('file', bytes, filename: 'avatar.png'));
+      final resp = await req.send();
+      final body = await resp.stream.bytesToString();
+      if (resp.statusCode == 200) {
+        final jsonMap = jsonDecode(body) as Map<String, dynamic>;
+        return (jsonMap['secure_url'] ?? jsonMap['url'])?.toString();
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Upload failed: ${resp.statusCode} ${resp.reasonPhrase}')),
+          );
+        }
+        return null;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload error: $e')),
+        );
+      }
+      return null;
+    }
+  }
+
+  // removed avatar editor flow
+
   Future<void> _openEditProfile() async {
     final fullNameController = TextEditingController(text: _user?.fullName ?? '');
     final avatarController = TextEditingController(text: _user?.avatar ?? '');
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
+        final mq = MediaQuery.of(context);
+        final isWide = mq.size.width > 600;
         return AlertDialog(
+          scrollable: true,
+          insetPadding: EdgeInsets.symmetric(
+            horizontal: isWide ? mq.size.width * 0.25 : 16,
+            vertical: 24,
+          ),
           title: const Text('Cập nhật hồ sơ'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
               TextField(
                 controller: fullNameController,
                 decoration: const InputDecoration(labelText: 'Họ và tên'),
               ),
               const SizedBox(height: 8),
-              TextField(
-                controller: avatarController,
-                decoration: const InputDecoration(labelText: 'Avatar URL'),
+              StatefulBuilder(
+                builder: (context, setDialogState) {
+                  final url = avatarController.text.trim();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 140,
+                        height: 140,
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFF1F5F9)),
+                        clipBehavior: Clip.antiAlias,
+                        child: url.isNotEmpty
+                            ? Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image))
+                            : const Icon(Icons.person, size: 64, color: Colors.black26),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final picker = ImagePicker();
+                                final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+                                if (picked == null) return;
+                                final bytes = await picked.readAsBytes();
+                                final link = await _uploadBytesToCloudinary(bytes);
+                                if (link != null) {
+                                  avatarController.text = link;
+                                  setDialogState(() {});
+                                }
+                              },
+                              icon: const Icon(Icons.cloud_upload),
+                              label: const Text('Upload'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (url.isNotEmpty)
+                            OutlinedButton(
+                              onPressed: () {
+                                avatarController.clear();
+                                setDialogState(() {});
+                              },
+                              child: const Text('Xóa ảnh'),
+                            ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
+              ),
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Huỷ')),
@@ -96,6 +194,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _student = resp.data;
       });
     } catch (_) {}
+  }
+
+  Future<void> _handleLogout() async {
+    await StorageService.clearToken();
+    await StorageService.clearRefreshToken();
+    await StorageService.clearTokenExpiry();
+    await StorageService.clearUser();
+    await StorageService.removeValue(AppConstants.onboardingSeenKey);
+    if (!mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
   }
 
   @override
@@ -225,63 +333,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Quick actions
           SectionCard(
             title: 'Quick actions',
-            child: Column(
+            child: GridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 2.6,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => Scaffold(
-                            appBar: AppBar(title: const Text('My Courses')),
-                            body: const Padding(
-                              padding: EdgeInsets.only(top: 8),
-                              child: MyEnrollmentsGrid(),
-                            ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(title: const Text('My Courses')),
+                          body: const Padding(
+                            padding: EdgeInsets.only(top: 8),
+                            child: MyEnrollmentsGrid(),
                           ),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF00ba4a), width: 2),
-                      foregroundColor: const Color(0xFF00ba4a),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.library_books),
-                    label: const Text('My Courses', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF00ba4a), width: 2),
+                    foregroundColor: const Color(0xFF00ba4a),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                  icon: const Icon(Icons.library_books),
+                  label: const Text('My Courses', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFED8936), width: 2),
-                      foregroundColor: const Color(0xFFED8936),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.shopping_cart),
-                    label: Text('cart.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFED8936), width: 2),
+                    foregroundColor: const Color(0xFFED8936),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                  icon: const Icon(Icons.shopping_cart),
+                  label: Text('cart.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF3182CE), width: 2),
-                      foregroundColor: const Color(0xFF3182CE),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.receipt_long),
-                    label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF3182CE), width: 2),
+                    foregroundColor: const Color(0xFF3182CE),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                  icon: const Icon(Icons.receipt_long),
+                  label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _handleLogout,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
+                    foregroundColor: const Color(0xFFE53E3E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -335,29 +445,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     icon: const Icon(Icons.password),
                     label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      await StorageService.clearToken();
-                      await StorageService.clearRefreshToken();
-                      await StorageService.clearTokenExpiry();
-                      await StorageService.clearUser();
-                      await StorageService.removeValue(AppConstants.onboardingSeenKey);
-                      if (!mounted) return;
-                      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
-                      foregroundColor: const Color(0xFFE53E3E),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -599,3 +686,5 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
     );
   }
 }
+
+// Removed avatar editor per request; direct upload flow is used

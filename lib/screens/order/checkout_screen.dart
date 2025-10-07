@@ -174,18 +174,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
 
-        // Refresh cart count in home screen
-        HomeScreen.refreshCartCount(context);
-        
-        // Navigate to orders list
-        Navigator.of(context).pushReplacementNamed(AppRoutes.orders);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('order.success'.tr()),
-            backgroundColor: const Color(0xFF48BB78),
-          ),
-        );
+        // Try initiating PayOS payment
+        final paymentTxId = (order.paymentTransactions.isNotEmpty) ? order.paymentTransactions.first.id : '';
+        if (paymentTxId.isNotEmpty) {
+          final returnUrl = 'https://ottobit.vn/payment/success';
+          final cancelUrl = 'https://ottobit.vn/payment/cancel';
+          final payUrl = await _orderService.initiatePayOS(
+            paymentTransactionId: paymentTxId,
+            returnUrl: returnUrl,
+            cancelUrl: cancelUrl,
+          );
+          if (!mounted) return;
+          await Navigator.of(context).pushNamed(
+            AppRoutes.paymentWebview,
+            arguments: {
+              'paymentUrl': payUrl,
+              'returnUrl': returnUrl,
+              'cancelUrl': cancelUrl,
+              'amount': order.total,
+              'description': 'Pay order ${order.id}',
+            },
+          );
+
+          // Handle return/cancel from webview
+          if (mounted) {
+            // Always refresh cart count
+            HomeScreen.refreshCartCount(context);
+            // Navigate to orders list regardless of result
+            Navigator.of(context).pushReplacementNamed(AppRoutes.orders);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('order.success'.tr()),
+                backgroundColor: const Color(0xFF48BB78),
+              ),
+            );
+          }
+        } else {
+          // Fallback: no payment needed
+          HomeScreen.refreshCartCount(context);
+          Navigator.of(context).pushReplacementNamed(AppRoutes.orders);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('order.success'.tr()),
+              backgroundColor: const Color(0xFF48BB78),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

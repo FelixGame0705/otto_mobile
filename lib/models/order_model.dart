@@ -53,6 +53,7 @@ class OrderModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<OrderItemModel> items;
+  final List<PaymentTransactionModel> paymentTransactions;
 
   OrderModel({
     required this.id,
@@ -64,6 +65,7 @@ class OrderModel {
     required this.createdAt,
     required this.updatedAt,
     required this.items,
+    required this.paymentTransactions,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -80,12 +82,65 @@ class OrderModel {
               ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      paymentTransactions: (json['paymentTransactions'] as List<dynamic>?)
+              ?.map((e) => PaymentTransactionModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
   String get formattedTotal {
     final formatter = NumberFormat('#,###', 'vi_VN');
     return '${formatter.format(total)} VNĐ';
+  }
+}
+
+class PaymentTransactionModel {
+  final String id;
+  final String orderId;
+  final int type;
+  final int method;
+  final String? orderCode;
+  final int amount;
+  final int status;
+  final String? errorCode;
+  final String? errorMessage;
+  final DateTime? paidAt;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  PaymentTransactionModel({
+    required this.id,
+    required this.orderId,
+    required this.type,
+    required this.method,
+    required this.orderCode,
+    required this.amount,
+    required this.status,
+    required this.errorCode,
+    required this.errorMessage,
+    required this.paidAt,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory PaymentTransactionModel.fromJson(Map<String, dynamic> json) {
+    return PaymentTransactionModel(
+      id: (json['id'] ?? '').toString(),
+      orderId: (json['orderId'] ?? '').toString(),
+      type: (json['type'] as num?)?.toInt() ?? 0,
+      method: (json['method'] as num?)?.toInt() ?? 0,
+      orderCode: json['orderCode']?.toString(),
+      amount: (json['amount'] as num?)?.toInt() ?? 0,
+      status: (json['status'] as num?)?.toInt() ?? 0,
+      errorCode: json['errorCode']?.toString(),
+      errorMessage: json['errorMessage']?.toString(),
+      paidAt: (json['paidAt'] != null && json['paidAt'].toString().isNotEmpty)
+          ? DateTime.tryParse(json['paidAt'].toString())
+          : null,
+      createdAt: DateTime.parse(json['createdAt'].toString()),
+      updatedAt: DateTime.parse(json['updatedAt'].toString()),
+    );
   }
 }
 

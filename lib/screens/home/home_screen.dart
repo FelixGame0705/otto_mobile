@@ -12,7 +12,8 @@ import 'package:ottobit/widgets/home/home_shimmers.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+  const HomeScreen({super.key, this.initialIndex = 0});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _currentIndex = widget.initialIndex;
     _loadAppBarProfile();
     _loadCartCount();
     Future.delayed(const Duration(milliseconds: 400), () {

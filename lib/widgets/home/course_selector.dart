@@ -34,7 +34,9 @@ class CourseSelector extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pushNamed('/home', arguments: {'initialIndex': 1});
+              },
               child: const Text('Khám phá khóa học'),
             ),
           ],
