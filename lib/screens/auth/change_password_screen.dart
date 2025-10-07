@@ -54,7 +54,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'auth.changePassword.title'.tr(),
-      gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+      alignment: Alignment.center,
+      gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       child: SectionCard(
         child: Form(
           key: _formKey,
@@ -94,7 +95,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleChangePassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEDFCF2),
+                    backgroundColor: const Color(0xFF17a64b),
                     foregroundColor: const Color(0xFF2D3748),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color.fromARGB(255, 133, 255, 176), Color.fromARGB(255, 255, 255, 255)],
+            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
           ),
         ),
         child: SafeArea(
@@ -151,8 +151,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             if (mounted) setState(() => _tabLoading = false);
           });
         },
-        selectedItemColor: const Color(0xFF4299E1),
-        unselectedItemColor: const Color(0xFF718096),
+        selectedItemColor: const Color(0xFF1aad50),
+        unselectedItemColor: const Color(0xFFc0c7c2),
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.library_books), label: 'home.myCourses'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.explore), label: 'home.explore'.tr()),

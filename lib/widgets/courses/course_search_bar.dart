@@ -39,10 +39,6 @@ class CourseSearchBar extends StatelessWidget {
             color: Color(0xFFA0AEC0),
             fontSize: 16,
           ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Color(0xFF4299E1),
-          ),
           suffixIcon: searchTerm.isNotEmpty
               ? IconButton(
                   icon: const Icon(

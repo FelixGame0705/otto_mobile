@@ -46,4 +46,5 @@ class AppConstants {
   static const String userKey = 'user_data';
   static const String themeKey = 'app_theme';
   static const String languageKey = 'app_language';
+  static const String onboardingSeenKey = 'onboarding_seen';
 }

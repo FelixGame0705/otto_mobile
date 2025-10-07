@@ -61,6 +61,9 @@
     "notFound": "Not found",
     "close": "Close",
     "refresh": "Refresh",
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get started",
     "share": "Share",
     "viewAllShown": "All items shown",
     "viewDetails": "View details",
@@ -84,6 +87,14 @@
     "createdAt": "Created at:",
     "lastUpdated": "Last updated:",
     "challenges": "challenges"
+  },
+  "onb": {
+    "title1": "Learn with fun robots",
+    "desc1": "Explore courses and practice coding with friendly robots.",
+    "title2": "Practice and play",
+    "desc2": "Interactive lessons, challenges and games to level up.",
+    "title3": "Track your progress",
+    "desc3": "Sign in to save learning progress and continue anywhere."
   },
   "home": {
     "myCourses": "My courses",

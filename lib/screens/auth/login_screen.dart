@@ -181,12 +181,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       showAppBar: false,
-      gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
-      child: Form(
-        key: _formKey,
-        child: SectionCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      alignment: Alignment.center,
+      gradientColors: const [Color(0xFFEDFCF2), Color.fromARGB(255, 255, 255, 255)],
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Form(
+            key: _formKey,
+            child: SectionCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 height: 50,
@@ -318,6 +322,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),

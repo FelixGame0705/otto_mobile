@@ -8,6 +8,7 @@ import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/widgets/common/section_card.dart';
 import 'package:ottobit/widgets/common/language_dropdown.dart';
 import 'package:ottobit/services/student_service.dart';
+import 'package:ottobit/utils/constants.dart';
 import 'package:ottobit/models/student_model.dart';
 import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
 
@@ -101,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'profile.title'.tr(),
-      gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+      gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       alignment: Alignment.topCenter,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,6 +335,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     icon: const Icon(Icons.password),
                     label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await StorageService.clearToken();
+                      await StorageService.clearRefreshToken();
+                      await StorageService.clearTokenExpiry();
+                      await StorageService.clearUser();
+                      await StorageService.removeValue(AppConstants.onboardingSeenKey);
+                      if (!mounted) return;
+                      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.onboarding, (route) => false);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
+                      foregroundColor: const Color(0xFFE53E3E),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

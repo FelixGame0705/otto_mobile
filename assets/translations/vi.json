@@ -62,6 +62,9 @@
     "notFound": "Không tìm thấy dữ liệu",
     "close": "Đóng",
     "refresh": "Làm mới",
+    "skip": "Bỏ qua",
+    "next": "Tiếp tục",
+    "getStarted": "Bắt đầu",
     "share": "Chia sẻ",
     "viewAllShown": "Đã hiển thị tất cả",
     "viewDetails": "Xem chi tiết",
@@ -86,6 +89,14 @@
     "createdAt": "Ngày tạo:",
     "lastUpdated": "Cập nhật cuối:",
     "challenges": "thử thách"
+  },
+  "onb": {
+    "title1": "Học cùng robot thú vị",
+    "desc1": "Khám phá khóa học và luyện code với robot thân thiện.",
+    "title2": "Luyện tập và vui chơi",
+    "desc2": "Bài học tương tác, thử thách và trò chơi để nâng trình.",
+    "title3": "Theo dõi tiến trình",
+    "desc3": "Đăng nhập để lưu tiến độ học và tiếp tục ở mọi nơi."
   },
   "home": {
     "myCourses": "Khóa học của tôi",

@@ -21,6 +21,8 @@ import 'package:ottobit/screens/order/checkout_screen.dart';
 import 'package:ottobit/screens/order/orders_screen.dart';
 import 'package:ottobit/screens/order/order_detail_screen.dart';
 import 'package:ottobit/models/cart_model.dart';
+import 'package:ottobit/screens/onboarding/onboarding_screen.dart';
+import 'package:ottobit/screens/splash/splash_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -45,8 +47,12 @@ class AppRoutes {
   static const String checkout = '/checkout';
   static const String orders = '/orders';
   static const String orderDetail = '/order-detail';
+  static const String onboarding = '/onboarding';
+  static const String splash = '/splash';
 
   static Map<String, WidgetBuilder> get routes => {
+    splash: (context) => const SplashScreen(),
+    onboarding: (context) => const OnboardingScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
     forgotPassword: (context) => const ForgotPasswordScreen(),
