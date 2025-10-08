@@ -137,6 +137,46 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
     // BLE service removed - micro:bit integration disabled
   }
 
+  /// Xử lý bất kỳ event nào từ Socket.IO
+  Future<void> _handleAnySocketEvent(String eventName, dynamic data) async {
+    try {
+      debugPrint('📡 Socket event received: $eventName with data: $data');
+      
+      // Hiển thị toast cho tất cả các events (trừ actions vì đã có xử lý riêng)
+      if (eventName != 'actions' && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('📡 Socket Event: $eventName', 
+                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text('Data: ${data.toString().length > 80 
+                    ? data.toString().substring(0, 80) + '...' 
+                    : data.toString()}', 
+                     style: const TextStyle(fontSize: 12, color: Colors.white70)),
+              ],
+            ),
+            duration: const Duration(seconds: 3),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'View',
+              textColor: Colors.white,
+              onPressed: () {
+                _showFullDataDialog({'event': eventName, 'data': data});
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error handling socket event: $e');
+    }
+  }
+
   /// Xử lý event actions từ Socket.IO
   Future<void> _handleActionsEvent(dynamic data) async {
     try {
@@ -153,7 +193,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         return;
       }
 
-      // Hiển thị Toast notification với thông tin chi tiết
+      // Hiển thị Toast notification với thông tin chi tiết về data
       if (mounted) {
         final roomId = data['roomId'] as String?;
         final timestamp = data['timestamp'] as int?;
@@ -161,20 +201,62 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             ? DateTime.fromMillisecondsSinceEpoch(timestamp).toString().substring(11, 19)
             : '';
         
+        // Tạo preview của actions data
+        String actionsPreview = '';
+        if (actions.isNotEmpty) {
+          final firstAction = actions.first;
+          if (firstAction is Map<String, dynamic>) {
+            final actionType = firstAction['type'] ?? 'unknown';
+            final actionData = firstAction['data'] ?? firstAction;
+            actionsPreview = 'Type: $actionType';
+            if (actionData is Map && actionData.isNotEmpty) {
+              final keys = actionData.keys.take(2).join(', ');
+              actionsPreview += ' | Data: {$keys...}';
+            }
+          } else {
+            actionsPreview = 'Data: ${firstAction.toString().length > 50 
+                ? firstAction.toString().substring(0, 50) + '...' 
+                : firstAction.toString()}';
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('🤖 Đã nhận ${actions.length} actions từ Socket.IO'),
-                if (roomId != null) Text('Room: $roomId', style: const TextStyle(fontSize: 12)),
-                if (timeStr.isNotEmpty) Text('Time: $timeStr', style: const TextStyle(fontSize: 12)),
+                Text('🤖 Socket Data Received', 
+                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 4),
+                Text('Actions: ${actions.length} items', 
+                     style: const TextStyle(fontSize: 13)),
+                if (actionsPreview.isNotEmpty) 
+                  Text(actionsPreview, 
+                       style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                if (roomId != null) 
+                  Text('Room: $roomId', 
+                       style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                if (timeStr.isNotEmpty) 
+                  Text('Time: $timeStr', 
+                       style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                const SizedBox(height: 4),
+                Text('Raw data: ${data.toString().length > 100 
+                    ? data.toString().substring(0, 100) + '...' 
+                    : data.toString()}', 
+                     style: const TextStyle(fontSize: 11, color: Colors.white60)),
               ],
             ),
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 5),
             backgroundColor: Colors.blue,
             behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'View Full',
+              textColor: Colors.white,
+              onPressed: () {
+                _showFullDataDialog(data);
+              },
+            ),
           ),
         );
       }
@@ -252,6 +334,9 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
 
       // Set callback cho event actions
       _socketService.setOnActionsReceived(_handleActionsEvent);
+      
+      // Lắng nghe tất cả các events từ socket để hiển thị toast
+      _socketService.setOnAnyEventReceived(_handleAnySocketEvent);
 
       // Kiểm tra xem Socket.IO đã connect chưa
       if (_socketService.isConnected) {
@@ -940,20 +1025,28 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             children: [
               const Text('Blockly Editor'),
               const SizedBox(width: 8),
-              // Socket.IO connection indicator
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _socketService.isConnected ? Colors.green : Colors.red,
+              // Socket.IO connection indicator với tooltip
+              Tooltip(
+                message: _socketService.isConnected 
+                    ? 'Socket.IO Connected' 
+                    : 'Socket.IO Disconnected',
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _socketService.isConnected ? Colors.green : Colors.red,
+                  ),
                 ),
               ),
               if (_roomId != null) ...[
                 const SizedBox(width: 8),
-                Text(
-                  'Room: ${_roomId!.toString()}...',
-                  style: const TextStyle(fontSize: 12),
+                Tooltip(
+                  message: 'Room ID: $_roomId',
+                  child: Text(
+                    'Room: ${_roomId!.toString().substring(0, 8)}...',
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ],
@@ -1036,6 +1129,11 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               onPressed: _showUniversalHexDialog,
               icon: const Icon(Icons.usb),
             ),
+            IconButton(
+              tooltip: 'Socket Debug Info',
+              onPressed: _showSocketDebugInfo,
+              icon: const Icon(Icons.bug_report),
+            ),
           ],
         ),
         body: Row(
@@ -1057,6 +1155,262 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Hiển thị dialog với toàn bộ data từ socket
+  void _showFullDataDialog(dynamic data) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: MediaQuery.of(context).size.height * 0.7,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  const Icon(Icons.data_object, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Socket Data Details',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 8),
+              
+              // Data content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: SelectableText(
+                      const JsonEncoder.withIndent('  ').convert(data),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      // Copy to clipboard
+                      Clipboard.setData(ClipboardData(
+                        text: const JsonEncoder.withIndent('  ').convert(data),
+                      ));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Data copied to clipboard'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: const Text('Copy'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Hiển thị thông tin debug của Socket.IO
+  void _showSocketDebugInfo() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.6,
+          height: MediaQuery.of(context).size.height * 0.5,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                children: [
+                  const Icon(Icons.bug_report, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Socket.IO Debug Info',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const Divider(),
+              const SizedBox(height: 8),
+              
+              // Debug info content
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ..._buildSocketDebugInfo(),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Test Socket Connection:',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () async {
+                              final connected = await _socketService.connect();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(connected 
+                                        ? 'Socket connected successfully' 
+                                        : 'Failed to connect socket'),
+                                    backgroundColor: connected ? Colors.green : Colors.red,
+                                  ),
+                                );
+                              }
+                              Navigator.of(context).pop();
+                              setState(() {});
+                            },
+                            child: const Text('Reconnect'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () async {
+                              await _socketService.testConnection();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Test message sent to server'),
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text('Send Test'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              _socketService.refreshCallbacks();
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Callbacks refreshed'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                setState(() {});
+                              }
+                            },
+                            child: const Text('Refresh'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tạo debug info cho socket
+  List<Widget> _buildSocketDebugInfo() {
+    final debugInfo = _socketService.getDebugInfo();
+    return [
+      _buildDebugInfoRow('Connection Status', 
+          debugInfo['isConnected'] ? 'Connected' : 'Disconnected',
+          debugInfo['isConnected'] ? Colors.green : Colors.red),
+      _buildDebugInfoRow('Socket Connected', 
+          debugInfo['socketConnected'] ? 'Yes' : 'No',
+          debugInfo['socketConnected'] ? Colors.green : Colors.red),
+      _buildDebugInfoRow('Room ID', debugInfo['roomId'] ?? 'Not set', Colors.blue),
+      _buildDebugInfoRow('Server URL', 'http://163.227.230.168:3000/', Colors.grey),
+      _buildDebugInfoRow('Actions Callback', 
+          debugInfo['hasActionsCallback'] ? 'Set' : 'Not set', 
+          debugInfo['hasActionsCallback'] ? Colors.green : Colors.orange),
+      _buildDebugInfoRow('Any Event Callback', 
+          debugInfo['hasAnyEventCallback'] ? 'Set' : 'Not set', 
+          debugInfo['hasAnyEventCallback'] ? Colors.green : Colors.orange),
+      _buildDebugInfoRow('Reconnect Attempts', 
+          debugInfo['reconnectAttempts'].toString(), 
+          debugInfo['reconnectAttempts'] > 0 ? Colors.orange : Colors.green),
+      _buildDebugInfoRow('Network Available', 
+          debugInfo['isNetworkAvailable'] ? 'Yes' : 'No',
+          debugInfo['isNetworkAvailable'] ? Colors.green : Colors.red),
+    ];
+  }
+
+  /// Helper method để tạo debug info row
+  Widget _buildDebugInfoRow(String label, String value, Color valueColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: valueColor, fontFamily: 'monospace'),
+            ),
+          ),
+        ],
       ),
     );
   }

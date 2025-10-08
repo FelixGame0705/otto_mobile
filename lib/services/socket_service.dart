@@ -11,6 +11,7 @@ class SocketService {
   String? _currentRoomId;
   bool _isConnected = false;
   Function(dynamic)? _onActionsReceived;
+  Function(String, dynamic)? _onAnyEventReceived;
   
   // Auto-reconnection properties
   Timer? _reconnectTimer;
@@ -68,6 +69,12 @@ class SocketService {
         return true;
       }
 
+      // Dispose socket cũ nếu có
+      if (_socket != null) {
+        _socket!.dispose();
+        _socket = null;
+      }
+
       _socket = IO.io(
         'http://163.227.230.168:3000/',
         IO.OptionBuilder()
@@ -80,6 +87,9 @@ class SocketService {
       _socket!.onConnect((_) {
         debugPrint('✅ Socket connected successfully to http://163.227.230.168:3000/');
         _isConnected = true;
+        _reconnectAttempts = 0;
+        _startHeartbeat();
+        debugPrint('🔧 Socket callbacks status: actions=${_onActionsReceived != null}, anyEvent=${_onAnyEventReceived != null}');
       });
 
       // Lắng nghe sự kiện ngắt kết nối
@@ -122,14 +132,46 @@ class SocketService {
         } else {
           debugPrint('⚠️ No actions callback set');
         }
+        
+        // Gọi callback cho tất cả events
+        if (_onAnyEventReceived != null) {
+          _onAnyEventReceived!('actions', data);
+        }
       });
 
-      // Chờ kết nối thành công
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // Lắng nghe tất cả các events khác (trừ actions vì đã xử lý riêng)
+      _socket!.onAny((eventName, data) {
+        debugPrint('📡 Received event: $eventName with data: ${jsonEncode(data)}');
+        if (eventName != 'actions' && _onAnyEventReceived != null) {
+          _onAnyEventReceived!(eventName, data);
+        }
+      });
+
+      // Lắng nghe event test để debug
+      _socket!.on('test_response', (data) {
+        debugPrint('🧪 Test response received: ${jsonEncode(data)}');
+      });
+
+      // Lắng nghe event pong cho heartbeat
+      _socket!.on('pong', (data) {
+        debugPrint('💓 Pong received: ${jsonEncode(data)}');
+      });
+
+      // Chờ kết nối thành công với timeout
+      int attempts = 0;
+      const maxAttempts = 10;
+      while (!_isConnected && attempts < maxAttempts) {
+        await Future.delayed(const Duration(milliseconds: 200));
+        attempts++;
+        debugPrint('⏳ Waiting for socket connection... attempt $attempts/$maxAttempts');
+      }
       
       if (_isConnected) {
+        debugPrint('✅ Socket connection confirmed');
         _reconnectAttempts = 0;
         _startHeartbeat();
+      } else {
+        debugPrint('❌ Socket connection timeout after ${maxAttempts * 200}ms');
       }
       
       return _isConnected;
@@ -216,6 +258,61 @@ class SocketService {
   /// Set callback cho event actions
   void setOnActionsReceived(Function(dynamic) callback) {
     _onActionsReceived = callback;
+  }
+
+  /// Set callback cho tất cả events
+  void setOnAnyEventReceived(Function(String, dynamic) callback) {
+    _onAnyEventReceived = callback;
+  }
+
+  /// Test kết nối và gửi message test
+  Future<void> testConnection() async {
+    if (_socket == null || !_socket!.connected) {
+      debugPrint('❌ Socket not connected for test');
+      return;
+    }
+    
+    debugPrint('🧪 Testing socket connection...');
+    _socket!.emit('test', {
+      'message': 'Hello from Flutter!',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'roomId': _currentRoomId,
+    });
+    debugPrint('✅ Test message sent');
+  }
+
+  /// Lấy thông tin debug về socket
+  Map<String, dynamic> getDebugInfo() {
+    return {
+      'isConnected': _isConnected,
+      'socketConnected': _socket?.connected ?? false,
+      'roomId': _currentRoomId,
+      'hasActionsCallback': _onActionsReceived != null,
+      'hasAnyEventCallback': _onAnyEventReceived != null,
+      'reconnectAttempts': _reconnectAttempts,
+      'isNetworkAvailable': _isNetworkAvailable,
+    };
+  }
+
+  /// Force refresh callbacks (dùng khi callbacks bị mất)
+  void refreshCallbacks() {
+    debugPrint('🔄 Refreshing socket callbacks...');
+    if (_socket != null && _socket!.connected) {
+      // Re-register callbacks
+      if (_onActionsReceived != null) {
+        _socket!.off('actions');
+        _socket!.on('actions', (data) {
+          debugPrint('🤖 Received actions event: ${jsonEncode(data)}');
+          _onActionsReceived!(data);
+          if (_onAnyEventReceived != null) {
+            _onAnyEventReceived!('actions', data);
+          }
+        });
+      }
+      debugPrint('✅ Callbacks refreshed');
+    } else {
+      debugPrint('❌ Cannot refresh callbacks: socket not connected');
+    }
   }
 
   /// Disconnect Socket.IO (chỉ gọi khi app đóng)

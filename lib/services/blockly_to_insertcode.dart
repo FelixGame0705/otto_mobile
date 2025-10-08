@@ -14,17 +14,17 @@ WIFI_TIMEOUT_MS = 10000
 RESPONSE_TIMEOUT_MS = 8000
 RESPONSE_CHECK_INTERVAL = 50
 MAX_RESPONSE_CHECKS = 40
-WIFI_SSID = "Heo"
-WIFI_PASS = "giadinhheo123@"
+WIFI_SSID = "Your WiFi SSID"
+WIFI_PASS = "Your WiFi Password"
 
 # Action queue to record steps: f,r,l,b and final v/d
 ACTION_QUEUE = []
 
-# Actions API (HTTPS)
+# Actions API (HTTPS) - Will be injected from environment
 ACTIONS_API_HOST = "163.227.230.168"
 ACTIONS_API_PORT = 3000
 ACTIONS_API_PATH = "/sendActions"
-ACTIONS_ROOM_ID = "room-123"
+ACTIONS_ROOM_ID = "room-199"
 
 def append_action(code):
     try:
@@ -44,6 +44,9 @@ def resp_has(resp, keys):
         pass
     return False
 
+class Halt(Exception):
+    pass
+
 class Robot:
     MOTOR_DRIVER_ADDR = 0x08
     MPU6050_ADDR = 0x68
@@ -55,41 +58,36 @@ class Robot:
     LINE_THRESHOLD_ABOVE = 941
     LINE_THRESHOLD_NORMAL = 81
 
-
     def __init__(self):
         self.RA, self.MA = self.MOTOR_DRIVER_ADDR, self.MPU6050_ADDR
         self.MPG = self.GYRO_Z_REG
         self.LP = self.LINE_SENSOR_PIN
         self.gs, self.ts = self.DEFAULT_GO_SPEED, self.DEFAULT_TURN_SPEED
         self.TA, self.TN = self.LINE_THRESHOLD_ABOVE, self.LINE_THRESHOLD_NORMAL
-        self.SP = (self.TA + self.TN) // 2      
-        self.kp = 0.12                          
-        self.kd = 0.06                           
-        self.max_corr = 70                      
-        self.prev_lv = self.SP                   
-
-        self.seek_overshoot = 8        
-        self.seek_timeout_ms = 1500     
-        self.seek_turn_speed = 110      
-
-        
-        self.cross_overshoot_ms = 500      
-        self.cross_overshoot_speed = 80    
-
+        self.SP = (self.TA + self.TN) // 2
+        self.kp = 0.12
+        self.kd = 0.06
+        self.max_corr = 70
+        self.prev_lv = self.SP
+        self.seek_overshoot = 8
+        self.seek_timeout_ms = 1500
+        self.seek_turn_speed = 110
+        self.cross_overshoot_ms = 500
+        self.cross_overshoot_speed = 80
         self.ca = 0.0
         self.go = 0.0
-
         self.init_mpu()
         self.stop()
         display.show(Image.HAPPY)
         sleep(500)
-    
+
     def check_abort(self):
         if button_b.was_pressed():
             self.clear_all()
             display.show(Image.SKULL)
             sleep(500)
             reset()
+
     def wr(self, r, d):
         try:
             i2c.write(self.RA, bytes([r, d]))
@@ -126,7 +124,11 @@ class Robot:
         lt = st
         a = self.ca
         while True:
-            self.check_abort()
+            if button_b.was_pressed():
+                self.clear_all()
+                display.show(Image.SKULL)
+                sleep(500)
+                reset()
                 
             ct = running_time()
             dt = (ct - lt) / 1000.0
@@ -136,8 +138,10 @@ class Robot:
             ae = target_angle - a
             if ae > 180: ae -= 360
             elif ae < -180: ae += 360
-            if abs(ae) < 5:  
+
+            if abs(ae) < 5:
                 break
+
             ts = self.ts if abs(ae) > 30 else (75 if abs(ae) > 15 else 60)
             if direction > 0:
                 self.motors(-ts, ts)
@@ -149,6 +153,7 @@ class Robot:
                 break
             sleep(10)
         self.stop()
+
         self.ca = a
  
     def line(self):
@@ -181,7 +186,7 @@ class Robot:
         display.show(Image.SKULL)
         sleep(500)
         reset()
-    
+
     def clear_all(self):
         self.stop()
         self.ca = 0.0
@@ -200,22 +205,21 @@ class Robot:
 
     def forward(self, timeout_ms=3000, speed=None, stop_on_cross=True):
         move_speed = self.gs if speed is None else int(speed)
-
         display.show(Image.ARROW_S)
         start = running_time()
         initial_on_cross = self.line() > self.TA
         cross_armed = (not stop_on_cross) or (not initial_on_cross)
         while True:
-            self.check_abort()
-
+            if button_b.was_pressed():
+                self.clear_all()
+                display.show(Image.SKULL)
+                sleep(500)
+                reset()
             if (running_time() - start) > int(timeout_ms):
                 break
-
             lv = self.line()
-
             if stop_on_cross and not cross_armed and lv <= self.TA:
                 cross_armed = True
-
             if lv > self.TA:
                 if stop_on_cross and cross_armed:
                     if self.cross_overshoot_ms > 0:
@@ -228,14 +232,17 @@ class Robot:
                 self.motors(move_speed, move_speed)
                 sleep(120)
                 continue
-
-            corr = self.follow_corr(lv)
-            L = self.clamp(move_speed - corr, 0, 255)
-            R = self.clamp(move_speed + corr, 0, 255)
-            self.motors(L, R)
-
+            if lv > self.TN:
+                corr = self.follow_corr(lv)
+                L = self.clamp(move_speed - corr, 0, 255)
+                R = self.clamp(move_speed + corr, 0, 255)
+                self.motors(L, R)
+            else:
+                corr = self.follow_corr(lv)
+                L = self.clamp(move_speed - corr, 0, 255)
+                R = self.clamp(move_speed + corr, 0, 255)
+                self.motors(L, R)
             sleep(10)
-
         self.stop()
         sleep(80)
         return True
@@ -259,7 +266,11 @@ class Robot:
             self.motors(ts, -ts)
 
         while running_time() - st < self.seek_timeout_ms:
-            self.check_abort()
+            if button_b.was_pressed():
+                self.clear_all()
+                display.show(Image.SKULL)
+                sleep(500)
+                reset()
                 
             lv = self.line()
             if self.TN < lv < self.TA:
@@ -279,7 +290,28 @@ class Robot:
     def back(self):
         return self.turn_to_line(left=True, base_angle=180)
 
-    def collect(self, n=1):
+    def collect(self, n=1, color=None):
+        col = str(color or "").lower()
+        
+        for _ in range(int(n)):
+            c = _cell_counts()
+            if c.get(col, 0) > 0:
+                c[col] -= 1
+                try:
+                    _victory_collected[col] += 1
+                    if col not in ("yellow", "green", "red", "blue"):
+                        return
+                    # Append action based on color
+                    if col == "yellow":
+                        append_action('collectYellow')
+                    elif col == "red":
+                        append_action('collectRed')
+                    elif col == "blue":
+                        append_action('collectBlue')
+                    elif col == "green":
+                        append_action('collectGreen')
+                except:
+                    pass
         for _ in range(int(n)):
             if button_b.was_pressed():
                 self.emergency_stop()
@@ -308,46 +340,59 @@ def run_route(r):
             append_action('forward')
             if not r.forward(timeout_ms=timeout_ms, speed=speed, stop_on_cross=stop_on_cross):
                 return False
+            dx, dy = _dir_to_delta(robot_state["dir"])
+            robot_state["x"] += dx
+            robot_state["y"] += dy
         return True
+
     def turnLeft(n=1):
         append_action('turnLeft')
         if not r.left():
             return False
+        robot_state["dir"] = (robot_state["dir"] - 1) % 4
         return True
+
     def turnRight(n=1):
         append_action('turnRight')
         if not r.right():
             return False
+        robot_state["dir"] = (robot_state["dir"] + 1) % 4
         return True
+
     def turnBack(n=1):
         append_action('turnBack')
         if not r.back():
             return False
+        robot_state["dir"] = (robot_state["dir"] + 2) % 4
         return True
-    def collect(n=1):
-        r.collect(n)
+
+    def collect(n=1, color=None):
+        r.collect(n, color)  # collect() will append the appropriate action
         return True
+
     def startSound():
         r.start_sound()
         return True
+
     def finishSound():
         r.finish_sound()
         return True
+
     user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound)
-    display.show(Image.YES)
     return True
 
 challengeJson = {
-    "robot":{"tile":{"x":3,"y":4},"direction":"east"},
-    "batteries":[{"tiles":[{"x":5,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":True},
-    {"x":7,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":True}]}],
-    "victory":{"byType":[{"red":0,"yellow":4,"green":0}],
-    "description":"Help me collect the yellow 🟨 battery!💡With the repeat block, you can loop code over and over."},
-    "statement":["forward","collect"],
-    "minCards":3,
-    "maxCards":5
+    "robot": {"tile": {"x": 1, "y": 1}, "direction": "east"},
+    "batteries": [{
+        "tiles": [
+            {"x": 3, "y": 1, "count": 1, "type": "yellow", "spread": 1.0, "allowedCollect": False}
+        ]
+    }],
+    "victory": {"byType": [{"red": 0, "yellow": 2, "green": 0}]},
+    "statement": ["forward", "collect"],
+    "minCards": 2,
+    "maxCards": 3
 }
-
 
 robot_state = {
     "x": challengeJson["robot"]["tile"]["x"],
@@ -368,17 +413,6 @@ for group in challengeJson.get("batteries", []):
 def _dir_to_delta(d):
     return [(0, -1), (1, 0), (0, 1), (-1, 0)][d % 4]
 
-def _advance_state_forward(steps):
-    for _ in range(int(steps)):
-        dx, dy = _dir_to_delta(robot_state["dir"])
-        robot_state["x"] += dx
-        robot_state["y"] += dy
-def _turn_left_state(): robot_state["dir"] = (robot_state["dir"] - 1) % 4
-def _turn_right_state(): robot_state["dir"] = (robot_state["dir"] + 1) % 4
-
-def _turn_back_state():
-    robot_state["dir"] = (robot_state["dir"] + 2) % 4
-
 def _cell_counts():
     return _battery_map.get((robot_state["x"], robot_state["y"]), {"yellow":0, "red":0, "green":0, "allowed":True})
 
@@ -394,55 +428,34 @@ def isRed():
     c = _cell_counts()
     return c.get("red", 0) > 0
 
-_vars = {"i": 0}
-def _eval_condition(cond):
-    try:
-        t = (cond or {}).get("type", "").lower()
-        if t == "condition":
-            fn = str((cond.get("function") or "")).lower()
-            chk = bool(cond.get("check", True))
-            val = False
-            if fn == "isgreen": val = isGreen()
-            elif fn == "isyellow": val = isYellow()
-            elif fn == "isred": val = isRed()
-            return val if chk else (not val)
-        elif t == "variablecomparison":
-            var = cond.get("variable")
-            op = str(cond.get("operator") or "=")
-            val = cond.get("value")
-            try:
-                left = _vars.get(str(var), var)
-            except:
-                left = var
-            try:
-                right = int(val)
-            except:
-                right = val
-            if op == "<": return left < right
-            if op == "<=": return left <= right
-            if op == "=": return left == right
-            if op == ">=": return left >= right
-            if op == ">": return left > right
-            return False
-    except:
-        return False
-    return False
+_victory_required = {"yellow":0, "red":0, "green":0}
+for v in challengeJson.get("victory", {}).get("byType", []):
+    for k in ("yellow", "red", "green"):
+        try:
+            _victory_required[k] += int(v.get(k, 0))
+        except:
+            pass
+_victory_collected = {"yellow":0, "red":0, "green":0}
 
-def _collect_color(color, n=1):
-    col = str(color or "").lower()
-    action = {"yellow": "collectYellow", "green": "collectGreen", "red": "collectRed"}.get(col)
-    if not action:
-        return
-    
-    for _ in range(int(n)):
-        append_action(action)
-        c = _cell_counts()
-        if not c.get("allowed", True):
-            continue
-        if c.get(col, 0) > 0:
-            c[col] -= 1
+def _check_victory():
+    return (
+        _victory_collected["yellow"] == _victory_required["yellow"] and
+        _victory_collected["red"] == _victory_required["red"] and
+        _victory_collected["green"] == _victory_required["green"]
+    )
 
 def user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound):
+    startSound()
+
+    forward(2)
+    collect(1, "yellow") 
+    
+    forward(1)
+    if _check_victory():
+        display.show(Image.YES)
+    else:
+        display.show(Image.NO)
+    finishSound()
 
 class UARTComm:
     def __init__(self):
@@ -703,6 +716,10 @@ while True:
     } else {
       _emitNodes(out, actions.whereType<Map<String, dynamic>>().toList(), indent: 1);
     }
+    out.writeln('    if _check_victory():');
+    out.writeln('        display.show(Image.YES)');
+    out.writeln('    else:');
+    out.writeln('        display.show(Image.NO)');
     out.writeln('    finishSound()');
     return out.toString();
   }
@@ -713,24 +730,24 @@ while True:
       final t = n['type'] as String?;
       switch (t) {
         case 'forward':
-          out.writeln(ind(indent) + 'forward(' + _pyVal(n['count']) + '); _advance_state_forward(' + _pyVal(n['count']) + ')');
+          out.writeln(ind(indent) + 'forward(' + _pyVal(n['count']) + ');');
           break;
         case 'turnRight':
-          out.writeln(ind(indent) + 'turnRight(); _turn_right_state()');
+          out.writeln(ind(indent) + 'turnRight();');
           break;
         case 'turnLeft':
-          out.writeln(ind(indent) + 'turnLeft(); _turn_left_state()');
+          out.writeln(ind(indent) + 'turnLeft();');
           break;
         case 'turnBack':
-          out.writeln(ind(indent) + 'turnBack(); _turn_back_state()');
+          out.writeln(ind(indent) + 'turnBack();');
           break;
         case 'collect':
           final color = jsonEncode(n['color']);
           final count = _pyVal(n['count']);
-          out.writeln(ind(indent) + 'collect(' + count + '); _collect_color(' + color + ', ' + count + ')');
+          out.writeln(ind(indent) + 'collect(' + count +',' + color + ');');
           break;
         case 'putBox':
-          out.writeln(ind(indent) + 'putBox(' + _pyVal(n['count']) + ')');
+          out.writeln(ind(indent) + 'putBox(' + _pyVal(n['count']) + ');');
           break;
         case 'takeBox':
           out.writeln(ind(indent) + 'takeBox(' + _pyVal(n['count']) + ')');
