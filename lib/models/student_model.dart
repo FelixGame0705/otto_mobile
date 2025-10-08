@@ -2,6 +2,10 @@ class Student {
   final String id;
   final String userId;
   final String fullname;
+  final String phoneNumber;
+  final String address;
+  final String state;
+  final String city;
   final DateTime dateOfBirth;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -12,6 +16,10 @@ class Student {
     required this.id,
     required this.userId,
     required this.fullname,
+    required this.phoneNumber,
+    required this.address,
+    required this.state,
+    required this.city,
     required this.dateOfBirth,
     required this.createdAt,
     required this.updatedAt,
@@ -24,6 +32,10 @@ class Student {
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
       fullname: json['fullname'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      address: json['address'] ?? '',
+      state: json['state'] ?? '',
+      city: json['city'] ?? '',
       dateOfBirth: DateTime.parse(json['dateOfBirth']),
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),

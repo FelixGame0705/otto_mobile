@@ -26,10 +26,18 @@ class StudentService {
 
   Future<StudentApiResponse> createStudent({
     required String fullname,
+    required String phoneNumber,
+    required String address,
+    required String state,
+    required String city,
     required DateTime dateOfBirth,
   }) async {
     final body = <String, dynamic>{
       'fullname': fullname,
+      'phoneNumber': phoneNumber,
+      'address': address,
+      'state': state,
+      'city': city,
       'dateOfBirth': dateOfBirth.toUtc().toIso8601String(),
     };
 
@@ -48,6 +56,43 @@ class StudentService {
       res.body,
       statusCode: res.statusCode,
       fallback: 'Failed to create student: ${res.statusCode}',
+    );
+    throw Exception(friendly);
+  }
+
+  Future<StudentApiResponse> updateStudent({
+    required String studentId,
+    required String fullname,
+    required String phoneNumber,
+    required String address,
+    required String state,
+    required String city,
+    required DateTime dateOfBirth,
+  }) async {
+    final body = <String, dynamic>{
+      'fullname': fullname,
+      'phoneNumber': phoneNumber,
+      'address': address,
+      'state': state,
+      'city': city,
+      'dateOfBirth': dateOfBirth.toUtc().toIso8601String(),
+    };
+
+    final res = await _http.put(
+      '/v1/students/$studentId',
+      body: body,
+      throwOnError: false,
+    );
+
+    if (res.statusCode == 200) {
+      final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
+      return StudentApiResponse.fromJson(jsonData);
+    }
+
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to update student: ${res.statusCode}',
     );
     throw Exception(friendly);
   }

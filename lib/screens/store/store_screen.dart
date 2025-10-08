@@ -585,7 +585,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       description: robot.description ?? '',
       imageUrl: robot.imageUrl,
       price: robot.price,
-      stockQuantity: robot.stockQuantity,
+      stockQuantity: 0, // Remove stock display
       technicalSpecs: robot.technicalSpecs ?? '',
       requirements: robot.requirements ?? '',
       minAge: robot.minAge,
@@ -608,7 +608,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       description: component.description,
       imageUrl: component.imageUrl,
       price: component.price,
-      stockQuantity: component.stockQuantity,
+      stockQuantity: 0, // Remove stock display
       technicalSpecs: component.specifications,
       requirements: '',
       minAge: 0,

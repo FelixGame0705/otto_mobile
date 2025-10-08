@@ -141,30 +141,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   Future<void> _handleAnySocketEvent(String eventName, dynamic data) async {
     try {
       debugPrint('📡 Socket event received: $eventName with data: $data');
-      
-      // Hiển thị toast cho tất cả các events (trừ actions vì đã có xử lý riêng)
-      if (eventName != 'actions' && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('📡 Socket Event: $eventName', 
-                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 4),
-                Text('Data: ${data.toString().length > 80 
-                    ? data.toString().substring(0, 80) + '...' 
-                    : data.toString()}', 
-                     style: const TextStyle(fontSize: 12, color: Colors.white70)),
-              ],
-            ),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating
-          ),
-        );
-      }
+      // No toast notifications for generic events
     } catch (e) {
       debugPrint('❌ Error handling socket event: $e');
     }
@@ -185,35 +162,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         debugPrint('❌ No actions found in data');
         return;
       }
-
-      // Hiển thị Toast notification với thông tin chi tiết về data
-      if (mounted) {
-        final roomId = data['roomId'] as String?;
-        final timestamp = data['timestamp'] as int?;
-        final timeStr = timestamp != null 
-            ? DateTime.fromMillisecondsSinceEpoch(timestamp).toString().substring(11, 19)
-            : '';
-        
-        // Tạo preview của actions data
-        String actionsPreview = '';
-        if (actions.isNotEmpty) {
-          final firstAction = actions.first;
-          if (firstAction is Map<String, dynamic>) {
-            final actionType = firstAction['type'] ?? 'unknown';
-            final actionData = firstAction['data'] ?? firstAction;
-            actionsPreview = 'Type: $actionType';
-            if (actionData is Map && actionData.isNotEmpty) {
-              final keys = actionData.keys.take(2).join(', ');
-              actionsPreview += ' | Data: {$keys...}';
-            }
-          } else {
-            actionsPreview = 'Data: ${firstAction.toString().length > 50 
-                ? firstAction.toString().substring(0, 50) + '...' 
-                : firstAction.toString()}';
-          }
-        }
-        
-      }
+      // No toast preview for actions
 
       // Kiểm tra PhaserBridge có sẵn sàng không
       if (_embeddedPhaserBridge == null) {
@@ -237,45 +186,14 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         debugPrint('🤖 Sending RUN_PROGRAM_HEADLESS to compile and execute program...');
         debugPrint('🤖 Program data: ${jsonEncode(program)}');
         await _embeddedPhaserBridge!.runProgramHeadless(program);
-        
-        // Hiển thị Toast đang xử lý
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🔄 Đang xử lý chương trình...'),
-              duration: Duration(seconds: 2),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+        // No toast while processing
       } else {
         debugPrint('❌ No program available to execute');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Không có chương trình để thực thi'),
-              duration: Duration(seconds: 2),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
       
     } catch (e) {
       debugPrint('❌ Error handling actions event: $e');
-      // Hiển thị Toast lỗi
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Lỗi xử lý actions: $e'),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      // No toast on error
     }
   }
 

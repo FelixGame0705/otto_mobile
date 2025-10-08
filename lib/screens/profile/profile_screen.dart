@@ -431,7 +431,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (_student != null) ...[
                   const SizedBox(height: 12),
                   _buildStudentProfileCard(),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: _creatingStudent ? null : _handleUpdateStudent,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF10B981), width: 2),
+                        foregroundColor: const Color(0xFF10B981),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: _creatingStudent
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.edit),
+                      label: Text(
+                          _creatingStudent
+                              ? 'Updating...'
+                              : 'Edit Student Profile',
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  ),
                 ],
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -463,6 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => _StudentRegistrationDialog(
         initialFullname: _user!.fullName,
+        initialPhone: _user!.phone,
       ),
     );
     
@@ -473,6 +500,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final service = StudentService();
       final resp = await service.createStudent(
         fullname: result['fullname'] as String,
+        phoneNumber: result['phoneNumber'] as String,
+        address: result['address'] as String,
+        state: result['state'] as String,
+        city: result['city'] as String,
         dateOfBirth: result['dateOfBirth'] as DateTime,
       );
       if (!mounted) return;
@@ -491,6 +522,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('profile.student.error'.tr(namedArgs: {'err': '$e'})), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _creatingStudent = false);
+    }
+  }
+
+  Future<void> _handleUpdateStudent() async {
+    if (_student == null) return;
+    
+    // Show dialog for student update
+    final result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => _StudentRegistrationDialog(
+        initialFullname: _student!.fullname,
+        initialPhone: _student!.phoneNumber,
+        initialAddress: _student!.address,
+        initialState: _student!.state,
+        initialCity: _student!.city,
+        initialDateOfBirth: _student!.dateOfBirth,
+        isUpdate: true,
+      ),
+    );
+    
+    if (result == null) return; // User cancelled
+    
+    setState(() => _creatingStudent = true);
+    try {
+      final service = StudentService();
+      final resp = await service.updateStudent(
+        studentId: _student!.id,
+        fullname: result['fullname'] as String,
+        phoneNumber: result['phoneNumber'] as String,
+        address: result['address'] as String,
+        state: result['state'] as String,
+        city: result['city'] as String,
+        dateOfBirth: result['dateOfBirth'] as DateTime,
+      );
+      if (!mounted) return;
+      final updated = resp.data;
+      if (updated != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Student updated successfully'), backgroundColor: Colors.green),
+        );
+        await _loadStudent();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(resp.message.isNotEmpty ? resp.message : 'Failed to update student'), backgroundColor: Colors.orange),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating student: $e'), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _creatingStudent = false);
@@ -526,6 +610,14 @@ extension _StudentCard on _ProfileScreenState {
           const SizedBox(height: 8),
           _infoRow('${'profile.student.fullname'.tr()}:', s.fullname),
           const SizedBox(height: 6),
+          _infoRow('Phone:', s.phoneNumber),
+          const SizedBox(height: 6),
+          _infoRow('Address:', s.address),
+          const SizedBox(height: 6),
+          _infoRow('State:', s.state),
+          const SizedBox(height: 6),
+          _infoRow('City:', s.city),
+          const SizedBox(height: 6),
           _infoRow('${'profile.student.dob'.tr()}:', '${s.dateOfBirth.day.toString().padLeft(2, '0')}/${s.dateOfBirth.month.toString().padLeft(2, '0')}/${s.dateOfBirth.year}'),
           const SizedBox(height: 6),
           _infoRow('profile.student.enrollments'.tr(), s.enrollmentsCount.toString()),
@@ -539,9 +631,21 @@ extension _StudentCard on _ProfileScreenState {
 
 class _StudentRegistrationDialog extends StatefulWidget {
   final String initialFullname;
+  final String initialPhone;
+  final String? initialAddress;
+  final String? initialState;
+  final String? initialCity;
+  final DateTime? initialDateOfBirth;
+  final bool isUpdate;
 
   const _StudentRegistrationDialog({
     required this.initialFullname,
+    required this.initialPhone,
+    this.initialAddress,
+    this.initialState,
+    this.initialCity,
+    this.initialDateOfBirth,
+    this.isUpdate = false,
   });
 
   @override
@@ -551,6 +655,10 @@ class _StudentRegistrationDialog extends StatefulWidget {
 class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> {
   final _formKey = GlobalKey<FormState>();
   final _fullnameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _cityController = TextEditingController();
   DateTime? _selectedDate;
   bool _isLoading = false;
 
@@ -558,11 +666,20 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   void initState() {
     super.initState();
     _fullnameController.text = widget.initialFullname;
+    _phoneController.text = widget.initialPhone;
+    _addressController.text = widget.initialAddress ?? '';
+    _stateController.text = widget.initialState ?? '';
+    _cityController.text = widget.initialCity ?? '';
+    _selectedDate = widget.initialDateOfBirth;
   }
 
   @override
   void dispose() {
     _fullnameController.dispose();
+    _phoneController.dispose();
+    _addressController.dispose();
+    _stateController.dispose();
+    _cityController.dispose();
     super.dispose();
   }
 
@@ -596,6 +713,10 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       Navigator.of(context).pop({
         'fullname': _fullnameController.text.trim(),
+        'phoneNumber': _phoneController.text.trim(),
+        'address': _addressController.text.trim(),
+        'state': _stateController.text.trim(),
+        'city': _cityController.text.trim(),
         'dateOfBirth': _selectedDate!,
       });
     }
@@ -605,62 +726,136 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'profile.student.dialogTitle'.tr(),
+        widget.isUpdate ? 'Edit Student Profile' : 'profile.student.dialogTitle'.tr(),
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextFormField(
-              controller: _fullnameController,
-              decoration: InputDecoration(
-                labelText: '${'profile.student.fullname'.tr()} *',
-                hintText: 'profile.student.fullnameHint'.tr(),
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.person),
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'profile.student.fullnameRequired'.tr();
-                }
-                if (value.trim().length < 2) {
-                  return 'profile.student.fullnameMin'.tr();
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: _selectDate,
-              child: InputDecorator(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _fullnameController,
                 decoration: InputDecoration(
-                  labelText: '${'profile.student.dob'.tr()} *',
-                  hintText: 'profile.student.dobPick'.tr(),
+                  labelText: '${'profile.student.fullname'.tr()} *',
+                  hintText: 'profile.student.fullnameHint'.tr(),
                   border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.calendar_today),
+                  prefixIcon: const Icon(Icons.person),
                 ),
-                child: Text(
-                  _selectedDate != null
-                      ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
-                      : 'profile.student.dobPick'.tr(),
-                  style: TextStyle(
-                    color: _selectedDate != null ? Colors.black : Colors.grey[600],
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'profile.student.fullnameRequired'.tr();
+                  }
+                  if (value.trim().length < 2) {
+                    return 'profile.student.fullnameMin'.tr();
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number *',
+                  hintText: 'Enter phone number',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Phone number is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _addressController,
+                decoration: const InputDecoration(
+                  labelText: 'Address *',
+                  hintText: 'Enter address',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Address is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stateController,
+                      decoration: const InputDecoration(
+                        labelText: 'State *',
+                        hintText: 'Enter state',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'State is required';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _cityController,
+                      decoration: const InputDecoration(
+                        labelText: 'City *',
+                        hintText: 'Enter city',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.location_city),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'City is required';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _selectDate,
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: '${'profile.student.dob'.tr()} *',
+                    hintText: 'profile.student.dobPick'.tr(),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    _selectedDate != null
+                        ? '${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}'
+                        : 'profile.student.dobPick'.tr(),
+                    style: TextStyle(
+                      color: _selectedDate != null ? Colors.black : Colors.grey[600],
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (_selectedDate == null)
-              Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'profile.student.dobRequired'.tr(),
-                  style: const TextStyle(color: Colors.red, fontSize: 12),
+              if (_selectedDate == null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'profile.student.dobRequired'.tr(),
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       actions: [
@@ -680,7 +875,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                   width: 16,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
-              : Text('common.register'.tr()),
+              : Text(widget.isUpdate ? 'Update' : 'common.register'.tr()),
         ),
       ],
     );

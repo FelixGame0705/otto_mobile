@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ottobit/models/product_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -84,20 +83,11 @@ class ProductCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF111827)),
                   ),
                   SizedBox(height: smallGap),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          product.brand,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                        ),
-                      ),
-                      SizedBox(width: smallGap),
-                      Text('product.stockQuantity'.tr(namedArgs: {'quantity': product.stockQuantity.toString()}),
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                    ],
+                  Text(
+                    product.brand,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                   ),
                 ],
               ),

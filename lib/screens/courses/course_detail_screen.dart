@@ -12,6 +12,9 @@ import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/models/cart_model.dart';
 import 'package:ottobit/screens/home/home_screen.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:ottobit/services/course_robot_service.dart';
+import 'package:ottobit/models/course_robot_model.dart';
+import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -30,6 +33,7 @@ class CourseDetailScreen extends StatefulWidget {
 class _CourseDetailScreenState extends State<CourseDetailScreen> {
   final CourseDetailService _courseDetailService = CourseDetailService();
   final CartService _cartService = CartService();
+  final CourseRobotService _courseRobotService = CourseRobotService();
 
   CourseDetail? _course;
   bool _isLoading = true;
@@ -38,6 +42,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   bool _isEnrolling = false;
   bool _isInCart = false;
   bool _isAddingToCart = false;
+  CourseRobot? _requiredRobot;
+  bool _isLoadingRobot = false;
 
   @override
   void initState() {
@@ -71,6 +77,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         // Check cart status for paid courses
         if (_course != null && _course!.isPaid) {
           _checkCartStatus();
+        }
+        
+        // Load required robot for paid courses
+        if (_course != null && _course!.isPaid) {
+          _loadRequiredRobot();
         }
       }
     } catch (e) {
@@ -133,6 +144,31 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
   }
 
+  Future<void> _loadRequiredRobot() async {
+    if (_course == null) return;
+    
+    setState(() {
+      _isLoadingRobot = true;
+    });
+    
+    try {
+      final robot = await _courseRobotService.getCourseRobotByCourseId(_course!.id);
+      if (mounted) {
+        setState(() {
+          _requiredRobot = robot;
+          _isLoadingRobot = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading required robot: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingRobot = false;
+        });
+      }
+    }
+  }
+
   Future<void> _handleAddToCart() async {
     if (_course == null || !_course!.isPaid) return;
 
@@ -185,6 +221,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final url = 'https://ottobit-fe.vercel.app/user/courses/${_course!.id}';
     final message = '${_course!.title}\n\n${_course!.description}\n\n$url';
     Share.share(message, subject: _course!.title);
+  }
+
+  void _showActivationCodeDialog() {
+    if (_course == null || _requiredRobot == null) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => ActivationCodeDialog(
+        course: _course!,
+        robot: _requiredRobot!,
+        onCodeRedeemed: () {
+          // Refresh course status after successful activation
+          _loadCourseDetail();
+        },
+      ),
+    );
   }
 
   @override
@@ -300,12 +352,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             CourseActionButtons(
               onEnroll: _course!.isFree ? _handleEnroll : null,
               onAddToCart: _course!.isPaid ? _handleAddToCart : null,
+              onActivateRobot: _course!.isPaid ? _showActivationCodeDialog : null,
               onShare: _handleShare,
               isEnrolled: _isEnrolled,
               isLoading: _isEnrolling || _isAddingToCart,
               isPaid: _course!.isPaid,
               isInCart: _isInCart,
               price: _course!.isPaid ? _course!.formattedPrice : null,
+              requiredRobot: _requiredRobot,
+              isLoadingRobot: _isLoadingRobot,
             )
           else
             Padding(
