@@ -69,8 +69,8 @@ class CourseActionButtons extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // Required Robot Info for paid courses
-          if (isPaid && requiredRobot != null) ...[
+          // Required Robot Info for all courses
+          if (requiredRobot != null) ...[
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -122,7 +122,7 @@ class CourseActionButtons extends StatelessWidget {
           ],
 
           // Loading robot info
-          if (isPaid && isLoadingRobot) ...[
+          if (isLoadingRobot) ...[
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -242,6 +242,32 @@ class CourseActionButtons extends StatelessWidget {
             ),
           ] else ...[
             // For free courses or regular paid courses
+            if (onActivateRobot != null) ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onActivateRobot,
+                  icon: const Icon(Icons.smart_toy, size: 18),
+                  label: const Text(
+                    'Kích hoạt Robot',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0EA5E9),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             Row(
               children: [
                 // Share Button

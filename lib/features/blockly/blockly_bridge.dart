@@ -31,9 +31,33 @@ class BlocklyBridge {
     });
   }
 
-  Future<void> importWorkspace(String xml) async {
-    final js = 'window.importWorkspace && window.importWorkspace(' + jsonEncode(xml) + ');';
-    await controller.runJavaScript(js);
+  Future<bool> importWorkspace(String xml) async {
+    final js = 'window.importWorkspace && window.importWorkspace(' + jsonEncode(xml) + ')';
+    try {
+      final result = await controller.runJavaScriptReturningResult(js);
+      // Some webviews double-encode results; handle both
+      Map<String, dynamic>? map;
+      if (result is String) {
+        try {
+          map = jsonDecode(result) as Map<String, dynamic>;
+        } catch (_) {
+          // Sometimes result itself is quoted JSON string, try decode twice
+          final once = jsonDecode(result);
+          if (once is String) {
+            map = jsonDecode(once) as Map<String, dynamic>;
+          }
+        }
+      } else if (result is Map) {
+        map = result.cast<String, dynamic>();
+      }
+      if (map != null) {
+        return map['ok'] == true;
+      }
+      return true;
+    } catch (e) {
+      debugPrint('importWorkspace failed: $e');
+      return false;
+    }
   }
 
   Future<String?> getWorkspaceXml() async {

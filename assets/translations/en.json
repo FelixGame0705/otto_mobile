@@ -298,7 +298,14 @@
     "processing": "Processing...",
     "success": "Order Successful!",
     "successMessage": "Your order has been placed successfully. You will receive a confirmation email shortly.",
-    "error": "Order failed"
+    "error": "Order failed",
+    "cancel": "Cancel Order",
+    "cancelConfirm": "Cancel Order",
+    "cancelMessage": "Are you sure you want to cancel this order?",
+    "cancelled": "Order Cancelled",
+    "cancelledMessage": "Your order has been cancelled successfully.",
+    "cancelError": "Failed to cancel order",
+    "continuePayment": "Continue Payment"
   }
 }
 

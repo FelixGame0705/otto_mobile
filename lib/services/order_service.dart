@@ -137,6 +137,35 @@ class OrderService {
       throw Exception('Error initiating payment: $e');
     }
   }
+
+  Future<void> cancelOrder(String orderId) async {
+    try {
+      print('OrderService: Cancelling order $orderId');
+      final response = await _httpService.put(
+        '/v1/orders/$orderId/cancel',
+        body: {},
+        throwOnError: false,
+      );
+      print('OrderService: Cancel response status: ${response.statusCode}');
+      print('OrderService: Cancel response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final message = jsonData['message'] ?? 'Order cancelled successfully';
+        print('OrderService: $message');
+        return;
+      }
+      final friendly = ApiErrorMapper.fromBody(
+        response.body,
+        statusCode: response.statusCode,
+        fallback: 'Failed to cancel order: ${response.statusCode}',
+      );
+      throw Exception(friendly);
+    } catch (e) {
+      print('OrderService: Cancel exception: $e');
+      throw Exception('Error cancelling order: $e');
+    }
+  }
 }
 
 

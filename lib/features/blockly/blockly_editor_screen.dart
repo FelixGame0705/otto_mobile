@@ -8,8 +8,8 @@ import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/services/challenge_service.dart';
 import 'package:ottobit/features/blockly/solution_viewer_screen.dart';
-import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
+import 'package:ottobit/screens/detect/detect_capture_screen.dart';
 import 'package:ottobit/services/socket_service.dart';
 import 'package:ottobit/services/room_id_service.dart';
 import 'package:ottobit/services/insert_code_service.dart';
@@ -40,6 +40,18 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   String? _lastXml;
   final _storage = ProgramStorageService();
   int _lastCompileTick = 0;
+
+  // Challenge mode: 0 = simulation, 1 = upload code
+  int get _challengeMode {
+    final dynamic raw = widget.initialChallengeJson?['challengeMode'] ?? widget.initialChallengeJson?['mode'];
+    if (raw is int) return raw;
+    if (raw is String) {
+      final parsed = int.tryParse(raw);
+      if (parsed != null) return parsed;
+    }
+    return 0;
+  }
+  bool get _isUploadMode => _challengeMode == 1;
 
   // Right Phaser pane resize
   bool _isDragging = false;
@@ -364,6 +376,100 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   bool get _isFirstChallengeOfLesson {
     final order = widget.initialChallengeJson?["order"];
     return order == 1 || order == "1";
+  }
+
+  Future<void> _openDetectDialog() async {
+    try {
+      final detections = await showDialog<List<Map<String, dynamic>>>(
+        context: context,
+        barrierDismissible: true,
+        builder: (ctx) {
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: MediaQuery.of(ctx).size.width * 0.9,
+              height: MediaQuery.of(ctx).size.height * 0.9,
+              child: const DetectCaptureScreen(asDialog: true),
+            ),
+          );
+        },
+      );
+      if (detections == null || detections.isEmpty) return;
+      final xml = _detectionsToBlocklyXml(detections);
+      final ok = await _bridge?.importWorkspace(xml) ?? false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ok ? 'Imported detected blocks into workspace' : 'Failed to import blocks into workspace')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to import detected blocks: $e')),
+      );
+    }
+  }
+
+  String _detectionsToBlocklyXml(List<Map<String, dynamic>> detections) {
+    String numberShadow(String name, int value) {
+      return '<value name="' + name + '"><block type="math_number"><field name="NUM">' + value.toString() + '</field></block></value>';
+    }
+
+    String actionToXml(Map<String, dynamic> a, {String? next}) {
+      final cls = (a['class_name'] ?? '').toString();
+      final dynamic rawVal = a['value'];
+      if (cls == 'move_forward' || cls == 'forward') {
+        final count = rawVal is int ? rawVal : int.tryParse((rawVal ?? '').toString()) ?? 1;
+        final body = numberShadow('COUNT', count);
+        return '<block type="forward">' + body + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
+      }
+      if (cls == 'collect') {
+        final count = rawVal is int ? rawVal : int.tryParse((rawVal ?? '').toString()) ?? 1;
+        // Provide explicit default color to be safe
+        return '<block type="collect"><field name="COLOR">green</field>' + numberShadow('COUNT', count) + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
+      }
+      if (cls == 'turn_right') {
+        return '<block type="turn"><field name="DIR">turnRight</field>' + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
+      }
+      if (cls == 'turn_left') {
+        return '<block type="turn"><field name="DIR">turnLeft</field>' + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
+      }
+      return next ?? '';
+    }
+
+    String? nextXml;
+    final buffer = StringBuffer();
+    buffer.write('<xml xmlns="https://developers.google.com/blockly/xml">');
+
+    for (int i = detections.length - 1; i >= 0; i--) {
+      final item = detections[i];
+      final cls = (item['class_name'] ?? '').toString();
+      if (cls == 'repeat_start') {
+        final count = (item['value'] is int)
+            ? item['value'] as int
+            : int.tryParse((item['value'] ?? '').toString()) ?? 1;
+        final actions = (item['actions'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
+        String? innerNext;
+        for (int j = actions.length - 1; j >= 0; j--) {
+          innerNext = actionToXml(actions[j], next: innerNext);
+        }
+        final doXml = innerNext != null
+            ? '<statement name="DO">' + innerNext + '</statement>'
+            : '<statement name="DO"></statement>';
+        final repeatXml = '<block type="repeat_simple">' + numberShadow('COUNT', count) + doXml + (nextXml != null ? '<next>' + nextXml + '</next>' : '') + '</block>';
+        nextXml = repeatXml;
+      } else if (cls == 'start') {
+        final startXml = '<block type="start" deletable="false" movable="true">' + (nextXml != null ? '<next>' + nextXml + '</next>' : '') + '</block>';
+        buffer.write(startXml);
+        nextXml = null;
+      } else {
+        nextXml = actionToXml(item, next: nextXml);
+      }
+    }
+
+    if (nextXml != null && nextXml.isNotEmpty) buffer.write(nextXml);
+    buffer.write('</xml>');
+    return buffer.toString();
   }
 
   /// Trigger build and flash from Blockly trong Universal Hex dialog
@@ -926,7 +1032,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
           actions: [
             IconButton(
               tooltip: 'Detect from Image',
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.detectCapture),
+              onPressed: _openDetectDialog,
               icon: const Icon(Icons.photo_camera_back_outlined),
             ),
             IconButton(
@@ -990,17 +1096,19 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               onPressed: _restartScene,
               icon: const Icon(Icons.refresh),
             ),
-            IconButton(
-              tooltip: 'Send to Phaser',
-              key: _keyToolbarSend,
-              onPressed: _sendToPhaser,
-              icon: const Icon(Icons.send),
-            ),
-            IconButton(
-              tooltip: 'Universal Hex',
-              onPressed: _showUniversalHexDialog,
-              icon: const Icon(Icons.usb),
-            ),
+            if (!_isUploadMode)
+              IconButton(
+                tooltip: 'Send to Phaser',
+                key: _keyToolbarSend,
+                onPressed: _sendToPhaser,
+                icon: const Icon(Icons.send),
+              ),
+            if (_isUploadMode)
+              IconButton(
+                tooltip: 'Universal Hex',
+                onPressed: _showUniversalHexDialog,
+                icon: const Icon(Icons.usb),
+              ),
           ],
         ),
         body: Row(

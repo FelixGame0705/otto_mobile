@@ -1280,11 +1280,23 @@
 
       window.importWorkspace = function (xmlText) {
       try {
+        if (!workspace) throw new Error('workspace not initialized');
         workspace.clear();
-        const dom = Blockly.Xml.textToDom(xmlText);
-        Blockly.Xml.domToWorkspace(dom, workspace);
+        const XMLNS = (Blockly.Xml && Blockly.Xml.textToDom) ? Blockly.Xml : (Blockly.utils && Blockly.utils.xml ? Blockly.utils.xml : null);
+        if (!XMLNS || !XMLNS.textToDom) throw new Error('Blockly XML helper not found');
+        const dom = XMLNS.textToDom(xmlText);
+        if (Blockly.Xml && Blockly.Xml.domToWorkspace) {
+          Blockly.Xml.domToWorkspace(dom, workspace);
+        } else if (Blockly.utils && Blockly.utils.xml && Blockly.utils.xml.domToWorkspace) {
+          Blockly.utils.xml.domToWorkspace(dom, workspace);
+        } else {
+          // Fallback using API available: append dom blocks manually if needed
+          Blockly.Xml.domToWorkspace(dom, workspace); // will throw if missing
+        }
+        return JSON.stringify({ ok: true });
         } catch (e) {
-          console.error(e);
+          console.error('importWorkspace error:', e);
+          return JSON.stringify({ ok: false, error: String(e && e.message ? e.message : e) });
         }
     };
       window.getWorkspaceXml = function () {

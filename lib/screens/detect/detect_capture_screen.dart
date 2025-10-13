@@ -7,7 +7,8 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 
 class DetectCaptureScreen extends StatefulWidget {
-  const DetectCaptureScreen({super.key});
+  final bool asDialog;
+  const DetectCaptureScreen({super.key, this.asDialog = false});
 
   @override
   State<DetectCaptureScreen> createState() => _DetectCaptureScreenState();
@@ -75,6 +76,16 @@ class _DetectCaptureScreenState extends State<DetectCaptureScreen> {
         setState(() {
           _resultJson = decoded;
         });
+        if (widget.asDialog) {
+          final detections = (decoded['detections'] as List?)
+                  ?.map((e) => (e as Map).cast<String, dynamic>())
+                  .toList() ??
+              <Map<String, dynamic>>[];
+          if (mounted) {
+            Navigator.of(context).pop(detections);
+          }
+          return;
+        }
       } else {
         setState(() {
           _error = 'HTTP ${resp.statusCode}: ${resp.body}';
@@ -102,24 +113,8 @@ class _DetectCaptureScreenState extends State<DetectCaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detect from Image'),
-        actions: [
-          IconButton(
-            tooltip: 'Camera',
-            icon: const Icon(Icons.photo_camera),
-            onPressed: _pickFromCamera,
-          ),
-          IconButton(
-            tooltip: 'Gallery',
-            icon: const Icon(Icons.photo_library),
-            onPressed: _pickFromGallery,
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: OrientationBuilder(
+    final content = SafeArea(
+      child: OrientationBuilder(
           builder: (context, orientation) {
             return LayoutBuilder(
               builder: (context, constraints) {
@@ -186,7 +181,63 @@ class _DetectCaptureScreenState extends State<DetectCaptureScreen> {
             );
           },
         ),
+    );
+
+    if (widget.asDialog) {
+      return Column(
+        children: [
+          Container(
+            color: Theme.of(context).colorScheme.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Icon(Icons.search, color: Colors.white),
+                const SizedBox(width: 8),
+                const Text('Detect from Image', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Camera',
+                  color: Colors.white,
+                  onPressed: _pickFromCamera,
+                  icon: const Icon(Icons.photo_camera),
+                ),
+                IconButton(
+                  tooltip: 'Gallery',
+                  color: Colors.white,
+                  onPressed: _pickFromGallery,
+                  icon: const Icon(Icons.photo_library),
+                ),
+                IconButton(
+                  tooltip: 'Close',
+                  color: Colors.white,
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+          Expanded(child: content),
+        ],
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detect from Image'),
+        actions: [
+          IconButton(
+            tooltip: 'Camera',
+            icon: const Icon(Icons.photo_camera),
+            onPressed: _pickFromCamera,
+          ),
+          IconButton(
+            tooltip: 'Gallery',
+            icon: const Icon(Icons.photo_library),
+            onPressed: _pickFromGallery,
+          ),
+        ],
       ),
+      body: content,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _pickFromCamera,
         icon: const Icon(Icons.camera_alt),

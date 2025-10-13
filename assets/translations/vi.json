@@ -300,7 +300,14 @@
     "processing": "Đang xử lý...",
     "success": "Đặt hàng thành công!",
     "successMessage": "Đơn hàng của bạn đã được đặt thành công. Bạn sẽ nhận được email xác nhận trong thời gian sớm nhất.",
-    "error": "Đặt hàng thất bại"
+    "error": "Đặt hàng thất bại",
+    "cancel": "Hủy đơn hàng",
+    "cancelConfirm": "Hủy đơn hàng",
+    "cancelMessage": "Bạn có chắc chắn muốn hủy đơn hàng này?",
+    "cancelled": "Đã hủy đơn hàng",
+    "cancelledMessage": "Đơn hàng của bạn đã được hủy thành công.",
+    "cancelError": "Không thể hủy đơn hàng",
+    "continuePayment": "Tiếp tục thanh toán"
   }
 }
 

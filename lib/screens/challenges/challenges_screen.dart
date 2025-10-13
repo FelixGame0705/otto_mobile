@@ -299,6 +299,9 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                                   'id': detail.id,
                                                   'lessonId': detail.lessonId,
                                                   'order': detail.order,
+                                                  'challengeMode': (detail.challengeJson != null)
+                                                      ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
+                                                      : 0,
                                                 },
                                               ),
                                             ),

@@ -79,8 +79,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _checkCartStatus();
         }
         
-        // Load required robot for paid courses
-        if (_course != null && _course!.isPaid) {
+        // Load required robot for all courses
+        if (_course != null) {
           _loadRequiredRobot();
         }
       }
@@ -352,7 +352,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             CourseActionButtons(
               onEnroll: _course!.isFree ? _handleEnroll : null,
               onAddToCart: _course!.isPaid ? _handleAddToCart : null,
-              onActivateRobot: _course!.isPaid ? _showActivationCodeDialog : null,
+              onActivateRobot: _showActivationCodeDialog,
               onShare: _handleShare,
               isEnrolled: _isEnrolled,
               isLoading: _isEnrolling || _isAddingToCart,
