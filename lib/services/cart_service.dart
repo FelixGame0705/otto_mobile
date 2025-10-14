@@ -366,7 +366,9 @@ class CartService {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        return CartApiResponse.fromJson(jsonData, (data) => Cart.fromJson(data as Map<String, dynamic>));
+        // The API returns the updated cart data directly in 'data' field
+        final cartData = jsonData['data'] as Map<String, dynamic>;
+        return CartApiResponse.fromJson(jsonData, (data) => Cart.fromJson(cartData));
       } else {
         final friendly = ApiErrorMapper.fromBody(
           response.body,
@@ -396,7 +398,9 @@ class CartService {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-        return CartApiResponse.fromJson(jsonData, (data) => Cart.fromJson(data as Map<String, dynamic>));
+        // The API returns the updated cart data directly in 'data' field
+        final cartData = jsonData['data'] as Map<String, dynamic>;
+        return CartApiResponse.fromJson(jsonData, (data) => Cart.fromJson(cartData));
       } else {
         final friendly = ApiErrorMapper.fromBody(
           response.body,

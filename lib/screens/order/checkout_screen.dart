@@ -31,6 +31,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _discountCode = '';
   bool _hasDiscount = false;
   int _discountAmount = 0;
+  CartSummary? _currentCartSummary;
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -42,6 +43,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    _loadCartSummary();
   }
 
   void _loadUserInfo() {
@@ -50,6 +52,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _emailController.text = 'user@ottobit.com';
     _phoneController.text = '0123456789';
     _addressController.text = '123 Main Street, Ho Chi Minh City';
+  }
+
+  Future<void> _loadCartSummary() async {
+    try {
+      final summary = await _cartService.getCartSummary();
+      if (mounted) {
+        setState(() {
+          _currentCartSummary = summary.data;
+          _discountAmount = summary.data?.discountAmount ?? 0;
+          _hasDiscount = _discountAmount > 0;
+        });
+      }
+    } catch (e) {
+      print('Failed to load cart summary: $e');
+    }
   }
 
   @override
@@ -79,6 +96,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _discountAmount = response.data?.discountAmount ?? 0;
           _isProcessing = false;
         });
+        
+        // Refresh cart summary to get updated pricing
+        await _loadCartSummary();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -119,6 +139,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _discountController.clear();
           _isProcessing = false;
         });
+        
+        // Refresh cart summary to get updated pricing
+        await _loadCartSummary();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -237,8 +260,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
-  int get _subtotal => widget.cartItems.fold(0, (sum, item) => sum + item.unitPrice);
-  int get _total => _subtotal - _discountAmount;
+  int get _subtotal => _currentCartSummary?.subtotal ?? widget.cartItems.fold(0, (sum, item) => sum + item.unitPrice);
+  int get _total => _currentCartSummary?.total ?? (_subtotal - _discountAmount);
+
+  String _formatPrice(int price) {
+    return price.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    ) + ' VNĐ';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -329,10 +359,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('order.subtotal'.tr()),
-                          Text(_subtotal.toString().replaceAllMapped(
-                            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                            (Match m) => '${m[1]},',
-                          ) + ' VNĐ'),
+                          Text(_formatPrice(_subtotal)),
                         ],
                       ),
                       if (_hasDiscount) ...[
@@ -342,10 +369,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           children: [
                             Text('order.discount'.tr() + ' ($_discountCode)'),
                             Text(
-                              '-${_discountAmount.toString().replaceAllMapped(
-                                RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                                (Match m) => '${m[1]},',
-                              )} VNĐ',
+                              '-${_formatPrice(_discountAmount)}',
                               style: const TextStyle(color: Color(0xFF48BB78)),
                             ),
                           ],
@@ -363,10 +387,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                           ),
                           Text(
-                            _total.toString().replaceAllMapped(
-                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                              (Match m) => '${m[1]},',
-                            ) + ' VNĐ',
+                            _formatPrice(_total),
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
                           ),
                         ],
