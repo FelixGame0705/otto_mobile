@@ -10,9 +10,14 @@ class CourseDetail {
   final int type; // 1 = free, 2 = paid
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isDeleted;
   final int lessonsCount;
   final int enrollmentsCount;
   final String createdByName;
+  final bool? isEnrolled;
+  final DateTime? enrollmentDate;
+  final double ratingAverage;
+  final int ratingCount;
 
   CourseDetail({
     required this.id,
@@ -24,9 +29,14 @@ class CourseDetail {
     required this.type,
     required this.createdAt,
     required this.updatedAt,
+    required this.isDeleted,
     required this.lessonsCount,
     required this.enrollmentsCount,
     required this.createdByName,
+    this.isEnrolled,
+    this.enrollmentDate,
+    required this.ratingAverage,
+    required this.ratingCount,
   });
 
   factory CourseDetail.fromJson(Map<String, dynamic> json) {
@@ -40,9 +50,16 @@ class CourseDetail {
       type: (json['type'] as num?)?.toInt() ?? 1,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      isDeleted: json['isDeleted'] ?? false,
       lessonsCount: (json['lessonsCount'] as num?)?.toInt() ?? 0,
       enrollmentsCount: (json['enrollmentsCount'] as num?)?.toInt() ?? 0,
       createdByName: json['createdByName'] ?? '',
+      isEnrolled: json.containsKey('isEnrolled') ? (json['isEnrolled'] as bool?) : null,
+      enrollmentDate: json['enrollmentDate'] != null 
+          ? DateTime.tryParse(json['enrollmentDate']) 
+          : null,
+      ratingAverage: (json['ratingAverage'] as num?)?.toDouble() ?? 0.0,
+      ratingCount: json['ratingCount'] ?? 0,
     );
   }
 
@@ -57,9 +74,14 @@ class CourseDetail {
       'type': type,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'isDeleted': isDeleted,
       'lessonsCount': lessonsCount,
       'enrollmentsCount': enrollmentsCount,
       'createdByName': createdByName,
+      'isEnrolled': isEnrolled,
+      'enrollmentDate': enrollmentDate?.toIso8601String(),
+      'ratingAverage': ratingAverage,
+      'ratingCount': ratingCount,
     };
   }
 

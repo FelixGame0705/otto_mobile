@@ -84,6 +84,34 @@ class SubmissionApiResponse {
   }
 }
 
+class SubmissionListApiResponse {
+  final String message;
+  final List<Submission> data;
+  final List<String>? errors;
+  final String? errorCode;
+  final DateTime timestamp;
+
+  const SubmissionListApiResponse({
+    required this.message,
+    required this.data,
+    this.errors,
+    this.errorCode,
+    required this.timestamp,
+  });
+
+  factory SubmissionListApiResponse.fromJson(Map<String, dynamic> json) {
+    return SubmissionListApiResponse(
+      message: json['message'] as String? ?? '',
+      data: (json['data'] as List<dynamic>? ?? [])
+          .map((e) => Submission.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      errors: json['errors'] != null ? List<String>.from(json['errors'] as List) : null,
+      errorCode: json['errorCode'] as String?,
+      timestamp: DateTime.parse((json['timestamp'] as String?) ?? DateTime.now().toIso8601String()),
+    );
+  }
+}
+
 class CreateSubmissionRequest {
   final String challengeId;
   final String codeJson;

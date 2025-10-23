@@ -529,8 +529,6 @@ def handle_wifi_connection(timeout_ms=3000):
         display.scroll("WIFI OK")
         display.show(Image.HAPPY)
         return True
-    # Join AP (short wait)
-    display.scroll("JOIN AP")
     join_cmd = 'AT+CWJAP="{}","{}"'.format(WIFI_SSID, WIFI_PASS)
     resp, _ = uart_comm.send_line(join_cmd)
     resp += uart_comm.read_for(timeout_ms)

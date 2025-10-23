@@ -118,7 +118,6 @@ class AuthService {
 
   // Đăng ký
   static Future<AuthResult> register({
-    required String fullName,
     required String email,
     required String phone,
     required String password,
@@ -127,7 +126,6 @@ class AuthService {
       final response = await HttpService().post(
         _registerEndpoint,
         body: {
-          'fullName': fullName,
           'email': email,
           'password': password,
           'confirmPassword': password,
@@ -142,7 +140,7 @@ class AuthService {
         final payload = data['data'] as Map<String, dynamic>;
         final user = UserModel(
           id: (payload['userId'] ?? '').toString(),
-          fullName: (payload['fullName'] ?? fullName).toString(),
+          fullName: (payload['fullName'] ?? '').toString(),
           email: (payload['email'] ?? email).toString(),
           phone: phone,
           avatar: '',

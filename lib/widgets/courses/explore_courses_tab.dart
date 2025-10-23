@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/course_model.dart';
+import 'package:intl/intl.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/course_service.dart';
 import 'package:ottobit/widgets/courses/course_search_bar.dart';
@@ -42,8 +43,10 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   }
 
   Future<void> _loadCourses({bool isRefresh = false}) async {
+    final bool isLoadMore = !isRefresh && _currentPage > 1;
     setState(() {
-      _isLoading = true;
+      // Only show the full-screen loader on initial load or explicit refresh
+      _isLoading = !isLoadMore;
       _errorMessage = '';
       if (isRefresh) {
         _currentPage = 1;
@@ -96,7 +99,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   }
 
   void _handleSearch() {
-    _searchTerm = _searchController.text.trim();
+    // Use the tracked search term from onChanged to trigger the search
     _loadCourses(isRefresh: true);
   }
 
@@ -120,10 +123,10 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   }
 
   double _calculateChildAspectRatio(double width, Orientation orientation) {
-    if (width >= 1200) return 0.8;
-    if (width >= 900) return 0.72;
-    if (width >= 600) return 0.78;
-    return orientation == Orientation.landscape ? 0.7 : 0.54;
+    if (width >= 1200) return 0.75;
+    if (width >= 900) return 0.67;
+    if (width >= 600) return 0.73;
+    return orientation == Orientation.landscape ? 0.65 : 0.49;
   }
 
   @override
@@ -132,6 +135,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
       children: [
         CourseSearchBar(
           searchTerm: _searchTerm,
+          controller: _searchController,
           onSearchChanged: _handleSearchChanged,
           onSearchPressed: _handleSearch,
           onClearPressed: _handleClearSearch,
@@ -232,7 +236,7 @@ class _CourseCard extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: SizedBox(
-              height: 120,
+              height: 100,
               width: double.infinity,
               child: course.imageUrl.isNotEmpty
                   ? Image.network(
@@ -251,12 +255,25 @@ class _CourseCard extends StatelessWidget {
                 Text(course.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3748)), maxLines: 2, overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 6),
                 Text(course.description, style: const TextStyle(fontSize: 12, color: Color(0xFF718096), height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
+                    _PriceTag(price: course.price, type: course.type),
                 const SizedBox(height: 8),
-                Row(
+                Column(
                   children: [
-                    Expanded(child: _buildStatChip(Icons.play_lesson, '${course.lessonsCount}', const Color(0xFF48BB78))),
-                    const SizedBox(width: 4),
-                    Expanded(child: _buildStatChip(Icons.people, '${course.enrollmentsCount}', const Color(0xFFED8936))),
+                    Row(
+                      children: [
+                        Expanded(child: _buildStatChip(Icons.play_lesson, '${course.lessonsCount}', const Color(0xFF48BB78))),
+                        const SizedBox(width: 4),
+                        Expanded(child: _buildStatChip(Icons.people, '${course.enrollmentsCount}', const Color(0xFFED8936))),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(child: _buildStatChip(Icons.star, course.ratingCount > 0 ? course.ratingAverage.toStringAsFixed(1) : 'N/A', const Color(0xFFF6AD55))),
+                        const Expanded(child: SizedBox()),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -270,13 +287,16 @@ class _CourseCard extends StatelessWidget {
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4299E1),
+                      backgroundColor: course.isEnrolled == true ? const Color(0xFF48BB78) : const Color(0xFF4299E1),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                       elevation: 1,
                     ),
-                    child: Text('common.viewDetails'.tr(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      course.isEnrolled == true ? 'courses.continueLearning'.tr() : 'common.viewDetails'.tr(),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ],
@@ -311,6 +331,40 @@ class _CourseCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _PriceTag extends StatelessWidget {
+  final int price;
+  final int type; // 1 free, 2 paid
+
+  const _PriceTag({required this.price, required this.type});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isFree = price == 0 || type == 1;
+    final TextStyle textStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: isFree ? const Color(0xFF48BB78) : const Color(0xFF2D3748),
+    );
+
+    return Row(
+      children: [
+        Icon(isFree ? Icons.workspace_premium : Icons.attach_money,
+            size: 14, color: isFree ? const Color(0xFF48BB78) : const Color(0xFF2D3748)),
+        const SizedBox(width: 4),
+        Text(
+          isFree ? 'common.free'.tr() : _formatVnd(price),
+          style: textStyle,
+        ),
+      ],
+    );
+  }
+
+  String _formatVnd(int value) {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return '${formatter.format(value)} VNĐ';
   }
 }
 

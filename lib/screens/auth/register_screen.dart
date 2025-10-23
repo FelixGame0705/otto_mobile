@@ -16,7 +16,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -27,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -44,7 +42,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         final result = await AuthService.register(
-          fullName: _fullNameController.text.trim(),
           email: _emailController.text.trim(),
           phone: _phoneController.text.trim(),
           password: _passwordController.text,
@@ -108,19 +105,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text('auth.register.subheading'.tr(), style: const TextStyle(fontSize: 16, color: Color(0xFF718096))),
               const SizedBox(height: 24),
 
-              AppTextField(
-                controller: _fullNameController,
-                label: 'auth.fullName'.tr(),
-                hint: 'auth.enterFullName'.tr(),
-                prefixIcon: Icons.person_outlined,
-                keyboardType: TextInputType.name,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'auth.enterFullName'.tr();
-                  if (value.length < 2) return 'auth.min2'.tr();
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
 
               AppTextField(
                 controller: _emailController,

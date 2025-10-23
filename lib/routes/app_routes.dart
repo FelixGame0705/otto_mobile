@@ -24,6 +24,7 @@ import 'package:ottobit/models/cart_model.dart';
 import 'package:ottobit/screens/order/payment_webview_screen.dart';
 import 'package:ottobit/screens/onboarding/onboarding_screen.dart';
 import 'package:ottobit/screens/splash/splash_screen.dart';
+import 'package:ottobit/screens/news/blog_detail_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -51,6 +52,7 @@ class AppRoutes {
   static const String paymentWebview = '/payment-webview';
   static const String onboarding = '/onboarding';
   static const String splash = '/splash';
+  static const String blogDetail = '/blog-detail';
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
@@ -225,6 +227,17 @@ class AppRoutes {
         }
       }
       return const Scaffold(body: Center(child: Text('Thiếu tham số thanh toán')));
+    },
+    blogDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        return BlogDetailScreen(slug: args);
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin bài viết'),
+        ),
+      );
     },
   };
 }

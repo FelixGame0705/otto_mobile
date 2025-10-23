@@ -9,6 +9,7 @@ import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/screens/profile/profile_screen.dart';
 import 'package:ottobit/screens/cart/cart_screen.dart';
 import 'package:ottobit/widgets/home/home_shimmers.dart';
+import 'package:ottobit/widgets/news/news_tab.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -136,7 +137,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ? const _MyCoursesTab()
                   : _currentIndex == 1
                       ? const _ExploreTab()
-              : _currentIndex == 2
+                  : _currentIndex == 2
+                      ? const _NewsTab()
+                  : _currentIndex == 3
                       ? const _StoreTab()
                       : const _ProfileTab()),
         ),
@@ -158,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         items: [
           BottomNavigationBarItem(icon: const Icon(Icons.library_books), label: 'home.myCourses'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.explore), label: 'home.explore'.tr()),
+          BottomNavigationBarItem(icon: const Icon(Icons.article), label: 'home.news'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.storefront), label: 'home.store'.tr()),
           BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'Profile'),
         ],
@@ -234,6 +238,15 @@ class _ExploreTab extends StatelessWidget {
   }
 }
 
+class _NewsTab extends StatelessWidget {
+  const _NewsTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return const NewsTab();
+  }
+}
+
 // removed in favor of ExploreCoursesTab
 
 class _StoreTab extends StatelessWidget {
@@ -269,6 +282,8 @@ class _TabShimmer extends StatelessWidget {
       case 1:
         return const _ExploreTabShimmer();
       case 2:
+        return const _NewsTabShimmer();
+      case 3:
         return const _StoreTabShimmer();
       default:
         return const _ProfileTabShimmer();
@@ -300,6 +315,53 @@ class _ExploreTabShimmer extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NewsTabShimmer extends StatelessWidget {
+  const _NewsTabShimmer();
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Search bar shimmer
+          Shimmer.fromColors(
+            baseColor: Colors.grey.shade300,
+            highlightColor: Colors.grey.shade100,
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Blog cards shimmer
+          Expanded(
+            child: ListView.builder(
+              itemCount: 5,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Shimmer.fromColors(
+                  baseColor: Colors.grey.shade300,
+                  highlightColor: Colors.grey.shade100,
+                  child: Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

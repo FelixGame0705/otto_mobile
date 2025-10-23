@@ -171,7 +171,8 @@
         <block type="getNumberBox"></block>
         <block type="warehouseCount"></block>
         <block type="math_number"></block>
-          <block type="var_ref"></block>
+        <block type="math_arithmetic"></block>
+        <block type="var_ref"></block>
         </category>
         <category name="🧠" colour="#a8e6cf">
           <block type="boolean_value"></block>
@@ -282,6 +283,7 @@
               new C.FieldDropdown([
                 ["green", "green"],
                 ["yellow", "yellow"],
+                ["red", "red"],
               ]),
               "COLOR"
             );
@@ -631,6 +633,29 @@
           },
         };
 
+        // Math arithmetic operations block
+        C.Blocks["math_arithmetic"] = {
+          init: function () {
+            this.appendValueInput("A").setCheck("Number");
+            this.appendValueInput("B")
+              .setCheck("Number")
+              .appendField(
+                new C.FieldDropdown([
+                  ["+", "ADD"],
+                  ["-", "MINUS"],
+                  ["×", "MULTIPLY"],
+                  ["÷", "DIVIDE"],
+                ]),
+                "OP"
+              );
+            this.setOutput(true, "Number");
+            this.setInputsInline(true);
+            this.setColour("#45b7d1"); // blue sáng
+            this.setTooltip("Perform arithmetic operations on two numbers");
+            this.setHelpUrl("");
+          },
+        };
+
 
         // Boolean literal block (true/false in one block)
         C.Blocks["boolean_value"] = {
@@ -715,7 +740,7 @@
           },
         };
 
-        // Variable reference block for comparison
+        // Variable reference block for comparison - dynamically syncs with repeat_range
         C.Blocks["var_ref"] = {
           init: function () {
             this.appendDummyInput().appendField(
@@ -729,6 +754,37 @@
             this.setOutput(true, "Number");
             this.setColour("#9b27b0"); // blue sáng
             this.setTooltip("Reference to loop variable");
+            this.setHelpUrl("");
+          },
+
+          // Update variable options when repeat_range blocks change
+          onchange: function (e) {
+            if (!this.workspace || this.isInFlyout) return;
+            
+            // Find all repeat_range blocks in the workspace
+            const repeatBlocks = this.workspace.getAllBlocks(false)
+              .filter(block => block.type === "repeat_range");
+            
+            // Collect all variable names from repeat_range blocks
+            const variableNames = new Set();
+            repeatBlocks.forEach(block => {
+              const varName = block.getFieldValue("VAR");
+              if (varName) variableNames.add(varName);
+            });
+            
+            // If we found variables, update the dropdown
+            if (variableNames.size > 0) {
+              const options = Array.from(variableNames).map(name => [name, name]);
+              const field = this.getField("VAR");
+              if (field) {
+                field.menuGenerator_ = function() { return options; };
+                // Update the field if current value is not in new options
+                const currentValue = field.getValue();
+                if (!variableNames.has(currentValue)) {
+                  field.setValue(Array.from(variableNames)[0]);
+                }
+              }
+            }
           },
         };
 
@@ -812,7 +868,11 @@
           if (target.type === "batteryCount") return "batteryCount";
           if (target.type === "getNumberBox") return "getNumberBox";
           if (target.type === "warehouseCount") return "warehouseCount";
-          if (target.type === "var_ref") return target.getFieldValue("VAR");
+          if (target.type === "var_ref") {
+            const v = target.getFieldValue("VAR");
+            // Serialize loop variable references as template tokens for Phaser
+            return `{{${v}}}`;
+          }
       return 0;
     }
 
@@ -1095,6 +1155,16 @@
               return nodeFunctionDefine(block);
             case "function_call":
               return nodeFunctionCall(block);
+            case "math_arithmetic":
+              const leftArith = numFrom(block, "A");
+              const rightArith = numFrom(block, "B");
+              const mathOp = block.getFieldValue("OP");
+              return {
+                type: "math_arithmetic",
+                operator: mathOp,
+                left: leftArith,
+                right: rightArith
+              };
             default:
               return null;
           }
@@ -1156,7 +1226,7 @@
 
           const result = { 
             version: "1.0.0", 
-            programName: "program", 
+            programName: "user_program", 
             actions 
           };
 
@@ -1165,13 +1235,64 @@
             result.functions = functions;
           }
 
+          // Thu thập các biến được khai báo bởi repeatRange để gửi sang Phaser
+          (function collectDeclaredVariables() {
+            const declared = new Set();
+
+            function walkNodes(nodes) {
+              if (!Array.isArray(nodes)) return;
+              for (const n of nodes) {
+                if (!n || typeof n !== "object") continue;
+                // Biến lặp được khai báo tại repeatRange
+                if (n.type === "repeatRange" && typeof n.variable === "string" && n.variable) {
+                  declared.add(n.variable);
+                }
+                // Duyệt thân/lists con nếu có
+                if (Array.isArray(n.body)) walkNodes(n.body);
+                if (Array.isArray(n.then)) walkNodes(n.then);
+                if (Array.isArray(n.thens)) walkNodes(n.thens.flat());
+                if (Array.isArray(n.else)) walkNodes(n.else);
+              }
+            }
+
+            // Duyệt actions chính
+            walkNodes(actions);
+            // Duyệt functions (nếu có)
+            if (Array.isArray(result.functions)) {
+              for (const f of result.functions) {
+                walkNodes(f.body);
+              }
+            }
+
+            if (declared.size > 0) {
+              result.variables = Array.from(declared);
+            }
+          })();
+
           return result;
         };
 
         gens.toPython = function (workspace) {
       const program = gens.toJSON(workspace);
           function pyVal(v) {
-            return typeof v === "string" ? v : JSON.stringify(v);
+            if (typeof v === "string") return v;
+            if (typeof v === "object" && v !== null) {
+              // Handle math_arithmetic and other complex expressions
+              if (v.type === "math_arithmetic") {
+                const leftVal = pyVal(v.left);
+                const rightVal = pyVal(v.right);
+                const operators = {
+                  ADD: " + ",
+                  MINUS: " - ",
+                  MULTIPLY: " * ",
+                  DIVIDE: " / "
+                };
+                const op = operators[v.operator] || " + ";
+                return `(${leftVal}${op}${rightVal})`;
+              }
+              return JSON.stringify(v);
+            }
+            return JSON.stringify(v);
           }
       const lines = [];
           function emit(nodes, indent) {
@@ -1343,3 +1464,4 @@
   </script>
 </body>
 </html>
+

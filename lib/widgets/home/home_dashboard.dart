@@ -5,6 +5,7 @@ import 'package:ottobit/services/lesson_process_service.dart';
 import 'package:ottobit/services/learning_path_controller.dart';
 import 'package:ottobit/widgets/home/course_selector.dart';
 import 'package:ottobit/widgets/home/learning_path.dart';
+import 'package:ottobit/widgets/ui/ai_support_screen.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/models/enrollment_model.dart';
 import 'package:ottobit/models/lesson_model.dart';
@@ -151,58 +152,76 @@ class _HomeDashboardState extends State<HomeDashboard> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'Lộ trình học',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          const SizedBox(height: 12),
-          CourseSelector(
-            enrollments: _enrollments,
-            selectedCourseId: _selectedCourseId,
-            onSelect: (e) => _onSelectCourse(e.courseId),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.green.withOpacity(0.06),
-                  Colors.greenAccent.withOpacity(0.04),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: _load,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                'Lộ trình học',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.green.withOpacity(0.15)),
-            ),
-            child: _selectedCourseId == null || _selectedCourseId!.isEmpty
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      SizedBox(height: 8),
-                      Text('Hãy chọn một khóa học để xem lộ trình'),
-                      SizedBox(height: 8),
+              const SizedBox(height: 12),
+              CourseSelector(
+                enrollments: _enrollments,
+                selectedCourseId: _selectedCourseId,
+                onSelect: (e) => _onSelectCourse(e.courseId),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color.fromARGB(148, 76, 175, 79).withOpacity(0.06),
+                      const Color.fromARGB(134, 105, 240, 175).withOpacity(0.04),
                     ],
-                  )
-                : LearningPath(
-                    lessons: _lessons,
-                    lessonResources: _lessonIdToResources,
-                    courseId: _selectedCourseId!,
-                    completedLessonIds: _completedLessonIds,
-                    currentLessonOrder: _currentLessonOrder,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.green.withOpacity(0.15)),
+                ),
+                child: _selectedCourseId == null || _selectedCourseId!.isEmpty
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          SizedBox(height: 8),
+                          Text('Hãy chọn một khóa học để xem lộ trình'),
+                          SizedBox(height: 8),
+                        ],
+                      )
+                    : LearningPath(
+                        lessons: _lessons,
+                        lessonResources: _lessonIdToResources,
+                        courseId: _selectedCourseId!,
+                        completedLessonIds: _completedLessonIds,
+                        currentLessonOrder: _currentLessonOrder,
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Positioned(
+          bottom: 16,
+          left: 16,
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AiSupportScreen()),
+              );
+            },
+            icon: const Icon(Icons.smart_toy, color: Colors.white),
+            label: const Text('AI Support', style: TextStyle(color: Colors.white)),
+            backgroundColor: const Color(0xFF17a64b),
+          ),
+        ),
+      ],
     );
   }
 }

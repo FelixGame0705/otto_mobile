@@ -16,6 +16,7 @@ class StatusDialogWidget extends StatefulWidget {
   final String? codeJson;
   final VoidCallback onPlayAgain;
   final VoidCallback onClose;
+  final VoidCallback? onSimulation;
 
   const StatusDialogWidget({
     super.key,
@@ -28,6 +29,7 @@ class StatusDialogWidget extends StatefulWidget {
     this.codeJson,
     required this.onPlayAgain,
     required this.onClose,
+    this.onSimulation,
   });
 
   @override
@@ -486,6 +488,26 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
               ),
             ),
             SizedBox(width: 12),
+            if (widget.onSimulation != null && widget.status == 'VICTORY') ...[
+              Expanded(
+                child: ActionButtonWidget(
+                  text: 'Simulation',
+                  icon: null,
+                  textColor: Colors.white,
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  isTablet: isTablet,
+                  isLandscape: isLandscape,
+                  onPressed: () {
+                    try {
+                      widget.onSimulation!();
+                    } finally {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ),
+              SizedBox(width: 12),
+            ],
             Expanded(
               child: ActionButtonWidget(
                 text: 'Close',

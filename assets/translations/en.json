@@ -67,6 +67,7 @@
     "share": "Share",
     "viewAllShown": "All items shown",
     "viewDetails": "View details",
+    "free": "Free",
     "cancel": "Cancel",
     "search": "Search",
     "clearSearch": "Clear search",
@@ -99,6 +100,7 @@
   "home": {
     "myCourses": "My courses",
     "explore": "Explore",
+    "news": "News",
     "store": "Store"
   },
   "course": {
@@ -119,11 +121,31 @@
     "enrollmentsCount": "Enrollments",
     "peopleUnit": "people",
     "detailDescription": "Detailed description",
-    "createdBy": "Created by: {name}"
+    "createdBy": "Created by: {name}",
+    "rating": "Rating",
+    "reviews": "reviews",
+    "noRating": "No ratings yet",
+    "rateCourse": "Rate this course",
+    "yourRating": "Your rating",
+    "ratingComment": "Comment (optional)",
+    "ratingCommentHint": "Share your experience with this course...",
+    "submitRating": "Submit rating",
+    "updateRating": "Update rating",
+    "deleteRating": "Delete rating",
+    "ratingSubmitted": "Rating submitted successfully",
+    "ratingUpdated": "Rating updated successfully",
+    "ratingDeleted": "Rating deleted successfully",
+    "ratingError": "Error with rating",
+    "confirmDeleteRating": "Are you sure you want to delete your rating?",
+    "stars": "stars",
+    "allRatings": "All ratings",
+    "noComment": "No comment",
+    "selectStars": "Please select a rating"
   },
   "courses": {
     "searchHint": "Search courses...",
-    "allShown": "All courses shown"
+    "allShown": "All courses shown",
+    "continueLearning": "Continue learning"
   },
   "pagination": {
     "showing": "Showing {start}-{end} of {total} courses"
@@ -306,6 +328,50 @@
     "cancelledMessage": "Your order has been cancelled successfully.",
     "cancelError": "Failed to cancel order",
     "continuePayment": "Continue Payment"
+  },
+  "news": {
+    "searchHint": "Search articles...",
+    "filter": "Filter",
+    "sortBy": "Sort by",
+    "sortDirection": "Sort direction",
+    "ascending": "Ascending",
+    "descending": "Descending",
+    "sortByUpdated": "Last updated",
+    "sortByCreated": "Date created",
+    "sortByTitle": "Title",
+    "sortByViews": "View count",
+    "sortByReadingTime": "Reading time",
+    "filterByTag": "Filter by tag",
+    "minutes": "min",
+    "empty": "No articles found",
+    "emptyMessage": "Try adjusting your search or filters to find more articles.",
+    "loadError": "Failed to load articles: {0}",
+    "detail": "Article Detail",
+    "notFound": "Article not found",
+    "notFoundMessage": "The article you're looking for doesn't exist or has been removed.",
+    "shareComingSoon": "Share functionality coming soon!",
+    "author": "Author",
+    "publishedOn": "Published on",
+    "readingTime": "Reading time",
+    "views": "views",
+    "tags": "Tags",
+    "comments": "Comments",
+    "writeComment": "Write a comment...",
+    "postComment": "Post",
+    "updateComment": "Update",
+    "editComment": "Edit comment",
+    "deleteComment": "Delete comment",
+    "delete": "Delete",
+    "deleteCommentConfirm": "Are you sure you want to delete this comment?",
+    "commentPosted": "Comment posted successfully!",
+    "commentUpdated": "Comment updated successfully!",
+    "commentDeleted": "Comment deleted successfully!",
+    "commentError": "Error: {0}",
+    "loadCommentsError": "Failed to load comments: {0}",
+    "noComments": "No comments yet",
+    "beFirstToComment": "Be the first to share your thoughts!",
+    "anonymous": "Anonymous",
+    "edited": "edited"
   }
 }
 

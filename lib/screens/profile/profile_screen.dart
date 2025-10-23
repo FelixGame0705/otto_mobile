@@ -70,7 +70,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // removed avatar editor flow
 
   Future<void> _openEditProfile() async {
-    final fullNameController = TextEditingController(text: _user?.fullName ?? '');
     final avatarController = TextEditingController(text: _user?.avatar ?? '');
     final result = await showDialog<bool>(
       context: context,
@@ -91,11 +90,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-              TextField(
-                controller: fullNameController,
-                decoration: const InputDecoration(labelText: 'Họ và tên'),
-              ),
-              const SizedBox(height: 8),
               StatefulBuilder(
                 builder: (context, setDialogState) {
                   final url = avatarController.text.trim();
@@ -159,7 +153,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     if (result == true) {
       final res = await AuthService.updateProfile(
-        fullName: fullNameController.text.trim().isEmpty ? null : fullNameController.text.trim(),
         avatarUrl: avatarController.text.trim().isEmpty ? null : avatarController.text.trim(),
       );
       if (!mounted) return;
@@ -241,32 +234,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _user!.fullName,
+                                  _user!.email,
                                   style: const TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w700,
                                     color: Color(0xFF1F2937),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.email_outlined, size: 16, color: Color(0xFF475569)),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        _user!.email,
-                                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                // const SizedBox(height: 4),
                                 if (_user!.phone.isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Container(
@@ -488,7 +463,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => _StudentRegistrationDialog(
-        initialFullname: _user!.fullName,
+        initialFullname: '',
         initialPhone: _user!.phone,
       ),
     );

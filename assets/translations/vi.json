@@ -68,6 +68,7 @@
     "share": "Chia sẻ",
     "viewAllShown": "Đã hiển thị tất cả",
     "viewDetails": "Xem chi tiết",
+    "free": "Miễn phí",
     "cancel": "Hủy",
     "confirm": "Xác nhận",
     "search": "Tìm",
@@ -101,6 +102,7 @@
   "home": {
     "myCourses": "Khóa học của tôi",
     "explore": "Khám phá",
+    "news": "Tin tức",
     "store": "Cửa hàng"
   },
   "course": {
@@ -121,11 +123,31 @@
     "enrollmentsCount": "Số học viên",
     "peopleUnit": "người",
     "detailDescription": "Mô tả chi tiết",
-    "createdBy": "Tạo bởi: {name}"
+    "createdBy": "Tạo bởi: {name}",
+    "rating": "Đánh giá",
+    "reviews": "đánh giá",
+    "noRating": "Chưa có đánh giá",
+    "rateCourse": "Đánh giá khóa học này",
+    "yourRating": "Đánh giá của bạn",
+    "ratingComment": "Bình luận (tùy chọn)",
+    "ratingCommentHint": "Chia sẻ trải nghiệm của bạn với khóa học này...",
+    "submitRating": "Gửi đánh giá",
+    "updateRating": "Sửa",
+    "deleteRating": "Xóa",
+    "ratingSubmitted": "Đánh giá đã được gửi thành công",
+    "ratingUpdated": "Đánh giá đã được cập nhật thành công",
+    "ratingDeleted": "Đánh giá đã được xóa thành công",
+    "ratingError": "Lỗi với đánh giá",
+    "confirmDeleteRating": "Bạn có chắc chắn muốn xóa đánh giá của mình?",
+    "stars": "sao",
+    "allRatings": "Tất cả đánh giá",
+    "noComment": "Không có bình luận",
+    "selectStars": "Vui lòng chọn số sao"
   },
   "courses": {
     "searchHint": "Tìm kiếm khóa học...",
-    "allShown": "Đã hiển thị tất cả khóa học"
+    "allShown": "Đã hiển thị tất cả khóa học",
+    "continueLearning": "Tiếp tục học"
   },
   "pagination": {
     "showing": "Hiển thị {start}-{end} trong tổng số {total} khóa học"
@@ -308,6 +330,50 @@
     "cancelledMessage": "Đơn hàng của bạn đã được hủy thành công.",
     "cancelError": "Không thể hủy đơn hàng",
     "continuePayment": "Tiếp tục thanh toán"
+  },
+  "news": {
+    "searchHint": "Tìm kiếm bài viết...",
+    "filter": "Lọc",
+    "sortBy": "Sắp xếp theo",
+    "sortDirection": "Thứ tự sắp xếp",
+    "ascending": "Tăng dần",
+    "descending": "Giảm dần",
+    "sortByUpdated": "Cập nhật gần nhất",
+    "sortByCreated": "Ngày tạo",
+    "sortByTitle": "Tiêu đề",
+    "sortByViews": "Lượt xem",
+    "sortByReadingTime": "Thời gian đọc",
+    "filterByTag": "Lọc theo thẻ",
+    "minutes": "phút",
+    "empty": "Không tìm thấy bài viết",
+    "emptyMessage": "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc để tìm thêm bài viết.",
+    "loadError": "Không thể tải bài viết: {0}",
+    "detail": "Chi tiết bài viết",
+    "notFound": "Không tìm thấy bài viết",
+    "notFoundMessage": "Bài viết bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.",
+    "shareComingSoon": "Tính năng chia sẻ sắp ra mắt!",
+    "author": "Tác giả",
+    "publishedOn": "Được xuất bản vào",
+    "readingTime": "Thời gian đọc",
+    "views": "lượt xem",
+    "tags": "Thẻ",
+    "comments": "Bình luận",
+    "writeComment": "Viết bình luận...",
+    "postComment": "Đăng",
+    "updateComment": "Cập nhật",
+    "editComment": "Chỉnh sửa bình luận",
+    "deleteComment": "Xóa bình luận",
+    "delete": "Xóa",
+    "deleteCommentConfirm": "Bạn có chắc chắn muốn xóa bình luận này?",
+    "commentPosted": "Đăng bình luận thành công!",
+    "commentUpdated": "Cập nhật bình luận thành công!",
+    "commentDeleted": "Xóa bình luận thành công!",
+    "commentError": "Lỗi: {0}",
+    "loadCommentsError": "Không thể tải bình luận: {0}",
+    "noComments": "Chưa có bình luận nào",
+    "beFirstToComment": "Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!",
+    "anonymous": "Ẩn danh",
+    "edited": "đã chỉnh sửa"
   }
 }
 

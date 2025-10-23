@@ -24,16 +24,25 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   String? _error;
   int _selectedTabIndex = 0; // 0 = robots, 1 = components
   TabController? _tabController;
+  final ScrollController _robotScroll = ScrollController();
+  final ScrollController _componentScroll = ScrollController();
+  final List<RobotItem> _robots = [];
+  final List<Component> _components = [];
+  int _robotPageIndex = 1;
+  int _robotTotalPages = 1;
+  bool _robotLoadingMore = false;
+  bool _robotHasMore = true;
+  int _componentPageIndex = 1;
+  int _componentTotalPages = 1;
+  bool _componentLoadingMore = false;
+  bool _componentHasMore = true;
 
   // Filters
   final TextEditingController _searchCtrl = TextEditingController();
   final TextEditingController _brandCtrl = TextEditingController();
-  final TextEditingController _minPriceCtrl = TextEditingController();
-  final TextEditingController _maxPriceCtrl = TextEditingController();
   final TextEditingController _minAgeCtrl = TextEditingController();
   final TextEditingController _maxAgeCtrl = TextEditingController();
   // Slider states
-  RangeValues _priceRange = const RangeValues(0, 1000);
   RangeValues _ageRange = const RangeValues(6, 18);
   bool _inStock = false;
   String _orderBy = 'Name';
@@ -53,9 +62,17 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       }
     });
     _loadBoth(); // Load both robots and components initially
+    _robotScroll.addListener(() {
+      if (_robotScroll.position.pixels >= _robotScroll.position.maxScrollExtent - 200) {
+        _loadMoreRobots();
+      }
+    });
+    _componentScroll.addListener(() {
+      if (_componentScroll.position.pixels >= _componentScroll.position.maxScrollExtent - 200) {
+        _loadMoreComponents();
+      }
+    });
     // Initialize controllers from sliders so current API calls keep working
-    _minPriceCtrl.text = _priceRange.start.round().toString();
-    _maxPriceCtrl.text = _priceRange.end.round().toString();
     _minAgeCtrl.text = _ageRange.start.round().toString();
     _maxAgeCtrl.text = _ageRange.end.round().toString();
   }
@@ -63,6 +80,8 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   @override
   void dispose() {
     _tabController?.dispose();
+    _robotScroll.dispose();
+    _componentScroll.dispose();
     super.dispose();
   }
 
@@ -80,8 +99,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           size: 10,
           searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
           brand: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
-          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
-          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
           minAge: int.tryParse(_minAgeCtrl.text.trim()),
           maxAge: int.tryParse(_maxAgeCtrl.text.trim()),
           inStock: _inStock,
@@ -92,8 +109,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           page: 1,
           size: 10,
           searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
-          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
-          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
           inStock: _inStock,
           orderBy: _orderBy,
           orderDirection: _orderDirection,
@@ -103,6 +118,18 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       setState(() {
         _robotPage = (futures[0] as dynamic).data;
         _componentPage = (futures[1] as dynamic).data;
+        _robots
+          ..clear()
+          ..addAll(_robotPage?.items ?? []);
+        _components
+          ..clear()
+          ..addAll(_componentPage?.items ?? []);
+        _robotPageIndex = 1;
+        _robotTotalPages = _robotPage?.totalPages ?? 1;
+        _robotHasMore = _robotPageIndex < _robotTotalPages;
+        _componentPageIndex = 1;
+        _componentTotalPages = _componentPage?.totalPages ?? 1;
+        _componentHasMore = _componentPageIndex < _componentTotalPages;
         _loading = false;
       });
     } catch (e) {
@@ -127,8 +154,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           size: 10,
           searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
           brand: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
-          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
-          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
           minAge: int.tryParse(_minAgeCtrl.text.trim()),
           maxAge: int.tryParse(_maxAgeCtrl.text.trim()),
           inStock: _inStock,
@@ -137,6 +162,12 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         );
         setState(() {
           _robotPage = res.data;
+          _robots
+            ..clear()
+            ..addAll(_robotPage?.items ?? []);
+          _robotPageIndex = 1;
+          _robotTotalPages = _robotPage?.totalPages ?? 1;
+          _robotHasMore = _robotPageIndex < _robotTotalPages;
           _loading = false;
         });
       } else {
@@ -145,14 +176,18 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           page: 1,
           size: 10,
           searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
-          minPrice: int.tryParse(_minPriceCtrl.text.trim()),
-          maxPrice: int.tryParse(_maxPriceCtrl.text.trim()),
           inStock: _inStock,
           orderBy: _orderBy,
           orderDirection: _orderDirection,
         );
         setState(() {
           _componentPage = res.data;
+          _components
+            ..clear()
+            ..addAll(_componentPage?.items ?? []);
+          _componentPageIndex = 1;
+          _componentTotalPages = _componentPage?.totalPages ?? 1;
+          _componentHasMore = _componentPageIndex < _componentTotalPages;
           _loading = false;
         });
       }
@@ -162,6 +197,55 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         _loading = false;
       });
     }
+  }
+
+  Future<void> _loadMoreRobots() async {
+    if (_robotLoadingMore || !_robotHasMore || _selectedTabIndex != 0) return;
+    setState(() => _robotLoadingMore = true);
+    _robotPageIndex++;
+    try {
+      final res = await _robotService.getRobots(
+        page: _robotPageIndex,
+        size: 10,
+        searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+        brand: _brandCtrl.text.trim().isEmpty ? null : _brandCtrl.text.trim(),
+        minAge: int.tryParse(_minAgeCtrl.text.trim()),
+        maxAge: int.tryParse(_maxAgeCtrl.text.trim()),
+        inStock: _inStock,
+        orderBy: _orderBy,
+        orderDirection: _orderDirection,
+      );
+      setState(() {
+        _robotPage = res.data;
+        _robots.addAll(_robotPage?.items ?? []);
+        _robotTotalPages = _robotPage?.totalPages ?? _robotTotalPages;
+        _robotHasMore = _robotPageIndex < _robotTotalPages;
+      });
+    } catch (_) {}
+    if (mounted) setState(() => _robotLoadingMore = false);
+  }
+
+  Future<void> _loadMoreComponents() async {
+    if (_componentLoadingMore || !_componentHasMore || _selectedTabIndex != 1) return;
+    setState(() => _componentLoadingMore = true);
+    _componentPageIndex++;
+    try {
+      final res = await _componentService.getComponents(
+        page: _componentPageIndex,
+        size: 10,
+        searchTerm: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+        inStock: _inStock,
+        orderBy: _orderBy,
+        orderDirection: _orderDirection,
+      );
+      setState(() {
+        _componentPage = res.data;
+        _components.addAll(_componentPage?.items ?? []);
+        _componentTotalPages = _componentPage?.totalPages ?? _componentTotalPages;
+        _componentHasMore = _componentPageIndex < _componentTotalPages;
+      });
+    } catch (_) {}
+    if (mounted) setState(() => _componentLoadingMore = false);
   }
 
   @override
@@ -234,7 +318,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       );
     }
 
-    final items = _robotPage?.items ?? [];
+    final items = _robots;
     if (items.isEmpty) {
       return Center(child: Text('resource.empty'.tr()));
     }
@@ -242,6 +326,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     return RefreshIndicator(
       onRefresh: _load,
       child: GridView.builder(
+        controller: _robotScroll,
         padding: EdgeInsets.symmetric(horizontal: screenWidth < 360 ? 4 : 8, vertical: screenWidth < 360 ? 4 : 8),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: gridCount,
@@ -249,8 +334,19 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           crossAxisSpacing: screenWidth < 360 ? 4 : 8,
           mainAxisSpacing: screenWidth < 360 ? 4 : 8,
         ),
-        itemCount: items.length,
+        itemCount: items.length + (_robotLoadingMore ? 1 : 0) + (!_robotHasMore && items.isNotEmpty ? 1 : 0),
         itemBuilder: (context, index) {
+          if (index == items.length && _robotLoadingMore) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (index == items.length + (_robotLoadingMore ? 1 : 0) && !_robotHasMore && items.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('challenges.allShown'.tr(), style: TextStyle(color: Colors.grey[600])),
+              ),
+            );
+          }
           final robot = items[index];
           final product = _convertRobotToProduct(robot);
           return ProductCard(
@@ -285,7 +381,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       );
     }
 
-    final items = _componentPage?.items ?? [];
+    final items = _components;
     if (items.isEmpty) {
       return Center(child: Text('resource.empty'.tr()));
     }
@@ -293,6 +389,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     return RefreshIndicator(
       onRefresh: _load,
       child: GridView.builder(
+        controller: _componentScroll,
         padding: EdgeInsets.symmetric(horizontal: screenWidth < 360 ? 4 : 8, vertical: screenWidth < 360 ? 4 : 8),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: gridCount,
@@ -300,8 +397,19 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           crossAxisSpacing: screenWidth < 360 ? 4 : 8,
           mainAxisSpacing: screenWidth < 360 ? 4 : 8,
         ),
-        itemCount: items.length,
+        itemCount: items.length + (_componentLoadingMore ? 1 : 0) + (!_componentHasMore && items.isNotEmpty ? 1 : 0),
         itemBuilder: (context, index) {
+          if (index == items.length && _componentLoadingMore) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (index == items.length + (_componentLoadingMore ? 1 : 0) && !_componentHasMore && items.isNotEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text('challenges.allShown'.tr(), style: TextStyle(color: Colors.grey[600])),
+              ),
+            );
+          }
           final component = items[index];
           final product = _convertComponentToProduct(component);
           return ProductCard(
@@ -346,11 +454,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 const SizedBox(width: 6),
                 Text('store.filters'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 const Spacer(),
-                TextButton.icon(
-                  onPressed: () => setState(() => _showFilters = !_showFilters),
-                  icon: Icon(_showFilters ? Icons.expand_less : Icons.expand_more),
-                  label: Text(_showFilters ? 'store.collapse'.tr() : 'store.expand'.tr()),
-                ),
               ],
             ),
             if (_showFilters) ...[
@@ -407,34 +510,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ],
               ),
             ],
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('store.price'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text('${_priceRange.start.round()} - ${_priceRange.end.round()}'),
-                  ],
-                ),
-                RangeSlider(
-                  values: _priceRange,
-                  min: 0,
-                  max: 10000,
-                  divisions: 100,
-                  labels: RangeLabels('${_priceRange.start.round()}', '${_priceRange.end.round()}'),
-                  onChanged: (v) {
-                    setState(() {
-                      _priceRange = v;
-                      _minPriceCtrl.text = v.start.round().toString();
-                      _maxPriceCtrl.text = v.end.round().toString();
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -447,9 +522,11 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ),
                 RangeSlider(
                   values: _ageRange,
+                  activeColor: const Color(0xFF17a64b),
+                  inactiveColor: const Color(0xFF17a64b).withOpacity(0.2),
                   min: 0,
-                  max: 100,
-                  divisions: 100,
+                  max: 25,
+                  divisions: 25,
                   labels: RangeLabels('${_ageRange.start.round()}', '${_ageRange.end.round()}'),
                   onChanged: (v) {
                     setState(() {
@@ -532,41 +609,51 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
             const SizedBox(height: 8),
             Row(
               children: [
+                Switch(
+                  value: _inStock,
+                  onChanged: (v) => setState(() => _inStock = v),
+                ),
+                Text('store.inStock'.tr()),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
                 Expanded(
-                  child: Row(
-                    children: [
-                      Switch(
-                        value: _inStock,
-                        onChanged: (v) => setState(() => _inStock = v),
-                      ),
-                      Text('store.inStock'.tr()),
-                    ],
+                  child: ElevatedButton.icon(
+                    onPressed: _loadBoth,
+                    icon: const Icon(Icons.filter_list, color: Colors.white),
+                    label: Text('store.apply'.tr(), style: const TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF17a64b),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: _loadBoth,
-                  icon: const Icon(Icons.filter_list),
-                  label: Text('store.apply'.tr()),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      _searchCtrl.clear();
+                      _brandCtrl.clear();
+                      _minAgeCtrl.clear();
+                      _maxAgeCtrl.clear();
+                      setState(() {
+                        _inStock = false;
+                        _orderBy = 'Name';
+                        _orderDirection = 'ASC';
+                      });
+                      _loadBoth();
+                    },
+                    icon: const Icon(Icons.refresh, color: Color(0xFF17a64b)),
+                    label: Text('store.reset'.tr(), style: const TextStyle(color: Color(0xFF17a64b))),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFF17a64b), width: 1),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () {
-                    _searchCtrl.clear();
-                    _brandCtrl.clear();
-                    _minPriceCtrl.clear();
-                    _maxPriceCtrl.clear();
-                    _minAgeCtrl.clear();
-                    _maxAgeCtrl.clear();
-                    setState(() {
-                      _inStock = false;
-                      _orderBy = 'Name';
-                      _orderDirection = 'ASC';
-                    });
-                    _loadBoth();
-                  },
-                  child: Text('store.reset'.tr()),
-                )
               ],
             )
             ]

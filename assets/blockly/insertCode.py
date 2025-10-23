@@ -8,17 +8,17 @@ WIFI_TIMEOUT_MS = 10000
 RESPONSE_TIMEOUT_MS = 8000
 RESPONSE_CHECK_INTERVAL = 50
 MAX_RESPONSE_CHECKS = 40
-WIFI_SSID = "Phuc Quan"
-WIFI_PASS = "09092003@"
+WIFI_SSID = "Your WiFi SSID"
+WIFI_PASS = "Your WiFi Password"
 
 # Action queue to record steps: f,r,l,b and final v/d
 ACTION_QUEUE = []
 
-# Actions API (HTTPS)
+# Actions API (HTTPS) - Will be injected from environment
 ACTIONS_API_HOST = "163.227.230.168"
 ACTIONS_API_PORT = 3000
 ACTIONS_API_PATH = "/sendActions"
-ACTIONS_ROOM_ID = "room-123"
+ACTIONS_ROOM_ID = "room-199"
 
 def append_action(code):
     try:
@@ -38,6 +38,9 @@ def resp_has(resp, keys):
         pass
     return False
 
+class Halt(Exception):
+    pass
+
 class Robot:
     MOTOR_DRIVER_ADDR = 0x08
     MPU6050_ADDR = 0x68
@@ -49,41 +52,36 @@ class Robot:
     LINE_THRESHOLD_ABOVE = 941
     LINE_THRESHOLD_NORMAL = 81
 
-
     def __init__(self):
         self.RA, self.MA = self.MOTOR_DRIVER_ADDR, self.MPU6050_ADDR
         self.MPG = self.GYRO_Z_REG
         self.LP = self.LINE_SENSOR_PIN
         self.gs, self.ts = self.DEFAULT_GO_SPEED, self.DEFAULT_TURN_SPEED
         self.TA, self.TN = self.LINE_THRESHOLD_ABOVE, self.LINE_THRESHOLD_NORMAL
-        self.SP = (self.TA + self.TN) // 2      
-        self.kp = 0.12                          
-        self.kd = 0.06                           
-        self.max_corr = 70                      
-        self.prev_lv = self.SP                   
-
-        self.seek_overshoot = 8        
-        self.seek_timeout_ms = 1500     
-        self.seek_turn_speed = 110      
-
-        
-        self.cross_overshoot_ms = 500      
-        self.cross_overshoot_speed = 80    
-
+        self.SP = (self.TA + self.TN) // 2
+        self.kp = 0.12
+        self.kd = 0.06
+        self.max_corr = 70
+        self.prev_lv = self.SP
+        self.seek_overshoot = 8
+        self.seek_timeout_ms = 1500
+        self.seek_turn_speed = 110
+        self.cross_overshoot_ms = 500
+        self.cross_overshoot_speed = 80
         self.ca = 0.0
         self.go = 0.0
-
         self.init_mpu()
         self.stop()
         display.show(Image.HAPPY)
         sleep(500)
-    
+
     def check_abort(self):
         if button_b.was_pressed():
             self.clear_all()
             display.show(Image.SKULL)
             sleep(500)
             reset()
+
     def wr(self, r, d):
         try:
             i2c.write(self.RA, bytes([r, d]))
@@ -120,7 +118,11 @@ class Robot:
         lt = st
         a = self.ca
         while True:
-            self.check_abort()
+            if button_b.was_pressed():
+                self.clear_all()
+                display.show(Image.SKULL)
+                sleep(500)
+                reset()
                 
             ct = running_time()
             dt = (ct - lt) / 1000.0
@@ -130,8 +132,10 @@ class Robot:
             ae = target_angle - a
             if ae > 180: ae -= 360
             elif ae < -180: ae += 360
-            if abs(ae) < 5:  
+
+            if abs(ae) < 5:
                 break
+
             ts = self.ts if abs(ae) > 30 else (75 if abs(ae) > 15 else 60)
             if direction > 0:
                 self.motors(-ts, ts)
@@ -143,6 +147,7 @@ class Robot:
                 break
             sleep(10)
         self.stop()
+
         self.ca = a
  
     def line(self):
@@ -175,7 +180,7 @@ class Robot:
         display.show(Image.SKULL)
         sleep(500)
         reset()
-    
+
     def clear_all(self):
         self.stop()
         self.ca = 0.0
@@ -194,22 +199,21 @@ class Robot:
 
     def forward(self, timeout_ms=3000, speed=None, stop_on_cross=True):
         move_speed = self.gs if speed is None else int(speed)
-
         display.show(Image.ARROW_S)
         start = running_time()
         initial_on_cross = self.line() > self.TA
         cross_armed = (not stop_on_cross) or (not initial_on_cross)
         while True:
-            self.check_abort()
-
+            if button_b.was_pressed():
+                self.clear_all()
+                display.show(Image.SKULL)
+                sleep(500)
+                reset()
             if (running_time() - start) > int(timeout_ms):
                 break
-
             lv = self.line()
-
             if stop_on_cross and not cross_armed and lv <= self.TA:
                 cross_armed = True
-
             if lv > self.TA:
                 if stop_on_cross and cross_armed:
                     if self.cross_overshoot_ms > 0:
@@ -222,14 +226,17 @@ class Robot:
                 self.motors(move_speed, move_speed)
                 sleep(120)
                 continue
-
-            corr = self.follow_corr(lv)
-            L = self.clamp(move_speed - corr, 0, 255)
-            R = self.clamp(move_speed + corr, 0, 255)
-            self.motors(L, R)
-
+            if lv > self.TN:
+                corr = self.follow_corr(lv)
+                L = self.clamp(move_speed - corr, 0, 255)
+                R = self.clamp(move_speed + corr, 0, 255)
+                self.motors(L, R)
+            else:
+                corr = self.follow_corr(lv)
+                L = self.clamp(move_speed - corr, 0, 255)
+                R = self.clamp(move_speed + corr, 0, 255)
+                self.motors(L, R)
             sleep(10)
-
         self.stop()
         sleep(80)
         return True
@@ -253,7 +260,11 @@ class Robot:
             self.motors(ts, -ts)
 
         while running_time() - st < self.seek_timeout_ms:
-            self.check_abort()
+            if button_b.was_pressed():
+                self.clear_all()
+                display.show(Image.SKULL)
+                sleep(500)
+                reset()
                 
             lv = self.line()
             if self.TN < lv < self.TA:
@@ -273,7 +284,28 @@ class Robot:
     def back(self):
         return self.turn_to_line(left=True, base_angle=180)
 
-    def collect(self, n=1):
+    def collect(self, n=1, color=None):
+        col = str(color or "").lower()
+        
+        for _ in range(int(n)):
+            c = _cell_counts()
+            if c.get(col, 0) > 0:
+                c[col] -= 1
+                try:
+                    _victory_collected[col] += 1
+                    if col not in ("yellow", "green", "red", "blue"):
+                        return
+                    # Append action based on color
+                    if col == "yellow":
+                        append_action('collectYellow')
+                    elif col == "red":
+                        append_action('collectRed')
+                    elif col == "blue":
+                        append_action('collectBlue')
+                    elif col == "green":
+                        append_action('collectGreen')
+                except:
+                    pass
         for _ in range(int(n)):
             if button_b.was_pressed():
                 self.emergency_stop()
@@ -302,46 +334,59 @@ def run_route(r):
             append_action('forward')
             if not r.forward(timeout_ms=timeout_ms, speed=speed, stop_on_cross=stop_on_cross):
                 return False
+            dx, dy = _dir_to_delta(robot_state["dir"])
+            robot_state["x"] += dx
+            robot_state["y"] += dy
         return True
+
     def turnLeft(n=1):
         append_action('turnLeft')
         if not r.left():
             return False
+        robot_state["dir"] = (robot_state["dir"] - 1) % 4
         return True
+
     def turnRight(n=1):
         append_action('turnRight')
         if not r.right():
             return False
+        robot_state["dir"] = (robot_state["dir"] + 1) % 4
         return True
+
     def turnBack(n=1):
         append_action('turnBack')
         if not r.back():
             return False
+        robot_state["dir"] = (robot_state["dir"] + 2) % 4
         return True
-    def collect(n=1):
-        r.collect(n)
+
+    def collect(n=1, color=None):
+        r.collect(n, color)  # collect() will append the appropriate action
         return True
+
     def startSound():
         r.start_sound()
         return True
+
     def finishSound():
         r.finish_sound()
         return True
+
     user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound)
-    display.show(Image.YES)
     return True
 
 challengeJson = {
-    "robot":{"tile":{"x":3,"y":4},"direction":"east"},
-    "batteries":[{"tiles":[{"x":5,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":True},
-    {"x":7,"y":4,"count":2,"type":"yellow","spread":1.2,"allowedCollect":True}]}],
-    "victory":{"byType":[{"red":0,"yellow":4,"green":0}],
-    "description":"Help me collect the yellow 🟨 battery!💡With the repeat block, you can loop code over and over."},
-    "statement":["forward","collect"],
-    "minCards":3,
-    "maxCards":5
+    "robot": {"tile": {"x": 1, "y": 1}, "direction": "east"},
+    "batteries": [{
+        "tiles": [
+            {"x": 3, "y": 1, "count": 1, "type": "yellow", "spread": 1.0, "allowedCollect": False}
+        ]
+    }],
+    "victory": {"byType": [{"red": 0, "yellow": 2, "green": 0}]},
+    "statement": ["forward", "collect"],
+    "minCards": 2,
+    "maxCards": 3
 }
-
 
 robot_state = {
     "x": challengeJson["robot"]["tile"]["x"],
@@ -361,17 +406,6 @@ for group in challengeJson.get("batteries", []):
 
 def _dir_to_delta(d):
     return [(0, -1), (1, 0), (0, 1), (-1, 0)][d % 4]
-
-def _advance_state_forward(steps):
-    for _ in range(int(steps)):
-        dx, dy = _dir_to_delta(robot_state["dir"])
-        robot_state["x"] += dx
-        robot_state["y"] += dy
-def _turn_left_state(): robot_state["dir"] = (robot_state["dir"] - 1) % 4
-def _turn_right_state(): robot_state["dir"] = (robot_state["dir"] + 1) % 4
-
-def _turn_back_state():
-    robot_state["dir"] = (robot_state["dir"] + 2) % 4
 
 def _cell_counts():
     return _battery_map.get((robot_state["x"], robot_state["y"]), {"yellow":0, "red":0, "green":0, "allowed":True})
@@ -399,128 +433,23 @@ _victory_collected = {"yellow":0, "red":0, "green":0}
 
 def _check_victory():
     return (
-        _victory_collected["yellow"] >= _victory_required["yellow"] and
-        _victory_collected["red"] >= _victory_required["red"] and
-        _victory_collected["green"] >= _victory_required["green"]
+        _victory_collected["yellow"] == _victory_required["yellow"] and
+        _victory_collected["red"] == _victory_required["red"] and
+        _victory_collected["green"] == _victory_required["green"]
     )
-
-_vars = {"i": 0}
-def _eval_condition(cond):
-    try:
-        t = (cond or {}).get("type", "").lower()
-        if t == "condition":
-            fn = str((cond.get("function") or "")).lower()
-            chk = bool(cond.get("check", True))
-            val = False
-            if fn == "isgreen": val = isGreen()
-            elif fn == "isyellow": val = isYellow()
-            elif fn == "isred": val = isRed()
-            return val if chk else (not val)
-        elif t == "variablecomparison":
-            var = cond.get("variable")
-            op = str(cond.get("operator") or "=")
-            val = cond.get("value")
-            try:
-                left = _vars.get(str(var), var)
-            except:
-                left = var
-            try:
-                right = int(val)
-            except:
-                right = val
-            if op == "<": return left < right
-            if op == "<=": return left <= right
-            if op == "=": return left == right
-            if op == ">=": return left >= right
-            if op == ">": return left > right
-            return False
-    except:
-        return False
-    return False
-
-def _repeat_range(var_name, start, end, step, body_fn):
-    try:
-        s = int(start)
-        e = int(end)
-        st = int(step) if int(step) != 0 else 1
-    except:
-        s = start
-        e = end
-        st = 1
-    if s <= e and st < 0:
-        st = -st
-    if s >= e and st > 0:
-        st = -st
-    _vars[str(var_name)] = s
-    iters = 0
-    max_iters = 1000
-    def _done(v):
-        return (st > 0 and v > e) or (st < 0 and v < e)
-    v = s
-    while not _done(v) and iters < max_iters:
-        _vars[str(var_name)] = v
-        try:
-            body_fn()
-        except:
-            pass
-        v = v + st
-        iters += 1
-    _vars[str(var_name)] = v
-
-
-def _collect_color(color, n=1):
-    col = str(color or "").lower()
-    if col not in ("yellow", "green", "red"):
-        return
-    for _ in range(int(n)):
-        c = _cell_counts()
-        if not c.get("allowed", True):
-            continue
-        if c.get(col, 0) > 0:
-            c[col] -= 1
-            try:
-                _victory_collected[col] += 1
-            except:
-                pass
-
 
 def user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound):
     startSound()
-    def pickupAndTurn():
-        collect(1); _collect_color("yellow", 1)
-        turnRight(); _turn_right_state()
-    forward(3); _advance_state_forward(3)
-    turnRight(); _turn_right_state()
-    forward(2); _advance_state_forward(2)
-    collect(4); _collect_color("green", 4)
-    for _ in range(2):
-        turnLeft(); _turn_left_state()
-        forward(1); _advance_state_forward(1)
-    if isGreen():
-        collect(1); _collect_color("green", 1)
-    elif isYellow():
-        forward(1); _advance_state_forward(1)
-    else:
-        turnBack(); _turn_back_state()
-    while isYellow():
-        collect(1); _collect_color("yellow", 1)
-    turnLeft(); _turn_left_state()
-    pickupAndTurn()
-    def _rr_body_i():
-        forward(1); _advance_state_forward(1)
-    _repeat_range("i", 1, 3, 1, _rr_body_i)
-    _tmp_cond = {"type": "variableComparison", "variable": "i", "operator": ">=", "value": 3}
-    if _eval_condition(_tmp_cond):
-        turnRight(); _turn_right_state()
-    forward(1); _advance_state_forward(1)
+
+    forward(2)
+    collect(1, "yellow") 
+    
+    forward(1)
     if _check_victory():
-        append_action('victory')
         display.show(Image.YES)
     else:
-        append_action('defeat')
         display.show(Image.NO)
     finishSound()
-
 
 class UARTComm:
     def __init__(self):
@@ -577,28 +506,23 @@ class UARTComm:
                         pass
             sleep(20)
         return response
-
-r = Robot()
-uart_comm = UARTComm()
-display.scroll("READY")
-
+    
 def handle_wifi_connection(timeout_ms=3000):
-    display.show(Image.ARROW_E)
+    display.show(Image.ALL_CLOCKS, loop=True, wait=False)
     # Check AT
     resp, _ = uart_comm.send_line("AT")
     if not resp_has(resp, ("OK",)):
-        display.scroll("AT NG")
-        display.show(Image.NO)
+        display.scroll("WIFI FAIL")
+        display.show(Image.SAD)
         return False
     # Set station mode
     uart_comm.send_line("AT+CWMODE=1")
     # Already connected?
     resp, _ = uart_comm.send_line("AT+CWJAP?")
     if (WIFI_SSID in resp) and resp_has(resp, ("GOT IP", "OK")):
+        display.scroll("WIFI OK")
         display.show(Image.HAPPY)
         return True
-    # Join AP (short wait)
-    display.scroll("JOIN AP")
     join_cmd = 'AT+CWJAP="{}","{}"'.format(WIFI_SSID, WIFI_PASS)
     resp, _ = uart_comm.send_line(join_cmd)
     resp += uart_comm.read_for(timeout_ms)
@@ -612,6 +536,7 @@ def handle_wifi_connection(timeout_ms=3000):
         return False
 
 def send_actions_queue():
+    display.show(Image.ALL_CLOCKS, loop=True, wait=False)
     actions_json = ('"' + '","'.join(ACTION_QUEUE) + '"') if len(ACTION_QUEUE) > 0 else ''
     body = '{"id":"' + ACTIONS_ROOM_ID + '","actions":[' + actions_json + ']}'
     req = (
@@ -627,52 +552,53 @@ def send_actions_queue():
     resp, _ = uart_comm.send_line('AT+CIPSTART="TCP","{}",{}'.format(ACTIONS_API_HOST, ACTIONS_API_PORT))
     resp += uart_comm.read_for(3000)
     if not resp_has(resp, ("CONNECT", "OK")):
-        display.scroll("HTTP NG")
+        display.scroll("S FAIL")
         return False
     # Send request length
     resp, _ = uart_comm.send_line("AT+CIPSEND={}".format(len(req)))
     resp += uart_comm.read_for(1500)
     if not resp_has(resp, (">",)):
-        display.scroll("SEND NG")
+        display.scroll("S FAIL")
         uart_comm.send_line("AT+CIPCLOSE")
         return False
     # Send HTTP request
     uart_comm.write_raw(req)
-    http_resp = uart_comm.read_for(5000)
+    http_resp = uart_comm.read_for(3000)
     uart_comm.send_line("AT+CIPCLOSE")
     if resp_has(http_resp, ("HTTP/1.1",)):
-        display.scroll("QUEUE OK")
+        display.scroll("S OK")
         try:
             ACTION_QUEUE[:] = []
         except:
             pass
         return True
-    display.scroll("QUEUE NG")
+    display.scroll("S FAIL")
     return False
 
-def show_ready():
+r = Robot()
+uart_comm = UARTComm()
+isConnected = handle_wifi_connection(20000)
+if isConnected:
     display.scroll("READY")
+else:
+    display.scroll("NO WIFI")
 while True:
     if button_a.was_pressed():
-        run_route(r)
-        display.clear()
-        if (len(ACTION_QUEUE) > 0) and handle_wifi_connection(20000):
-            # Send actions queue after connecting WiFi
-            try:
-                send_actions_queue()
-            except:
-                pass
-        sleep(3000)
-        show_ready()
+        if isConnected:
+            run_route(r)
+            display.clear()
+            if len(ACTION_QUEUE) > 0:
+                try:
+                    send_actions_queue()
+                except:
+                    pass
+        else:
+            display.scroll("NO WIFI")
+        
     elif button_b.was_pressed():
-        send_actions_queue()
-        r.clear_all()
-        display.show(Image.SKULL)
-        display.clear()
-        sleep(3000)
-        show_ready()
-        sleep(500)
-        reset()
+        isConnected = handle_wifi_connection(20000)
+        if isConnected:
+            display.scroll("READY")
+        else:
+            display.scroll("NO WIFI")
     sleep(100)
-
-

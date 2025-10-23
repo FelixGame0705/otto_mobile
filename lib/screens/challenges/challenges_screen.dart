@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
-import 'package:ottobit/services/challenge_process_service.dart';
+// Removed ChallengeProcessService in favor of server-side best submissions API
 import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/services/submission_service.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
 
 class ChallengesScreen extends StatefulWidget {
@@ -26,16 +27,14 @@ class ChallengesScreen extends StatefulWidget {
 
 class _ChallengesScreenState extends State<ChallengesScreen> {
   final ChallengeService _service = ChallengeService();
-  final ChallengeProcessService _processService = ChallengeProcessService();
+  final SubmissionService _submissionService = SubmissionService();
   final ScrollController _scroll = ScrollController();
-  final TextEditingController _search = TextEditingController();
 
   List<Challenge> _items = [];
   Map<String, int> _challengeBestStars = {}; // Map challenge ID to best star
   bool _loading = true;
   bool _loadingMore = false;
   String _error = '';
-  String _term = '';
   int _page = 1;
   int _totalPages = 1;
   bool _hasMore = true;
@@ -50,7 +49,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
   @override
   void dispose() {
     _scroll.dispose();
-    _search.dispose();
     super.dispose();
   }
 
@@ -70,28 +68,21 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       final res = await _service.getChallenges(
         lessonId: widget.lessonId,
         courseId: widget.courseId,
-        searchTerm: _term.isNotEmpty ? _term : null,
+        searchTerm: null,
         pageNumber: _page,
         pageSize: 10,
       );
       
-      // Load challenge processes if showBestStars is true
+      // Load best submissions by lesson (server-calculated best stars)
       Map<String, int> bestStars = {};
-      if (widget.showBestStars) {
-        try {
-          final processRes = await _processService.getMyChallenges(
-            lessonId: widget.lessonId,
-            courseId: widget.courseId,
-            pageNumber: 1,
-            pageSize: 100, // Get all to ensure we have complete data
-          );
-          for (final process in processRes.data?.items ?? []) {
-            bestStars[process.challengeId] = process.bestStar;
-          }
-        } catch (e) {
-          print('Failed to load challenge processes: $e');
-          // Continue without best stars if process loading fails
+      try {
+        final bestRes = await _submissionService.getBestSubmissionsByLesson(lessonId: widget.lessonId);
+        for (final sub in bestRes.data) {
+          bestStars[sub.challengeId] = sub.star;
         }
+      } catch (e) {
+        // Silent fail; keep UI working even if best submissions not available
+        print('Failed to load best submissions: $e');
       }
       
       setState(() {
@@ -201,37 +192,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         ),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _search,
-                      onChanged: (v) => _term = v.trim(),
-                      decoration: InputDecoration(
-                        hintText: 'challenges.searchHint'.tr(),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: Color(0xFF00ba4a))),
-                        isDense: true,
-                        prefixIcon: const Icon(Icons.search),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00ba4a), foregroundColor: Colors.white),
-                    onPressed: () => _load(refresh: true),
-                    child: Text('challenges.search'.tr()),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
             Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -262,7 +222,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                               ],
                             ),
                           )
-                        : _items.isEmpty
+        : _items.isEmpty
                             ? Center(child: Text('common.notFound'.tr()))
                             : ListView.separated(
                                 controller: _scroll,
@@ -283,9 +243,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                   }
                                   if (index < _items.length) {
                                     final c = _items[index];
+                                    final int? bestStar = _challengeBestStars[c.id];
                                     return _GameChallengeTile(
                                       challenge: c,
-                                      bestStar: _challengeBestStars[c.id],
+                                      bestStar: bestStar,
                                       onTap: () async {
                                         try {
                                           final detail = await _service.getChallengeDetail(c.id);
@@ -299,9 +260,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                                   'id': detail.id,
                                                   'lessonId': detail.lessonId,
                                                   'order': detail.order,
-                                                  'challengeMode': (detail.challengeJson != null)
+                                                  // Prefer top-level API field; fallback to embedded JSON
+                                                  'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
                                                       ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
-                                                      : 0,
+                                                      : 0),
                                                 },
                                               ),
                                             ),

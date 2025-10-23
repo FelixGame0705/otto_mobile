@@ -6,6 +6,7 @@ class CourseSearchBar extends StatelessWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onSearchPressed;
   final VoidCallback onClearPressed;
+  final TextEditingController? controller;
 
   const CourseSearchBar({
     super.key,
@@ -13,6 +14,7 @@ class CourseSearchBar extends StatelessWidget {
     required this.onSearchChanged,
     required this.onSearchPressed,
     required this.onClearPressed,
+    this.controller,
   });
 
   @override
@@ -31,6 +33,7 @@ class CourseSearchBar extends StatelessWidget {
         ],
       ),
       child: TextField(
+        controller: controller,
         onChanged: onSearchChanged,
         onSubmitted: (_) => onSearchPressed(),
         decoration: InputDecoration(

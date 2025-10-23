@@ -6,6 +6,7 @@ import 'package:ottobit/services/course_detail_service.dart';
 import 'package:ottobit/widgets/courseDetail/course_detail_header.dart';
 import 'package:ottobit/widgets/courseDetail/course_info_section.dart';
 import 'package:ottobit/widgets/courseDetail/course_action_buttons.dart';
+import 'package:ottobit/widgets/courseDetail/course_rating_widget.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/cart_service.dart';
@@ -15,6 +16,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:ottobit/services/course_robot_service.dart';
 import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
+import 'package:ottobit/services/auth_service.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -44,12 +46,27 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   bool _isAddingToCart = false;
   CourseRobot? _requiredRobot;
   bool _isLoadingRobot = false;
+  String? _currentStudentId;
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUser();
     _loadCourseDetail();
     _checkCartStatus();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final user = await AuthService.getCurrentUser();
+      if (mounted) {
+        setState(() {
+          _currentStudentId = user?.id; // Use user id as studentId
+        });
+      }
+    } catch (e) {
+      print('Error loading current user: $e');
+    }
   }
 
 
@@ -406,6 +423,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 ),
               ),
             ),
+          
+          // Course Rating (at the end)
+          CourseRatingWidget(
+            courseId: widget.courseId,
+            currentStudentId: _currentStudentId,
+          ),
         ],
       ),
     );

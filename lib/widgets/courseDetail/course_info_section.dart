@@ -55,6 +55,17 @@ class CourseInfoSection extends StatelessWidget {
             color: const Color(0xFFED8936),
           ),
           
+          const SizedBox(height: 12),
+          
+          _buildInfoRow(
+            icon: Icons.star,
+            label: 'course.rating'.tr(),
+            value: course.ratingCount > 0 
+                ? '${course.ratingAverage.toStringAsFixed(1)} (${course.ratingCount} ${'course.reviews'.tr()})'
+                : 'course.noRating'.tr(),
+            color: const Color(0xFFF6AD55),
+          ),
+          
           // const SizedBox(height: 12),
           
           // _buildInfoRow(

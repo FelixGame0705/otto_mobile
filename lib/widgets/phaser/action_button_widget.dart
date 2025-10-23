@@ -3,7 +3,7 @@ import 'responsive_helpers.dart';
 
 class ActionButtonWidget extends StatelessWidget {
   final String text;
-  final IconData icon;
+  final IconData? icon; // allow null, will fallback to default
   final Color textColor;
   final Color backgroundColor;
   final bool isTablet;
@@ -13,7 +13,7 @@ class ActionButtonWidget extends StatelessWidget {
   const ActionButtonWidget({
     super.key,
     required this.text,
-    required this.icon,
+    this.icon,
     required this.textColor,
     required this.backgroundColor,
     required this.isTablet,
@@ -25,13 +25,15 @@ class ActionButtonWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     
+    final iconData = icon ?? null;
+
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(
-        icon, 
-        color: textColor, 
+      icon: iconData != null ? Icon(
+        iconData,
+        color: textColor,
         size: isTablet ? 16 : (isLandscape ? 14 : 15),
-      ),
+      ) : null,
       label: Text(
         text,
         style: TextStyle(
@@ -45,7 +47,7 @@ class ActionButtonWidget extends StatelessWidget {
         foregroundColor: textColor,
         elevation: 0,
         padding: EdgeInsets.symmetric(
-          horizontal: ResponsiveHelpers.getButtonPadding(screenWidth, isTablet, 'horizontal'), 
+          horizontal: ResponsiveHelpers.getButtonPadding(screenWidth, isTablet, 'horizontal'),
           vertical: ResponsiveHelpers.getButtonPadding(screenWidth, isTablet, 'vertical'),
         ),
         shape: RoundedRectangleBorder(

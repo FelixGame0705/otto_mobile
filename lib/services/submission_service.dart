@@ -44,4 +44,27 @@ class SubmissionService {
     );
     throw Exception(friendly);
   }
+
+  Future<SubmissionListApiResponse> getBestSubmissionsByLesson({
+    required String lessonId,
+  }) async {
+    final params = <String, String>{
+      'LessonId': lessonId,
+    };
+    final res = await _http.get(
+      '/v1/submissions/best',
+      queryParams: params,
+      throwOnError: false,
+    );
+    if (res.statusCode == 200) {
+      final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
+      return SubmissionListApiResponse.fromJson(jsonData);
+    }
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to fetch best submissions: ${res.statusCode}',
+    );
+    throw Exception(friendly);
+  }
 }

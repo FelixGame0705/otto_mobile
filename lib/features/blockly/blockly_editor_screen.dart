@@ -64,6 +64,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   // BLE service removed - using USB instead
   String _receivedData = '';
   bool _showMicrobitPanel = false;
+  Map<String, dynamic>? _latestActionsProgram; // program built from socket actions
 
   // Tutorial
   final GlobalKey _keyToolbarBlockly = GlobalKey();
@@ -192,21 +193,55 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         return;
       }
 
-      // Gửi RUN_PROGRAM_HEADLESS để compile program và thực thi actions
-      final program = await _compileAndGetProgram();
-      if (program != null) {
-        debugPrint('🤖 Sending RUN_PROGRAM_HEADLESS to compile and execute program...');
-        debugPrint('🤖 Program data: ${jsonEncode(program)}');
-        await _embeddedPhaserBridge!.runProgramHeadless(program);
-        // No toast while processing
-      } else {
-        debugPrint('❌ No program available to execute');
-      }
+      // Chuyển đổi socket actions -> Phaser program JSON (không hiển thị block)
+      final program = _convertSocketActionsToProgram(actions);
+      _latestActionsProgram = program; // lưu để dùng nút Simulation ở dialog
+      debugPrint('🤖 Converted socket actions to program: ${jsonEncode(program)}');
+      // Chạy headless để trình biên dịch trong game xử lý nhanh
+      await _embeddedPhaserBridge!.runProgramHeadless(program);
       
     } catch (e) {
       debugPrint('❌ Error handling actions event: $e');
       // No toast on error
     }
+  }
+
+  Map<String, dynamic> _convertSocketActionsToProgram(List<dynamic> actions) {
+    List<Map<String, dynamic>> toNodes = [];
+    for (final a in actions) {
+      final String s = a.toString();
+      switch (s) {
+        case 'forward':
+          toNodes.add({'type': 'forward', 'count': 1});
+          break;
+        case 'turnRight':
+          toNodes.add({'type': 'turnRight'});
+          break;
+        case 'turnLeft':
+          toNodes.add({'type': 'turnLeft'});
+          break;
+        case 'turnBack':
+          toNodes.add({'type': 'turnBack'});
+          break;
+        case 'collectYellow':
+          toNodes.add({'type': 'collect', 'color': 'yellow', 'count': 1});
+          break;
+        case 'collectGreen':
+          toNodes.add({'type': 'collect', 'color': 'green', 'count': 1});
+          break;
+        case 'collectRed':
+          toNodes.add({'type': 'collect', 'color': 'red', 'count': 1});
+          break;
+        default:
+          // Unknown action; ignore
+          break;
+      }
+    }
+    return {
+      'version': '1.0.0',
+      'programName': 'socket_actions',
+      'actions': toNodes,
+    };
   }
 
   /// Khởi tạo kết nối Socket.IO và join room
@@ -1022,7 +1057,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                 Tooltip(
                   message: 'Room ID: $_roomId',
                   child: Text(
-                    'Room: ${_roomId!.toString().substring(0, 8)}...',
+                    'Room: ${_roomId!.toString().substring(0, 12)}...',
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -1126,6 +1161,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                 },
                 initialMapJson: widget.initialMapJson,
                 initialChallengeJson: widget.initialChallengeJson,
+                getActionsProgram: () => _latestActionsProgram,
               ),
             ),
           ],

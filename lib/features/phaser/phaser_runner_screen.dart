@@ -13,6 +13,7 @@ class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialChallengeJson;
   final bool embedded;
   final ValueChanged<PhaserBridge>? onBridgeReady;
+  final Map<String, dynamic>? Function()? getActionsProgram;
   const PhaserRunnerScreen({
     super.key,
     this.initialProgram,
@@ -20,6 +21,7 @@ class PhaserRunnerScreen extends StatefulWidget {
     this.initialChallengeJson,
     this.embedded = false,
     this.onBridgeReady,
+    this.getActionsProgram,
   });
 
   @override
@@ -230,6 +232,32 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
             _isDialogShowing = false;
             Navigator.pop(context);
           },
+          onSimulation: widget.getActionsProgram != null
+              ? () async {
+                  try {
+                    final program = widget.getActionsProgram!.call();
+                    if (program != null) {
+                      debugPrint('▶️ Running simulation from socket actions program');
+                      // Load map và challenge trước khi chạy simulation
+                      if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
+                        await _bridge.loadMapAndChallenge(
+                          mapJson: widget.initialMapJson!,
+                          challengeJson: widget.initialChallengeJson!,
+                        );
+                        // Đợi một chút để map load xong
+                        await Future.delayed(const Duration(milliseconds: 500));
+                        await _bridge.runProgram(program);
+                      } else {
+                        debugPrint('❌ Cannot run simulation: missing mapJson or challengeJson');
+                      }
+                    } else {
+                      debugPrint('ℹ️ No actions program available for simulation');
+                    }
+                  } catch (e) {
+                    debugPrint('❌ Error running simulation: $e');
+                  }
+                }
+              : null,
         ),
       ),
     ).then((_) {
