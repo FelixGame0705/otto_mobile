@@ -25,6 +25,9 @@ import 'package:ottobit/screens/order/payment_webview_screen.dart';
 import 'package:ottobit/screens/onboarding/onboarding_screen.dart';
 import 'package:ottobit/screens/splash/splash_screen.dart';
 import 'package:ottobit/screens/news/blog_detail_screen.dart';
+import 'package:ottobit/screens/certificates/certificates_screen.dart';
+import 'package:ottobit/screens/certificates/certificate_detail_screen.dart';
+import 'package:ottobit/models/certificate_model.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -53,6 +56,8 @@ class AppRoutes {
   static const String onboarding = '/onboarding';
   static const String splash = '/splash';
   static const String blogDetail = '/blog-detail';
+  static const String certificates = '/certificates';
+  static const String certificateDetail = '/certificate-detail';
 
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
@@ -236,6 +241,27 @@ class AppRoutes {
       return const Scaffold(
         body: Center(
           child: Text('Thiếu thông tin bài viết'),
+        ),
+      );
+    },
+    certificates: (context) => const CertificatesScreen(),
+    certificateDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        return CertificateDetailScreen(certificateId: args);
+      } else if (args is Map<String, dynamic>) {
+        final certificateId = args['certificateId'] as String?;
+        final certificate = args['certificate'] as Certificate?;
+        if (certificateId != null) {
+          return CertificateDetailScreen(
+            certificateId: certificateId,
+            certificate: certificate,
+          );
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Missing certificate ID'),
         ),
       );
     },

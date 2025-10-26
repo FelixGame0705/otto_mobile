@@ -312,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisCount: 2,
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 2.6,
+              childAspectRatio: 2.2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: [
@@ -357,6 +357,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   icon: const Icon(Icons.receipt_long),
                   label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.certificates),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF7C3AED), width: 2),
+                    foregroundColor: const Color(0xFF7C3AED),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.workspace_premium),
+                  label: const Text('My Certificates', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: _handleLogout,
