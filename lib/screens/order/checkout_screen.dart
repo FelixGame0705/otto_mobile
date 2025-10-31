@@ -6,6 +6,8 @@ import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/services/order_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/screens/home/home_screen.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
+import 'dart:convert';
 
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> cartItems;
@@ -250,6 +252,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
         
+        // Check for VOU_012 error and show dialog
+        final errorMsg = e.toString();
+        if (errorMsg.contains('VOU_012') || errorMsg.contains('Voucher đã đạt giới hạn')) {
+          // Try to extract error code from JSON if available
+          try {
+            final errorJson = jsonDecode(errorMsg.replaceFirst('Exception: ', ''));
+            if (errorJson['errorCode'] == 'VOU_012') {
+              _showVoucherErrorDialog(errorJson['message'] ?? ApiErrorMapper.fromBody(null, fallback: 'Voucher không hợp lệ'));
+              return;
+            }
+          } catch (_) {
+            // If parsing fails, check string directly
+            if (errorMsg.contains('VOU_012')) {
+              final friendlyMsg = ApiErrorMapper.fromBody(errorMsg, fallback: 'Voucher không hợp lệ');
+              _showVoucherErrorDialog(friendlyMsg);
+              return;
+            }
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('order.error'.tr() + ': $e'),
@@ -258,6 +280,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
       }
     }
+  }
+
+  void _showVoucherErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.orange, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(child: Text('Voucher không hợp lệ')),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Đóng'),
+          ),
+        ],
+      ),
+    );
   }
 
   int get _subtotal => _currentCartSummary?.subtotal ?? widget.cartItems.fold(0, (sum, item) => sum + item.unitPrice);

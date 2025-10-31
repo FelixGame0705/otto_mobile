@@ -363,8 +363,6 @@ class _GameChallengeTile extends StatelessWidget {
                       _Pill(icon: Icons.speed, text: 'Lv ${challenge.difficulty}'),
                       const SizedBox(width: 8),
                       _Pill(icon: Icons.access_time, text: '${(challenge.order + 1) * 2}p'),
-                      const Spacer(),
-                      Text('${challenge.submissionsCount} tries', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                     ],
                   ),
                 ],

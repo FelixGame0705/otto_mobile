@@ -11,6 +11,8 @@ import 'package:ottobit/services/student_service.dart';
 import 'package:ottobit/utils/constants.dart';
 import 'package:ottobit/models/student_model.dart';
 import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
+import 'package:ottobit/screens/support/tickets_screen.dart';
+import 'package:ottobit/screens/submissions/my_submissions_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -339,6 +341,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: const Text('My Courses', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MySubmissionsScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                    foregroundColor: const Color(0xFF2563EB),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.code),
+                  label: const Text('My Submissions', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFED8936), width: 2),
@@ -367,6 +383,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   icon: const Icon(Icons.workspace_premium),
                   label: const Text('My Certificates', style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const TicketsScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF9333EA), width: 2),
+                    foregroundColor: const Color(0xFF9333EA),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.support_agent),
+                  label: Text('ticket.myTickets'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: _handleLogout,

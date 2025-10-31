@@ -140,10 +140,11 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
     });
 
     // Initialize Socket.IO connection
-    _initializeSocketConnection();
-    
-    // Start connection monitoring
-    _startConnectionMonitoring();
+    if (_isUploadMode) {
+      _initializeSocketConnection();
+      // Start connection monitoring
+      _startConnectionMonitoring();
+    }
   }
 
   void _setupBleListeners() {
@@ -1038,29 +1039,31 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             children: [
               const Text('Blockly Editor'),
               const SizedBox(width: 8),
-              // Socket.IO connection indicator với tooltip
-              Tooltip(
-                message: _socketService.isConnected 
-                    ? 'Socket.IO Connected' 
-                    : 'Socket.IO Disconnected',
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _socketService.isConnected ? Colors.green : Colors.red,
-                  ),
-                ),
-              ),
-              if (_roomId != null) ...[
-                const SizedBox(width: 8),
+              // Socket.IO connection indicator + room chỉ hiển thị ở upload mode
+              if (_isUploadMode) ...[
                 Tooltip(
-                  message: 'Room ID: $_roomId',
-                  child: Text(
-                    'Room: ${_roomId!.toString().substring(0, 12)}...',
-                    style: const TextStyle(fontSize: 12),
+                  message: _socketService.isConnected 
+                      ? 'Socket.IO Connected' 
+                      : 'Socket.IO Disconnected',
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _socketService.isConnected ? Colors.green : Colors.red,
+                    ),
                   ),
                 ),
+                if (_roomId != null) ...[
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Room ID: $_roomId',
+                    child: Text(
+                      'Room: ${_roomId!.toString().substring(0, 12)}...',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
@@ -1161,7 +1164,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                 },
                 initialMapJson: widget.initialMapJson,
                 initialChallengeJson: widget.initialChallengeJson,
-                getActionsProgram: () => _latestActionsProgram,
+                getActionsProgram: _isUploadMode ? () => _latestActionsProgram : null,
               ),
             ),
           ],

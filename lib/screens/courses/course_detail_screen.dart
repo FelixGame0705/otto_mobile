@@ -17,6 +17,8 @@ import 'package:ottobit/services/course_robot_service.dart';
 import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
 import 'package:ottobit/services/auth_service.dart';
+import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
+import 'package:ottobit/screens/support/tickets_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -256,6 +258,38 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
+  Future<void> _showCreateTicketDialog() async {
+    if (_course == null) return;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => CreateTicketDialog(
+        courseId: _course!.id,
+        courseName: _course!.title,
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Optionally show a success message or navigate to tickets list
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ticket created successfully'),
+          backgroundColor: Colors.green,
+          action: SnackBarAction(
+            label: 'View Tickets',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TicketsScreen()),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -396,31 +430,52 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           if (!widget.hideEnroll)
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.lessons,
-                      arguments: {
-                        'courseId': widget.courseId,
-                        'courseTitle': _course?.title,
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.lessons,
+                          arguments: {
+                            'courseId': widget.courseId,
+                            'courseTitle': _course?.title,
+                          },
+                        );
                       },
-                    );
-                  },
-                  icon: const Icon(Icons.menu_book),
-                  label: Text('course.viewLessons'.tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF48BB78),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      icon: const Icon(Icons.menu_book),
+                      label: Text('course.viewLessons'.tr()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF48BB78),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 2,
+                      ),
                     ),
-                    elevation: 2,
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _showCreateTicketDialog,
+                      icon: const Icon(Icons.support_agent),
+                      label: Text('ticket.getSupport'.tr()),
+                      style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF17a64b),
+                      side: const BorderSide(color: Color(0xFF17a64b)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           

@@ -372,6 +372,56 @@
     "beFirstToComment": "Be the first to share your thoughts!",
     "anonymous": "Anonymous",
     "edited": "edited"
+  },
+  "ticket": {
+    "create": "Create Support Ticket",
+    "course": "Course: {courseName}",
+    "title": "Title",
+    "titleHint": "Enter ticket title",
+    "titleRequired": "Title is required",
+    "titleMin": "Title must be at least 3 characters",
+    "description": "Description",
+    "descriptionHint": "Describe your issue",
+    "descriptionRequired": "Description is required",
+    "descriptionMin": "Description must be at least 10 characters",
+    "createButton": "Create",
+    "getSupport": "Get Support",
+    "myTickets": "My Support Tickets",
+    "noTickets": "No support tickets",
+    "noTicketsMessage": "Create a ticket from any course detail page",
+    "ticketDetails": "Ticket Details",
+    "status": {
+      "open": "Open",
+      "inProgress": "In Progress",
+      "resolved": "Resolved",
+      "closed": "Closed"
+    },
+    "messages": {
+      "noMessages": "No messages yet",
+      "startConversation": "Start the conversation",
+      "writeMessage": "Write a message...",
+      "you": "You",
+      "supportTeam": "Support Team",
+      "loadingMessages": "Loading messages...",
+      "errorLoadingMessages": "Error loading messages",
+      "errorSendingMessage": "Error sending message",
+      "justNow": "just now",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago",
+      "yesterday": "Yesterday",
+      "daysAgo": "{n}d ago",
+      "typing": "Support is typing..."
+    },
+    "rating": {
+      "title": "Rate our support",
+      "subtitle": "How satisfied are you with the assistance?",
+      "commentHint": "Write a comment (optional)...",
+      "submit": "Submit rating",
+      "submitted": "Rating submitted",
+      "success": "Rating submitted successfully",
+      "error": "Failed to submit rating: {0}",
+      "selectStars": "Please select a rating"
+    }
   }
 }
 

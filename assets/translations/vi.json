@@ -374,6 +374,56 @@
     "beFirstToComment": "Hãy là người đầu tiên chia sẻ suy nghĩ của bạn!",
     "anonymous": "Ẩn danh",
     "edited": "đã chỉnh sửa"
+  },
+  "ticket": {
+    "create": "Tạo ticket hỗ trợ",
+    "course": "Khóa học: {courseName}",
+    "title": "Tiêu đề",
+    "titleHint": "Nhập tiêu đề ticket",
+    "titleRequired": "Tiêu đề là bắt buộc",
+    "titleMin": "Tiêu đề phải có ít nhất 3 ký tự",
+    "description": "Mô tả",
+    "descriptionHint": "Mô tả vấn đề của bạn",
+    "descriptionRequired": "Mô tả là bắt buộc",
+    "descriptionMin": "Mô tả phải có ít nhất 10 ký tự",
+    "createButton": "Tạo",
+    "getSupport": "Nhận hỗ trợ",
+    "myTickets": "Ticket hỗ trợ của tôi",
+    "noTickets": "Chưa có ticket hỗ trợ",
+    "noTicketsMessage": "Tạo ticket từ trang chi tiết khóa học bất kỳ",
+    "ticketDetails": "Chi tiết ticket",
+    "status": {
+      "open": "Mở",
+      "inProgress": "Đang xử lý",
+      "resolved": "Đã giải quyết",
+      "closed": "Đã đóng"
+    },
+    "messages": {
+      "noMessages": "Chưa có tin nhắn",
+      "startConversation": "Bắt đầu cuộc trò chuyện",
+      "writeMessage": "Viết tin nhắn...",
+      "you": "Bạn",
+      "supportTeam": "Đội hỗ trợ",
+      "loadingMessages": "Đang tải tin nhắn...",
+      "errorLoadingMessages": "Lỗi tải tin nhắn",
+      "errorSendingMessage": "Lỗi gửi tin nhắn",
+      "justNow": "vừa xong",
+      "minutesAgo": "{n} phút trước",
+      "hoursAgo": "{n} giờ trước",
+      "yesterday": "Hôm qua",
+      "daysAgo": "{n} ngày trước",
+      "typing": "Đội hỗ trợ đang nhập..."
+    },
+    "rating": {
+      "title": "Đánh giá hỗ trợ",
+      "subtitle": "Bạn hài lòng thế nào với hỗ trợ vừa rồi?",
+      "commentHint": "Viết bình luận (không bắt buộc)...",
+      "submit": "Gửi đánh giá",
+      "submitted": "Đã gửi đánh giá",
+      "success": "Gửi đánh giá thành công",
+      "error": "Không thể gửi đánh giá: {0}",
+      "selectStars": "Vui lòng chọn số sao"
+    }
   }
 }
 

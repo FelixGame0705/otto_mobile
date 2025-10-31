@@ -50,6 +50,9 @@ class ApiErrorMapper {
     'USER_001': 'Không tìm thấy người dùng.', // USER_NOT_FOUND
     'USER_002': 'Email đã được đăng ký.', // EMAIL_ALREADY_EXISTS
     'USER_005': 'Đổi mật khẩu thất bại: Mật khẩu hiện tại không chính xác.', // CURRENT_PASSWORD_INCORRECT
+
+    // ================= Voucher errors =================
+    'VOU_012': 'Voucher đã đạt giới hạn sử dụng hoặc không còn hiệu lực.',
   };
 
   /// Optional mapping by HTTP status to a default message.

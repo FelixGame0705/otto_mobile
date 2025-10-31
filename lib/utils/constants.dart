@@ -40,6 +40,7 @@ class AppConstants {
   // API
   static const String baseUrl = 'https://ottobit-be.felixtien.dev/api'; // Thay đổi thành URL thực tế của backend
   static const Duration apiTimeout = Duration(seconds: 30);
+  static const String assistanceHubUrl = 'https://ottobit-be.felixtien.dev/assistance-message-hub';
   
   // Storage Keys
   static const String tokenKey = 'auth_token';

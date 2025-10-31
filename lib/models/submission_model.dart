@@ -131,3 +131,31 @@ class CreateSubmissionRequest {
     };
   }
 }
+
+class SubmissionPage {
+  final int size;
+  final int page;
+  final int total;
+  final int totalPages;
+  final List<Submission> items;
+
+  const SubmissionPage({
+    required this.size,
+    required this.page,
+    required this.total,
+    required this.totalPages,
+    required this.items,
+  });
+
+  factory SubmissionPage.fromJson(Map<String, dynamic> json) {
+    return SubmissionPage(
+      size: (json['size'] as num?)?.toInt() ?? 10,
+      page: (json['page'] as num?)?.toInt() ?? 1,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      totalPages: (json['totalPages'] as num?)?.toInt() ?? 1,
+      items: (json['items'] as List<dynamic>? ?? [])
+          .map((e) => Submission.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
