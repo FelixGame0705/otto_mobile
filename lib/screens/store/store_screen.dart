@@ -49,15 +49,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   String _orderDirection = 'ASC';
   bool _showFilters = true;
 
-  bool get _filtersActive =>
-      _searchCtrl.text.trim().isNotEmpty ||
-      _brandCtrl.text.trim().isNotEmpty ||
-      _ageRange.start != 6 ||
-      _ageRange.end != 18 ||
-      _inStock ||
-      _orderBy != 'Name' ||
-      _orderDirection != 'ASC';
-
   @override
   void initState() {
     super.initState();
@@ -279,37 +270,10 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         title: Text('store.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: _filtersActive ? const Color(0xFF17a64b) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color:
-                    _filtersActive ? const Color(0xFF17a64b) : const Color(0xFFE2E8F0),
-              ),
-              boxShadow: _filtersActive
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF17a64b).withOpacity(0.25),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.tune,
-                color: _filtersActive ? Colors.white : const Color(0xFF17a64b),
-              ),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: 'store.filters'.tr(),
-            ),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.tune, color: Colors.white),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          tooltip: 'store.filters'.tr(),
         ),
         bottom: TabBar(
           controller: _tabController!,

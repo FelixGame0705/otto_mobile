@@ -378,18 +378,29 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                       ],
                     ),
                   ),
-                  RangeSlider(
-                    values: _draftPriceRange,
-                    min: _priceSliderMin,
-                    max: _priceSliderMax,
-                    divisions: _priceSliderDivisions,
-                    labels: RangeLabels(
-                      _formatCurrency(_draftPriceRange.start),
-                      _formatCurrency(_draftPriceRange.end),
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      sliderTheme: SliderTheme.of(context).copyWith(
+                        activeTrackColor: const Color(0xFF17a64b),
+                        inactiveTrackColor: const Color(0xFF17a64b).withOpacity(0.2),
+                        thumbColor: const Color(0xFF17a64b),
+                        overlayColor: const Color(0x3317a64b),
+                        valueIndicatorColor: const Color(0xFF17a64b),
+                      ),
                     ),
-                    onChanged: (values) => setDrawerState(() {
-                      _draftPriceRange = values;
-                    }),
+                    child: RangeSlider(
+                      values: _draftPriceRange,
+                      min: _priceSliderMin,
+                      max: _priceSliderMax,
+                      divisions: _priceSliderDivisions,
+                      labels: RangeLabels(
+                        _formatCurrency(_draftPriceRange.start),
+                        _formatCurrency(_draftPriceRange.end),
+                      ),
+                      onChanged: (values) => setDrawerState(() {
+                        _draftPriceRange = values;
+                      }),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Text(
