@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:ottobit/models/submission_model.dart';
 import 'package:ottobit/services/submission_service.dart';
-import 'package:ottobit/features/blockly/solution_viewer_screen.dart';
+import 'package:ottobit/screens/blockly/solution_viewer_screen.dart';
 
 class MySubmissionsScreen extends StatefulWidget {
   const MySubmissionsScreen({super.key});

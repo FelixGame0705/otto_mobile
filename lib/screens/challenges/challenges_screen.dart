@@ -3,7 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
 // Removed ChallengeProcessService in favor of server-side best submissions API
-import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/screens/blockly/blockly_editor_screen.dart';
 import 'package:ottobit/services/submission_service.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
 

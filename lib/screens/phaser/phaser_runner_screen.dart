@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:ottobit/features/phaser/phaser_bridge.dart';
-import '../../widgets/phaser/status_dialog_widget.dart';
 import 'package:ottobit/core/services/storage_service.dart';
+import 'package:ottobit/features/phaser/phaser_bridge.dart';
+import 'package:ottobit/widgets/phaser/status_dialog_widget.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;
@@ -44,10 +44,8 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   }
 
   void _initializeWebView() {
-    // Khởi tạo bridge trước
     _bridge = PhaserBridge();
     _setupBridgeCallbacks();
-    // Thông báo bridge cho parent nếu cần
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         widget.onBridgeReady?.call(_bridge);
@@ -75,9 +73,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
               _isLoading = false;
               _isGameReady = true;
             });
-            // Initialize bridge sau khi page load
             _bridge.initialize(_controller);
-            // Chỉ gửi payload sau khi nhận READY từ Phaser
             debugPrint(
               '⏳ Waiting for READY from Phaser before sending payload',
             );
@@ -106,7 +102,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         });
         _refreshCachedCodeJson();
         _sendInitialPayloadIfAny();
-        // Do not show READY popup
       }
     };
 
@@ -137,7 +132,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
 
     _bridge.onProgress = (data) {
       debugPrint('📊 onProgress callback called with data: $data');
-      // Không hiển thị popup cho progress
     };
 
     _bridge.onError = (data) {
@@ -156,8 +150,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
 
     _bridge.onProgramCompiled = (data) {
       debugPrint('🤖 onProgramCompiled callback called with data: $data');
-      // Không cần hiển thị dialog cho program compiled
-      // Chỉ log để debug
     };
   }
 
@@ -169,7 +161,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   ) {
     debugPrint('🎭 Attempting to show dialog: $status - $title');
 
-    // Prevent multiple dialogs
     if (_isDialogShowing) {
       debugPrint('⚠️ Dialog already showing, skipping');
       return;
@@ -203,7 +194,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
             );
             return challengeId;
           }(),
-          // Prefer cached/pre-encoded codeJson if available
           codeJson: codeJsonString.isNotEmpty
               ? codeJsonString
               : (widget.initialProgram != null
@@ -238,13 +228,11 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
                     final program = widget.getActionsProgram!.call();
                     if (program != null) {
                       debugPrint('▶️ Running simulation from socket actions program');
-                      // Load map và challenge trước khi chạy simulation
                       if (widget.initialMapJson != null && widget.initialChallengeJson != null) {
                         await _bridge.loadMapAndChallenge(
                           mapJson: widget.initialMapJson!,
                           challengeJson: widget.initialChallengeJson!,
                         );
-                        // Đợi một chút để map load xong
                         await Future.delayed(const Duration(milliseconds: 500));
                         await _bridge.runProgram(program);
                       } else {
@@ -310,7 +298,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         challengeJson: widget.initialChallengeJson!,
       );
     } else if (widget.initialProgram != null) {
-      // fallback behavior if only program is provided
       _loadMapAndRunProgram();
     }
   }
@@ -454,3 +441,4 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     super.dispose();
   }
 }
+
