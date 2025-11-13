@@ -15,7 +15,6 @@ import 'package:ottobit/screens/home/home_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ottobit/services/course_robot_service.dart';
 import 'package:ottobit/models/course_robot_model.dart';
-import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
 import 'package:ottobit/screens/support/tickets_screen.dart';
@@ -242,22 +241,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     Share.share(message, subject: _course!.title);
   }
 
-  void _showActivationCodeDialog() {
-    if (_course == null || _requiredRobot == null) return;
-    
-    showDialog(
-      context: context,
-      builder: (context) => ActivationCodeDialog(
-        course: _course!,
-        robot: _requiredRobot!,
-        onCodeRedeemed: () {
-          // Refresh course status after successful activation
-          _loadCourseDetail();
-        },
-      ),
-    );
-  }
-
   Future<void> _showCreateTicketDialog() async {
     if (_course == null) return;
 
@@ -403,7 +386,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             CourseActionButtons(
               onEnroll: _course!.isFree ? _handleEnroll : null,
               onAddToCart: _course!.isPaid ? _handleAddToCart : null,
-              onActivateRobot: _showActivationCodeDialog,
               onShare: _handleShare,
               isEnrolled: _isEnrolled,
               isLoading: _isEnrolling || _isAddingToCart,

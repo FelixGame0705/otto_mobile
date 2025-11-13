@@ -2,29 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/blog_model.dart';
 
-class BlogFilterDialog extends StatefulWidget {
+class BlogFilterDrawer extends StatefulWidget {
   final List<BlogTag> tags;
+  final String? currentTagId;
   final String currentSortBy;
   final String currentSortDirection;
-  final Function({
+  final void Function({
     String? tagId,
     String? sortBy,
     String? sortDirection,
   }) onApply;
 
-  const BlogFilterDialog({
+  const BlogFilterDrawer({
     super.key,
     required this.tags,
+    required this.currentTagId,
     required this.currentSortBy,
     required this.currentSortDirection,
     required this.onApply,
   });
 
   @override
-  State<BlogFilterDialog> createState() => _BlogFilterDialogState();
+  State<BlogFilterDrawer> createState() => _BlogFilterDrawerState();
 }
 
-class _BlogFilterDialogState extends State<BlogFilterDialog> {
+class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
   String? _selectedTagId;
   String _sortBy = 'updatedAt';
   String _sortDirection = 'desc';
@@ -40,8 +42,17 @@ class _BlogFilterDialogState extends State<BlogFilterDialog> {
   @override
   void initState() {
     super.initState();
+    _selectedTagId = widget.currentTagId;
     _sortBy = widget.currentSortBy;
     _sortDirection = widget.currentSortDirection;
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _selectedTagId = null;
+      _sortBy = 'updatedAt';
+      _sortDirection = 'desc';
+    });
   }
 
   void _applyFilters() {
@@ -53,169 +64,195 @@ class _BlogFilterDialogState extends State<BlogFilterDialog> {
     Navigator.of(context).pop();
   }
 
-  void _resetFilters() {
-    setState(() {
-      _selectedTagId = null;
-      _sortBy = 'updatedAt';
-      _sortDirection = 'desc';
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: Colors.white,
-      title: Text('news.filter'.tr()),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tag filter
-            Text(
-              'news.filterByTag'.tr(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            // All tags option
-            RadioListTile<String?>(
-              title: Text('common.all'.tr()),
-              value: null,
-              groupValue: _selectedTagId,
-              activeColor: const Color(0xFF17a64b),
-              onChanged: (value) {
-                setState(() {
-                  _selectedTagId = value;
-                });
-              },
-              contentPadding: EdgeInsets.zero,
-            ),
-            
-            // Individual tags
-            ...widget.tags.map((tag) => RadioListTile<String?>(
-              title: Text(tag.name),
-              value: tag.id,
-              groupValue: _selectedTagId,
-              activeColor: const Color(0xFF17a64b),
-              onChanged: (value) {
-                setState(() {
-                  _selectedTagId = value;
-                });
-              },
-              contentPadding: EdgeInsets.zero,
-            )),
-            
-            const SizedBox(height: 16),
-            
-            // Sort by
-            Text(
-              'news.sortBy'.tr(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            DropdownButtonFormField<String>(
-              value: _sortBy,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF17a64b)),
+    return Drawer(
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF17a64b).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF17a64b)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFF17a64b)),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                child: Row(
+                  children: [
+                    const Icon(Icons.tune, color: Color(0xFF17a64b)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'news.filter'.tr(),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF166534),
+                          ),
+                    ),
+                  ],
                 ),
               ),
-              items: _sortOptions.map((option) {
-                return DropdownMenuItem<String>(
-                  value: option['value'],
-                  child: Text(option['label']!.tr()),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _sortBy = value;
-                  });
-                }
-              },
-            ),
-            
-            const SizedBox(height: 16),
-            
-            // Sort direction
-            Text(
-              'news.sortDirection'.tr(),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 24),
+              Text(
+                'news.filterByTag'.tr(),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
-            ),
-            const SizedBox(height: 8),
-            
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: Text('news.ascending'.tr()),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: Text('common.all'.tr()),
+                    selected: _selectedTagId == null,
+                    onSelected: (_) => setState(() => _selectedTagId = null),
+                    selectedColor: const Color(0xFF17a64b).withOpacity(0.2),
+                    labelStyle: TextStyle(
+                      color: _selectedTagId == null
+                          ? const Color(0xFF17a64b)
+                          : const Color(0xFF2D3748),
+                      fontWeight: FontWeight.w600,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                  ),
+                  ...widget.tags.map(
+                    (tag) => ChoiceChip(
+                      label: Text(tag.name),
+                      selected: _selectedTagId == tag.id,
+                      onSelected: (_) => setState(() => _selectedTagId = tag.id),
+                      selectedColor: const Color(0xFF17a64b).withOpacity(0.2),
+                      labelStyle: TextStyle(
+                        color: _selectedTagId == tag.id
+                            ? const Color(0xFF17a64b)
+                            : const Color(0xFF2D3748),
+                        fontWeight: FontWeight.w600,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'news.sortBy'.tr(),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                value: _sortBy,
+                items: _sortOptions
+                    .map(
+                      (option) => DropdownMenuItem<String>(
+                        value: option['value'],
+                        child: Text(option['label']!.tr()),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _sortBy = value);
+                  }
+                },
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
+                    borderSide: BorderSide(color: Color(0xFF17a64b)),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'news.sortDirection'.tr(),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              Column(
+                children: [
+                  RadioListTile<String>(
                     value: 'asc',
                     groupValue: _sortDirection,
-                    activeColor: const Color(0xFF17a64b),
                     onChanged: (value) {
-                      setState(() {
-                        _sortDirection = value!;
-                      });
+                      if (value != null) {
+                        setState(() => _sortDirection = value);
+                      }
                     },
-                    contentPadding: EdgeInsets.zero,
+                    title: Text('news.ascending'.tr()),
+                    activeColor: const Color(0xFF17a64b),
                   ),
-                ),
-                Expanded(
-                  child: RadioListTile<String>(
-                    title: Text('news.descending'.tr()),
+                  RadioListTile<String>(
                     value: 'desc',
                     groupValue: _sortDirection,
-                    activeColor: const Color(0xFF17a64b),
                     onChanged: (value) {
-                      setState(() {
-                        _sortDirection = value!;
-                      });
+                      if (value != null) {
+                        setState(() => _sortDirection = value);
+                      }
                     },
-                    contentPadding: EdgeInsets.zero,
+                    title: Text('news.descending'.tr()),
+                    activeColor: const Color(0xFF17a64b),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _resetFilters,
+                          icon: const Icon(Icons.refresh),
+                          label: Text('store.reset'.tr()),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF17a64b),
+                            side: const BorderSide(color: Color(0xFF17a64b)),
+                          ),
+                        ),
+                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _applyFilters,
+                      icon: const Icon(Icons.check),
+                      label: Text('store.apply'.tr()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF17a64b),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _resetFilters,
-          child: Text('store.reset'.tr(), style: const TextStyle(color: Color(0xFF17a64b))),
-        ),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('common.cancel'.tr(), style: const TextStyle(color: Colors.red)),
-        ),
-        ElevatedButton(
-          onPressed: _applyFilters,
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF17a64b)),
-          child: Text('store.apply'.tr(), style: const TextStyle(color: Colors.white)),
-        ),
-      ],
     );
   }
 }

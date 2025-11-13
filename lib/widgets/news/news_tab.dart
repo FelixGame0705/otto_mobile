@@ -16,6 +16,7 @@ class NewsTab extends StatefulWidget {
 class _NewsTabState extends State<NewsTab> {
   final BlogService _blogService = BlogService();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   
   List<Blog> _blogs = [];
   List<BlogTag> _tags = [];
@@ -26,6 +27,11 @@ class _NewsTabState extends State<NewsTab> {
   String? _selectedTagId;
   String _sortBy = 'updatedAt';
   String _sortDirection = 'desc';
+
+  bool get _filtersActive =>
+      _selectedTagId != null ||
+      _sortBy != 'updatedAt' ||
+      _sortDirection != 'desc';
 
   @override
   void initState() {
@@ -92,6 +98,7 @@ class _NewsTabState extends State<NewsTab> {
     try {
       final response = await _blogService.getBlogs(
         searchTerm: _searchTerm,
+        tagId: _selectedTagId,
         sortBy: _sortBy,
         sortDirection: _sortDirection,
         pageNumber: _currentPage,
@@ -169,6 +176,14 @@ class _NewsTabState extends State<NewsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: BlogFilterDrawer(
+        tags: _tags,
+        currentTagId: _selectedTagId,
+        currentSortBy: _sortBy,
+        currentSortDirection: _sortDirection,
+        onApply: _onFilter,
+      ),
       body: Column(
         children: [
           // Search and Filter Bar
@@ -178,7 +193,8 @@ class _NewsTabState extends State<NewsTab> {
               children: [
                 BlogSearchBar(
                   onSearch: _onSearch,
-                  onFilter: () => _showFilterDialog(),
+                  onFilter: _openFilterDrawer,
+                  filtersActive: _filtersActive,
                 ),
                 const SizedBox(height: 8),
                 // Tag filters
@@ -305,15 +321,7 @@ class _NewsTabState extends State<NewsTab> {
     );
   }
 
-  void _showFilterDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => BlogFilterDialog(
-        tags: _tags,
-        currentSortBy: _sortBy,
-        currentSortDirection: _sortDirection,
-        onApply: _onFilter,
-      ),
-    );
+  void _openFilterDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
   }
 }

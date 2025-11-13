@@ -7,6 +7,7 @@ class CourseSearchBar extends StatelessWidget {
   final VoidCallback onSearchPressed;
   final VoidCallback onClearPressed;
   final TextEditingController? controller;
+  final EdgeInsetsGeometry margin;
 
   const CourseSearchBar({
     super.key,
@@ -15,12 +16,13 @@ class CourseSearchBar extends StatelessWidget {
     required this.onSearchPressed,
     required this.onClearPressed,
     this.controller,
+    this.margin = const EdgeInsets.all(16),
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: margin,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),

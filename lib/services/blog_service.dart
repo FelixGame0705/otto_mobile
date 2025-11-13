@@ -14,6 +14,7 @@ class BlogService {
   /// Get blogs with pagination and search
   Future<BlogApiResponse> getBlogs({
     String? searchTerm,
+    String? tagId,
     String? dateFrom,
     String? dateTo,
     int? readingTimeMin,
@@ -33,6 +34,9 @@ class BlogService {
 
       if (searchTerm != null && searchTerm.isNotEmpty) {
         queryParams['SearchTerm'] = searchTerm;
+      }
+      if (tagId != null && tagId.isNotEmpty) {
+        queryParams['TagId'] = tagId;
       }
       if (dateFrom != null && dateFrom.isNotEmpty) {
         queryParams['DateFrom'] = dateFrom;

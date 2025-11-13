@@ -49,6 +49,15 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   String _orderDirection = 'ASC';
   bool _showFilters = true;
 
+  bool get _filtersActive =>
+      _searchCtrl.text.trim().isNotEmpty ||
+      _brandCtrl.text.trim().isNotEmpty ||
+      _ageRange.start != 6 ||
+      _ageRange.end != 18 ||
+      _inStock ||
+      _orderBy != 'Name' ||
+      _orderDirection != 'ASC';
+
   @override
   void initState() {
     super.initState();
@@ -262,17 +271,45 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
       key: _scaffoldKey,
       drawer: Drawer(
         width: screenWidth < 420 ? screenWidth * 0.9 : 320,
-        child: SafeArea(
-          child: SingleChildScrollView(child: _buildFilterBar(screenWidth)),
-        ),
+      child: SafeArea(
+        child: SingleChildScrollView(child: _buildFilterBar(screenWidth)),
+      ),
       ),
       appBar: AppBar(
         title: Text('store.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.tune),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: _filtersActive ? const Color(0xFF17a64b) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color:
+                    _filtersActive ? const Color(0xFF17a64b) : const Color(0xFFE2E8F0),
+              ),
+              boxShadow: _filtersActive
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF17a64b).withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.tune,
+                color: _filtersActive ? Colors.white : const Color(0xFF17a64b),
+              ),
+              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              tooltip: 'store.filters'.tr(),
+            ),
+          ),
         ),
         bottom: TabBar(
           controller: _tabController!,
@@ -447,14 +484,26 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Column(
           children: [
-            // Header row with collapse/expand
-            Row(
-              children: [
-                const Icon(Icons.tune, size: 18),
-                const SizedBox(width: 6),
-                Text('store.filters'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                const Spacer(),
-              ],
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF17a64b).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.tune, color: Color(0xFF17a64b)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'store.filters'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF166534),
+                    ),
+                  ),
+                ],
+              ),
             ),
             if (_showFilters) ...[
             if (screenWidth < 420) ...[
@@ -622,7 +671,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _loadBoth,
-                    icon: const Icon(Icons.filter_list, color: Colors.white),
+                    icon: const Icon(Icons.check, color: Colors.white),
                     label: Text('store.apply'.tr(), style: const TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF17a64b),
@@ -632,7 +681,7 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: () {
                       _searchCtrl.clear();
                       _brandCtrl.clear();
@@ -642,14 +691,15 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                         _inStock = false;
                         _orderBy = 'Name';
                         _orderDirection = 'ASC';
+                        _ageRange = const RangeValues(6, 18);
                       });
                       _loadBoth();
                     },
-                    icon: const Icon(Icons.refresh, color: Color(0xFF17a64b)),
-                    label: Text('store.reset'.tr(), style: const TextStyle(color: Color(0xFF17a64b))),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFF17a64b), width: 1),
+                    icon: const Icon(Icons.refresh),
+                    label: Text('store.reset'.tr()),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF17a64b),
+                      side: const BorderSide(color: Color(0xFF17a64b)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),

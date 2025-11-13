@@ -16,6 +16,11 @@ class CourseService {
     bool includeDeleted = false,
     int pageNumber = 1,
     int pageSize = 10,
+    int? minPrice,
+    int? maxPrice,
+    int? type,
+    int? sortBy,
+    int? sortDirection,
   }) async {
     try {
       final queryParams = <String, String>{
@@ -26,6 +31,21 @@ class CourseService {
 
       if (searchTerm != null && searchTerm.isNotEmpty) {
         queryParams['SearchTerm'] = searchTerm;
+      }
+      if (minPrice != null) {
+        queryParams['MinPrice'] = minPrice.toString();
+      }
+      if (maxPrice != null) {
+        queryParams['MaxPrice'] = maxPrice.toString();
+      }
+      if (type != null) {
+        queryParams['Type'] = type.toString();
+      }
+      if (sortBy != null) {
+        queryParams['SortBy'] = sortBy.toString();
+      }
+      if (sortDirection != null) {
+        queryParams['SortDirection'] = sortDirection.toString();
       }
 
       print('CourseService: Making request to /v1/courses');

@@ -13,6 +13,7 @@ import 'package:ottobit/models/student_model.dart';
 import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
 import 'package:ottobit/screens/support/tickets_screen.dart';
 import 'package:ottobit/screens/submissions/my_submissions_screen.dart';
+import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -189,6 +190,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _student = resp.data;
       });
     } catch (_) {}
+  }
+
+  void _openRobotActivationDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const ActivationCodeDialog(),
+    );
   }
 
   Future<void> _handleLogout() async {
@@ -398,6 +406,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   icon: const Icon(Icons.support_agent),
                   label: Text('ticket.myTickets'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _openRobotActivationDialog,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF0EA5E9), width: 2),
+                    foregroundColor: const Color(0xFF0EA5E9),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.smart_toy),
+                  label: const Text('Kích hoạt Robot', style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: _handleLogout,

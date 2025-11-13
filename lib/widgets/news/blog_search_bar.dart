@@ -4,11 +4,13 @@ import 'package:easy_localization/easy_localization.dart';
 class BlogSearchBar extends StatefulWidget {
   final Function(String) onSearch;
   final VoidCallback onFilter;
+  final bool filtersActive;
 
   const BlogSearchBar({
     super.key,
     required this.onSearch,
     required this.onFilter,
+    this.filtersActive = false,
   });
 
   @override
@@ -44,6 +46,36 @@ class _BlogSearchBarState extends State<BlogSearchBar> {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // Filter button
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: widget.onFilter,
+            icon: Icon(
+              Icons.tune,
+              color:
+                  widget.filtersActive ? Colors.white : const Color(0xFF17a64b),
+            ),
+            label: const SizedBox.shrink(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  widget.filtersActive ? const Color(0xFF17a64b) : Colors.white,
+              elevation: widget.filtersActive ? 2 : 0,
+              side: BorderSide(
+                color: widget.filtersActive
+                    ? const Color(0xFF17a64b)
+                    : const Color(0xFFE2E8F0),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
         // Search field
         Expanded(
           child: TextField(
@@ -81,22 +113,6 @@ class _BlogSearchBarState extends State<BlogSearchBar> {
                 vertical: 12,
               ),
             ),
-          ),
-        ),
-        
-        const SizedBox(width: 12),
-        
-        // Filter button
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF17a64b)),
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
-          ),
-          child: IconButton(
-            onPressed: widget.onFilter,
-            icon: const Icon(Icons.filter_list, color: Color(0xFF17a64b)),
-            tooltip: 'news.filter'.tr(),
           ),
         ),
       ],

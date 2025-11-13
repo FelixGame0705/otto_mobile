@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:ottobit/models/course_detail_model.dart';
-import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/activation_code_service.dart';
 
 class ActivationCodeDialog extends StatefulWidget {
-  final CourseDetail course;
-  final CourseRobot robot;
-  final VoidCallback onCodeRedeemed;
+  final String? courseTitle;
+  final String? robotName;
+  final VoidCallback? onCodeRedeemed;
 
   const ActivationCodeDialog({
     super.key,
-    required this.course,
-    required this.robot,
-    required this.onCodeRedeemed,
+    this.courseTitle,
+    this.robotName,
+    this.onCodeRedeemed,
   });
 
   @override
@@ -58,7 +56,7 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
         );
         
         Navigator.of(context).pop();
-        widget.onCodeRedeemed();
+        widget.onCodeRedeemed?.call();
       }
     } catch (e) {
       if (mounted) {
@@ -125,6 +123,36 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
             ),
             
             const SizedBox(height: 24),
+            if (widget.courseTitle != null || widget.robotName != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.courseTitle != null) ...[
+                      Text(
+                        'Khóa học: ${widget.courseTitle}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                    if (widget.robotName != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Robot: ${widget.robotName}',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             
             // Activation Code Input
             Text(
@@ -157,7 +185,7 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
               children: [
                 TextButton(
                   onPressed: _isRedeeming ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Hủy'),
+                  child: const Text('Hủy', style: TextStyle(color: Colors.red)),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
