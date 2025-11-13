@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
-import 'package:ottobit/core/models/program.dart';
+import 'package:ottobit/models/program.dart';
 
 class CompileResult {
   final Program program;
@@ -30,8 +29,14 @@ class CompilerService {
     final program = Program(
       version: version,
       programName: programName,
-      functions: functionsRaw.whereType<Map<String, dynamic>>()
-          .map((m) => FunctionDef(name: m['name'] as String, body: (m['body'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? const []))
+      functions: functionsRaw
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (m) => FunctionDef(
+              name: m['name'] as String,
+              body: (m['body'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? const [],
+            ),
+          )
           .toList(),
       actions: actionsRaw.whereType<Map<String, dynamic>>().toList(),
     );
@@ -130,7 +135,11 @@ class CompilerService {
           break;
         case 'repeatRange':
           final v = n['variable'] ?? 'i';
-          b.writeln(ind(indent) + 'for ' + '$v' + ' in range(${_pyVal(n['from'])}, ${_pyVal(n['to'])}, ${_pyVal(n['step'])}):');
+          b
+            ..write(ind(indent))
+            ..write('for ')
+            ..write('$v')
+            ..writeln(' in range(${_pyVal(n['from'])}, ${_pyVal(n['to'])}, ${_pyVal(n['step'])}):');
           _emitPythonNodes(b, (n['body'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? const [], indent: indent + 1);
           break;
         case 'if':
@@ -198,5 +207,4 @@ class CompilerService {
         ],
       };
 }
-
 

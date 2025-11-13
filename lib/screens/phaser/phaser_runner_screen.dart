@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:ottobit/core/services/storage_service.dart';
+import 'package:ottobit/services/program_storage_service.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/widgets/phaser/status_dialog_widget.dart';
 

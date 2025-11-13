@@ -20,7 +20,8 @@ class Program extends Equatable {
     String? programName,
     List<FunctionDef>? functions,
     List<Map<String, dynamic>>? actions,
-  }) => Program(
+  }) =>
+      Program(
         version: version ?? this.version,
         programName: programName ?? this.programName,
         functions: functions ?? this.functions,
@@ -34,9 +35,8 @@ class Program extends Equatable {
         'actions': actions,
       };
 
-  String toJsonString({bool pretty = false}) => pretty
-      ? const JsonEncoder.withIndent('  ').convert(toJson())
-      : jsonEncode(toJson());
+  String toJsonString({bool pretty = false}) =>
+      pretty ? const JsonEncoder.withIndent('  ').convert(toJson()) : jsonEncode(toJson());
 
   @override
   List<Object?> get props => [version, programName, functions, actions];
@@ -56,5 +56,4 @@ class FunctionDef extends Equatable {
   @override
   List<Object?> get props => [name, body];
 }
-
 

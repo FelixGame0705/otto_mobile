@@ -47,8 +47,8 @@ class ProgramStorageService {
   }
 }
 
-// Shared single instance accessor for prefs where needed outside async flows
+/// Shared single instance accessor for prefs where needed outside async flows.
 class ProgramStorageServiceShared {
-  static Future<SharedPreferences> get instance =>
-      SharedPreferences.getInstance();
+  static Future<SharedPreferences> get instance => SharedPreferences.getInstance();
 }
+
