@@ -15,6 +15,8 @@ import 'package:ottobit/services/room_id_service.dart';
 import 'package:ottobit/services/insert_code_service.dart';
 import 'dart:convert';
 import 'dart:async';
+import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 
 class BlocklyEditorScreen extends StatefulWidget {
   final Map<String, dynamic>? initialMapJson;
@@ -34,6 +36,16 @@ enum PanelPosition { left, right, top, bottom }
 class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
     with WidgetsBindingObserver {
   late final WebViewController _controller;
+  final AudioPlayer _bgmPlayer = AudioPlayer();
+  final Random _random = Random();
+  static const String _soundAssetPrefix = 'sound/';
+  static const List<String> _bgmFiles = [
+    'Mario Kart 7 Soundtrack - Main Title Theme.mp3',
+    'Toad_s Factory (OST) - Mario Kart Wii.mp3',
+    'Delfino Square - Mario Kart DS OST.mp3',
+    'Sunshine Airport - Mario Kart 8 Deluxe OST.mp3',
+    'Coconut Mall - Mario Kart Wii OST.mp3',
+  ];
   BlocklyBridge? _bridge;
   String _pythonPreview = '';
   Map<String, dynamic>? _compiledProgram;
@@ -145,10 +157,27 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       // Start connection monitoring
       _startConnectionMonitoring();
     }
+
+    _playRandomBackgroundMusic();
   }
 
   void _setupBleListeners() {
     // BLE service removed - micro:bit integration disabled
+  }
+
+  Future<void> _playRandomBackgroundMusic() async {
+    if (_bgmFiles.isEmpty) return;
+    final fileName = _bgmFiles[_random.nextInt(_bgmFiles.length)];
+    final assetPath = '$_soundAssetPrefix$fileName';
+    try {
+      await _bgmPlayer.stop();
+      await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+      await _bgmPlayer.setVolume(0.3);
+      await _bgmPlayer.play(AssetSource(assetPath));
+      debugPrint('🎵 Playing Blockly BGM: $assetPath');
+    } catch (e) {
+      debugPrint('❌ Failed to play Blockly BGM: $e');
+    }
   }
 
   /// Xử lý bất kỳ event nào từ Socket.IO
@@ -359,6 +388,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       DeviceOrientation.landscapeRight,
     ]);
     WidgetsBinding.instance.removeObserver(this);
+    _bgmPlayer.dispose();
     super.dispose();
   }
 

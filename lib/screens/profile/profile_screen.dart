@@ -19,6 +19,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
 // removed ui/rendering imports used by old editor
+import 'package:ottobit/services/location_service.dart';
+import 'package:ottobit/models/location_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -691,10 +693,12 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   final _fullnameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _cityController = TextEditingController();
   DateTime? _selectedDate;
   bool _isLoading = false;
+  bool _locationsLoading = true;
+  List<Province> _provinces = [];
+  Province? _selectedProvince;
+  Ward? _selectedWard;
 
   @override
   void initState() {
@@ -702,9 +706,8 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
     _fullnameController.text = widget.initialFullname;
     _phoneController.text = widget.initialPhone;
     _addressController.text = widget.initialAddress ?? '';
-    _stateController.text = widget.initialState ?? '';
-    _cityController.text = widget.initialCity ?? '';
     _selectedDate = widget.initialDateOfBirth;
+    _loadLocations();
   }
 
   @override
@@ -712,9 +715,40 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
     _fullnameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
-    _stateController.dispose();
-    _cityController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadLocations() async {
+    try {
+      final provinces = await LocationService.instance.getProvinces();
+      Province? matchedProvince;
+      Ward? matchedWard;
+      if ((widget.initialState ?? '').isNotEmpty) {
+        try {
+          matchedProvince = provinces.firstWhere((p) => p.name == widget.initialState);
+        } catch (_) {}
+        if (matchedProvince != null && (widget.initialCity ?? '').isNotEmpty) {
+          try {
+            matchedWard = matchedProvince.wards.firstWhere((w) => w.name == widget.initialCity);
+          } catch (_) {}
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _provinces = provinces;
+        _selectedProvince = matchedProvince;
+        _selectedWard = matchedWard;
+        _locationsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _locationsLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load provinces: $e')),
+      );
+    }
   }
 
   Future<void> _selectDate() async {
@@ -744,13 +778,13 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   }
 
   void _submitForm() {
-    if (_formKey.currentState!.validate() && _selectedDate != null) {
+    if (_formKey.currentState!.validate() && _selectedDate != null && !_locationsLoading) {
       Navigator.of(context).pop({
         'fullname': _fullnameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'address': _addressController.text.trim(),
-        'state': _stateController.text.trim(),
-        'city': _cityController.text.trim(),
+        'state': _selectedProvince?.name ?? '',
+        'city': _selectedWard?.name ?? '',
         'dateOfBirth': _selectedDate!,
       });
     }
@@ -821,45 +855,71 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                 },
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _stateController,
-                      decoration: const InputDecoration(
-                        labelText: 'State *',
-                        hintText: 'Enter state',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_city),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'State is required';
-                        }
-                        return null;
-                      },
-                    ),
+              if (_locationsLoading)
+                const Center(child: CircularProgressIndicator())
+              else ...[
+                DropdownButtonFormField<Province>(
+                  value: _selectedProvince,
+                  decoration: const InputDecoration(
+                    labelText: 'Province/City *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.location_city),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _cityController,
-                      decoration: const InputDecoration(
-                        labelText: 'City *',
-                        hintText: 'Enter city',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.location_city),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'City is required';
-                        }
-                        return null;
-                      },
-                    ),
+                  items: _provinces
+                      .map(
+                        (province) => DropdownMenuItem<Province>(
+                          value: province,
+                          child: Text(province.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedProvince = value;
+                      _selectedWard = null;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'State/Province is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<Ward>(
+                  value: _selectedWard,
+                  decoration: const InputDecoration(
+                    labelText: 'District/Ward *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.location_city),
                   ),
-                ],
-              ),
+                  items: (_selectedProvince?.wards ?? const [])
+                      .map(
+                        (ward) => DropdownMenuItem<Ward>(
+                          value: ward,
+                          child: Text(ward.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _selectedProvince == null
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedWard = value;
+                          });
+                        },
+                  validator: (value) {
+                    if (_selectedProvince == null) {
+                      return 'Please select province first';
+                    }
+                    if (value == null) {
+                      return 'City/Ward is required';
+                    }
+                    return null;
+                  },
+                ),
+              ],
               const SizedBox(height: 16),
               InkWell(
                 onTap: _selectDate,
@@ -898,7 +958,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
           child: Text('common.cancel'.tr()),
         ),
         ElevatedButton(
-          onPressed: _isLoading ? null : _submitForm,
+          onPressed: (_isLoading || _locationsLoading) ? null : _submitForm,
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4299E1),
             foregroundColor: Colors.white,
