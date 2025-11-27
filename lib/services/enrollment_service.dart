@@ -33,11 +33,13 @@ class EnrollmentService {
     int pageNumber = 1,
     int pageSize = 10,
     bool? isCompleted,
+    String? courseId,
   }) async {
     final params = <String, String>{
       'PageNumber': pageNumber.toString(),
       'PageSize': pageSize.toString(),
       if (isCompleted != null) 'IsCompleted': isCompleted.toString(),
+      if (courseId != null && courseId.isNotEmpty) 'CourseId': courseId,
     };
     final res = await _http.get(
       '/v1/enrollments/my-enrollments',
@@ -63,6 +65,19 @@ class EnrollmentService {
       fallback: 'Failed to fetch enrollments: ${res.statusCode}',
     );
     throw Exception(friendly);
+  }
+
+  Future<bool> isEnrolledInCourse({required String courseId}) async {
+    try {
+      final response = await getMyEnrollments(
+        pageNumber: 1,
+        pageSize: 1,
+        courseId: courseId,
+      );
+      return response.items.any((e) => e.courseId == courseId);
+    } catch (e) {
+      rethrow;
+    }
   }
 }
 

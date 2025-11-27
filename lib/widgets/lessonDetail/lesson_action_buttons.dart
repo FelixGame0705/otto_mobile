@@ -7,6 +7,9 @@ class LessonActionButtons extends StatelessWidget {
   final VoidCallback onViewTheory;
   final bool isStarting;
   final int challengesCount;
+  final bool canStartLesson;
+  final bool isCheckingEnrollment;
+  final String lockedMessage;
 
   const LessonActionButtons({
     super.key,
@@ -15,6 +18,9 @@ class LessonActionButtons extends StatelessWidget {
     required this.onViewTheory,
     this.isStarting = false,
     required this.challengesCount,
+    this.canStartLesson = true,
+    this.isCheckingEnrollment = false,
+    this.lockedMessage = 'Bạn cần đăng ký khóa học để bắt đầu bài học này.',
   });
 
   @override
@@ -23,39 +29,10 @@ class LessonActionButtons extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Start Lesson Button
+          // Start Lesson Button / Enrollment state
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: isStarting ? null : onStartLesson,
-              icon: isStarting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Icon(Icons.play_arrow, size: 24),
-              label: Text(
-                isStarting ? 'common.loading'.tr() : 'common.startLearning'.tr(),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4299E1),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 3,
-                shadowColor: const Color(0xFF4299E1).withOpacity(0.4),
-              ),
-            ),
+            child: _buildStartSection(),
           ),
           
           const SizedBox(height: 12),
@@ -172,6 +149,100 @@ class LessonActionButtons extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildStartSection() {
+    if (isCheckingEnrollment) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        icon: const SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
+        label: Text(
+          'common.loading'.tr(),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF4299E1),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 3,
+        ),
+      );
+    }
+
+    if (canStartLesson) {
+      return ElevatedButton.icon(
+        onPressed: isStarting ? null : onStartLesson,
+        icon: isStarting
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Icon(Icons.play_arrow, size: 24),
+        label: Text(
+          isStarting ? 'common.loading'.tr() : 'common.startLearning'.tr(),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF4299E1),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 3,
+          shadowColor: const Color(0xFF4299E1).withOpacity(0.4),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        border: Border.all(color: const Color(0xFFF6AD55)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.lock_outline, color: Color(0xFFDD6B20)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  lockedMessage,
+                  style: const TextStyle(
+                    color: Color(0xFFDD6B20),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_detail_model.dart';
 import 'package:ottobit/services/lesson_detail_service.dart';
+import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_detail_header.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_content_section.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_action_buttons.dart';
@@ -17,10 +18,14 @@ class LessonDetailScreen extends StatefulWidget {
 
 class _LessonDetailScreenState extends State<LessonDetailScreen> {
   final LessonDetailService _lessonDetailService = LessonDetailService();
+  final EnrollmentService _enrollmentService = EnrollmentService();
   LessonDetail? _lessonDetail;
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isStarting = false;
+  bool _isCheckingEnrollment = false;
+  bool? _isCourseEnrolled;
+  String? _enrollmentError;
 
   @override
   void initState() {
@@ -43,18 +48,59 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
           _lessonDetail = response.data;
           _isLoading = false;
         });
+        await _checkEnrollmentStatus();
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = e.toString().replaceFirst('Exception: ', '');
           _isLoading = false;
+          _isCourseEnrolled = null;
+          _enrollmentError = null;
         });
       }
     }
   }
 
+  Future<void> _checkEnrollmentStatus() async {
+    final lesson = _lessonDetail;
+    if (lesson == null) return;
+    setState(() {
+      _isCheckingEnrollment = true;
+      _enrollmentError = null;
+      _isCourseEnrolled = null;
+    });
+    try {
+      final enrolled = await _enrollmentService.isEnrolledInCourse(
+        courseId: lesson.courseId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isCourseEnrolled = enrolled;
+        _isCheckingEnrollment = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCourseEnrolled = false;
+        _isCheckingEnrollment = false;
+        _enrollmentError = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
   Future<void> _handleStartLesson() async {
+    final isEnrolled = _isCourseEnrolled ?? false;
+    if (!isEnrolled) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bạn cần đăng ký khóa học để bắt đầu bài học này.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
     if (_isStarting) return;
     setState(() {
       _isStarting = true;
@@ -182,6 +228,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     onViewTheory: _handleViewTheory,
                     isStarting: _isStarting,
                     challengesCount: _lessonDetail!.challengesCount,
+                    canStartLesson:
+                        !_isCheckingEnrollment && (_isCourseEnrolled ?? false),
+                    isCheckingEnrollment: _isCheckingEnrollment,
+                    lockedMessage: _enrollmentError ??
+                        'Bạn cần đăng ký khóa học để bắt đầu bài học này.',
                   ),
 
                   // Bottom padding for safe area
