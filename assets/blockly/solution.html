@@ -290,6 +290,82 @@
     <script>
       (function () {
         const C = Blockly;
+        let variableOptions = [
+          ["i", "i"],
+          ["a", "a"],
+          ["b", "b"],
+        ];
+
+        function getVariableDropdownOptions() {
+          return variableOptions.length ? variableOptions : [["i", "i"]];
+        }
+
+        function ensureVariableOption(name) {
+          if (!name) return;
+          if (
+            !variableOptions.some(function (entry) {
+              return entry[1] === name;
+            })
+          ) {
+            variableOptions = variableOptions.concat([[name, name]]);
+          }
+        }
+
+        function collectVariablesFromNodes(nodes, set) {
+          if (!Array.isArray(nodes)) return;
+          nodes.forEach(function (node) {
+            if (!node || typeof node !== "object") return;
+            if (node.type === "repeatRange") {
+              const variable = node.variable;
+              if (typeof variable === "string" && variable.trim().length) {
+                set.add(variable);
+              }
+            }
+            ["body", "then", "else"].forEach(function (key) {
+              if (Array.isArray(node[key])) {
+                collectVariablesFromNodes(node[key], set);
+              }
+            });
+            if (Array.isArray(node.thens)) {
+              node.thens.forEach(function (branch) {
+                collectVariablesFromNodes(branch, set);
+              });
+            }
+          });
+        }
+
+        function updateVariableOptions(program) {
+          const defaults = ["i", "a", "b"];
+          const names = new Set(defaults);
+          if (program && Array.isArray(program.variables)) {
+            program.variables.forEach(function (v) {
+              if (typeof v === "string" && v.trim().length) {
+                names.add(v);
+              }
+            });
+          }
+          if (program) {
+            collectVariablesFromNodes(program.actions, names);
+            if (Array.isArray(program.functions)) {
+              program.functions.forEach(function (fn) {
+                if (fn && Array.isArray(fn.body)) {
+                  collectVariablesFromNodes(fn.body, names);
+                }
+              });
+            }
+          }
+          variableOptions = Array.from(names).map(function (name) {
+            return [name, name];
+          });
+        }
+
+        function extractTemplateVariable(value) {
+          if (typeof value !== "string") return null;
+          var trimmed = value.trim();
+          if (!trimmed.startsWith("{{") || !trimmed.endsWith("}}")) return null;
+          var name = trimmed.substring(2, trimmed.length - 2).trim();
+          return name ? name : null;
+        }
         // Minimal custom blocks subset to visualize program
         if (!C.Blocks["start"])
           C.Blocks["start"] = {
@@ -367,11 +443,7 @@
               this.appendDummyInput()
                 .appendField("repeat")
                 .appendField(
-                  new C.FieldDropdown([
-                    ["i", "i"],
-                    ["a", "a"],
-                    ["b", "b"],
-                  ]),
+                  new C.FieldDropdown(getVariableDropdownOptions),
                   "VAR"
                 )
                 .appendField(" from(");
@@ -386,6 +458,17 @@
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
               this.setColour("#ff6b36");
+            },
+          };
+        if (!C.Blocks["var_ref"])
+          C.Blocks["var_ref"] = {
+            init: function () {
+              this.appendDummyInput().appendField(
+                new C.FieldDropdown(getVariableDropdownOptions),
+                "VAR"
+              );
+              this.setOutput(true, "Number");
+              this.setColour("#9b27b0");
             },
           };
         if (!C.Blocks["if_color"])
@@ -622,6 +705,16 @@
           renderer: "zelos",
         });
 
+        function makeVarRefBlock(name) {
+          if (!name) return null;
+          ensureVariableOption(name);
+          const block = workspace.newBlock("var_ref");
+          block.setFieldValue(name, "VAR");
+          block.initSvg();
+          block.render();
+          return block;
+        }
+
         // Notify flutter webview is ready (after Blockly is initialized)
         try {
           SolutionFromFlutter.postMessage(JSON.stringify({ type: "ready" }));
@@ -634,12 +727,26 @@
           b.render();
           return b;
         }
+
+        function connectValue(connection, value) {
+          if (!connection) return;
+          const templateVar = extractTemplateVariable(value);
+          if (templateVar) {
+            const varBlock = makeVarRefBlock(templateVar);
+            if (varBlock && varBlock.outputConnection) {
+              connection.connect(varBlock.outputConnection);
+            }
+            return;
+          }
+          if (value === undefined || value === null) return;
+          const nb = makeNumberBlock(value);
+          connection.connect(nb.outputConnection);
+        }
+
         function attachNumber(parent, name, val) {
-          if (val === undefined || val === null) return;
-          const nb = makeNumberBlock(val);
           const inp = parent.getInput(name);
-          if (inp && inp.connection)
-            inp.connection.connect(nb.outputConnection);
+          if (!inp || !inp.connection) return;
+          connectValue(inp.connection, val);
         }
 
         function buildCond(cond) {
@@ -682,13 +789,17 @@
               left = workspace.newBlock("warehouseCount");
             else if (cond.variable === "getNumberBox")
               left = workspace.newBlock("getNumberBox");
+            else if (typeof cond.variable === "string") {
+              ensureVariableOption(cond.variable);
+              left = workspace.newBlock("var_ref");
+              left.setFieldValue(cond.variable, "VAR");
+            }
             if (left) {
               left.initSvg();
               left.render();
               cmp.getInput("A").connection.connect(left.outputConnection);
             }
-            const rb = makeNumberBlock(cond.value ?? 0);
-            cmp.getInput("B").connection.connect(rb.outputConnection);
+            connectValue(cmp.getInput("B").connection, cond.value ?? 0);
             cmp.initSvg();
             cmp.render();
             return cmp;
@@ -707,10 +818,8 @@
           if (cond.type === "compare") {
             const b = workspace.newBlock("compare");
             b.setFieldValue(cond.operator || "EQ", "OP");
-            const la = makeNumberBlock(cond.left ?? 0);
-            const rb = makeNumberBlock(cond.right ?? 0);
-            b.getInput("A").connection.connect(la.outputConnection);
-            b.getInput("B").connection.connect(rb.outputConnection);
+            connectValue(b.getInput("A").connection, cond.left ?? 0);
+            connectValue(b.getInput("B").connection, cond.right ?? 0);
             b.initSvg();
             b.render();
             return b;
@@ -783,7 +892,9 @@
             }
             case "repeatRange": {
               const b = workspace.newBlock("repeat_range");
-              b.setFieldValue(n.variable || "i", "VAR");
+              const variableName = n.variable || "i";
+              ensureVariableOption(variableName);
+              b.setFieldValue(variableName, "VAR");
               attachNumber(b, "FROM", n.from ?? 0);
               attachNumber(b, "TO", n.to ?? 10);
               attachNumber(b, "STEP", n.step ?? 1);
@@ -872,6 +983,7 @@
           } catch (_) {}
         }
         function renderProgram(p) {
+          updateVariableOptions(p || {});
           workspace.clear();
           let fy = 20;
           if (Array.isArray(p.functions)) {

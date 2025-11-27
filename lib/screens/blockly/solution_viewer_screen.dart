@@ -40,7 +40,7 @@ class _SolutionViewerScreenState extends State<SolutionViewerScreen> {
 
   Future<void> _postProgram() async {
     if (!_ready) return;
-    final jsonStr = jsonEncode(widget.program);
+    final jsonStr = jsonEncode(_withDerivedVariables(widget.program));
     final js =
         'window.showSolution && window.showSolution(' +
         jsonEncode(jsonStr) +
@@ -48,6 +48,61 @@ class _SolutionViewerScreenState extends State<SolutionViewerScreen> {
     try {
       await _controller.runJavaScript(js);
     } catch (_) {}
+  }
+
+  Map<String, dynamic> _withDerivedVariables(Map<String, dynamic> program) {
+    final existing = program['variables'];
+    final hasExistingNames = existing is List &&
+        existing.any((v) => v is String && v.toString().trim().isNotEmpty);
+    if (hasExistingNames) return program;
+
+    final vars = <String>{};
+
+    void collectFromList(List<dynamic>? nodes) {
+      if (nodes == null) return;
+      for (final raw in nodes) {
+        if (raw is! Map<String, dynamic>) continue;
+        if (raw['type'] == 'repeatRange') {
+          final variable = raw['variable'];
+          if (variable is String && variable.trim().isNotEmpty) {
+            vars.add(variable);
+          }
+        }
+        for (final key in const ['body', 'then', 'else']) {
+          final section = raw[key];
+          if (section is List) collectFromList(section);
+        }
+        final thens = raw['thens'];
+        if (thens is List) {
+          for (final branch in thens) {
+            if (branch is List) collectFromList(branch);
+          }
+        }
+      }
+    }
+
+    if (existing is List) {
+      for (final v in existing) {
+        if (v is String && v.trim().isNotEmpty) vars.add(v);
+      }
+    }
+
+    final actions = program['actions'];
+    if (actions is List) collectFromList(actions);
+    final functions = program['functions'];
+    if (functions is List) {
+      for (final fn in functions) {
+        if (fn is Map<String, dynamic>) {
+          final body = fn['body'];
+          if (body is List) collectFromList(body);
+        }
+      }
+    }
+
+    if (vars.isEmpty) return program;
+    final enriched = Map<String, dynamic>.from(program);
+    enriched['variables'] = vars.toList();
+    return enriched;
   }
 
   @override
