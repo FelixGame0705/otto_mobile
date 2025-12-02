@@ -48,8 +48,9 @@ class CourseRatingService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseRatingService: Exception: $e');
-      throw Exception('Error fetching course ratings: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseRatingService error (getRatings): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -91,8 +92,9 @@ class CourseRatingService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseRatingService: Exception: $e');
-      throw Exception('Error creating rating: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseRatingService error (createRating): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -134,8 +136,9 @@ class CourseRatingService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseRatingService: Exception: $e');
-      throw Exception('Error updating rating: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseRatingService error (updateRating): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -166,8 +169,9 @@ class CourseRatingService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseRatingService: Exception: $e');
-      throw Exception('Error deleting rating: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseRatingService error (deleteRating): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -206,8 +210,9 @@ class CourseRatingService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseRatingService: Exception: $e');
-      throw Exception('Error fetching my rating: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseRatingService error (getMyRating): $friendly');
+      throw Exception(friendly);
     }
   }
 }

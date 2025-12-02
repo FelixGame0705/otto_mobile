@@ -115,9 +115,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
         
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('cart.discountError'.tr() + ': $e'),
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
@@ -158,9 +160,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
         
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('cart.discountRemoveError'.tr() + ': $e'),
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
@@ -210,7 +214,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             cancelUrl: cancelUrl,
           );
           if (!mounted) return;
-          await Navigator.of(context).pushNamed(
+          final result = await Navigator.of(context).pushNamed(
             AppRoutes.paymentWebview,
             arguments: {
               'paymentUrl': payUrl,
@@ -227,12 +231,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             HomeScreen.refreshCartCount(context);
             // Navigate to orders list regardless of result
             Navigator.of(context).pushReplacementNamed(AppRoutes.orders);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('order.success'.tr()),
-                backgroundColor: const Color(0xFF48BB78),
-              ),
-            );
+            
+            // Only show success message if payment was successful
+            if (result != null && result is Map && result['result'] == 'success') {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('order.success'.tr()),
+                  backgroundColor: const Color(0xFF48BB78),
+                ),
+              );
+            }
+            // If cancelled or other result, don't show success message
           }
         } else {
           // Fallback: no payment needed
@@ -252,29 +261,34 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _isProcessing = false;
         });
         
+        final isEnglish = context.locale.languageCode == 'en';
+        
         // Check for VOU_012 error and show dialog
-        final errorMsg = e.toString();
-        if (errorMsg.contains('VOU_012') || errorMsg.contains('Voucher đã đạt giới hạn')) {
+        final errorStr = e.toString();
+        if (errorStr.contains('VOU_012') || errorStr.contains('Voucher đã đạt giới hạn')) {
           // Try to extract error code from JSON if available
           try {
-            final errorJson = jsonDecode(errorMsg.replaceFirst('Exception: ', ''));
+            final cleanedError = errorStr.replaceFirst(RegExp(r'Exception:\s*', caseSensitive: false), '').trim();
+            final errorJson = jsonDecode(cleanedError);
             if (errorJson['errorCode'] == 'VOU_012') {
-              _showVoucherErrorDialog(errorJson['message'] ?? ApiErrorMapper.fromBody(null, fallback: 'Voucher không hợp lệ'));
+              final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+              _showVoucherErrorDialog(friendlyMsg);
               return;
             }
           } catch (_) {
             // If parsing fails, check string directly
-            if (errorMsg.contains('VOU_012')) {
-              final friendlyMsg = ApiErrorMapper.fromBody(errorMsg, fallback: 'Voucher không hợp lệ');
+            if (errorStr.contains('VOU_012')) {
+              final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
               _showVoucherErrorDialog(friendlyMsg);
               return;
             }
           }
         }
         
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('order.error'.tr() + ': $e'),
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
@@ -290,14 +304,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.orange, size: 28),
             const SizedBox(width: 12),
-            const Expanded(child: Text('Voucher không hợp lệ')),
+            Expanded(child: Text('order.voucherInvalid'.tr())),
           ],
         ),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Đóng'),
+            child: Text('common.close'.tr()),
           ),
         ],
       ),

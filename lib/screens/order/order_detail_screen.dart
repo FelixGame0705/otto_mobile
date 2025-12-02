@@ -5,6 +5,7 @@ import 'package:ottobit/models/order_model.dart';
 import 'package:ottobit/services/order_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/screens/home/home_screen.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -35,7 +36,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       setState(() { _order = o; _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = '$e'; _loading = false; });
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+      setState(() { _error = friendly; _loading = false; });
     }
   }
 
@@ -50,12 +53,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: Text('common.cancel'.tr()),
+            child: Text('common.cancel'.tr(), style: const TextStyle(color: Colors.red)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: Text('order.cancel'.tr()),
+            child: Text('order.cancel'.tr(), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -82,9 +85,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (!mounted) return;
       setState(() { _processing = false; });
       
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('order.cancelError'.tr() + ': $e'),
+          content: Text(friendly),
           backgroundColor: Colors.red,
         ),
       );
@@ -126,9 +132,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (!mounted) return;
       setState(() { _processing = false; });
       
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('order.error'.tr() + ': $e'),
+          content: Text(friendly),
           backgroundColor: Colors.red,
         ),
       );
@@ -217,26 +226,26 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   const SizedBox(width: 12),
                 ],
-                if (_canContinuePayment(o.status)) ...[
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _processing ? null : _continuePayment,
-                      icon: _processing 
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.payment),
-                      label: Text('order.continuePayment'.tr()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
+                // if (_canContinuePayment(o.status)) ...[
+                //   Expanded(
+                //     child: ElevatedButton.icon(
+                //       onPressed: _processing ? null : _continuePayment,
+                //       icon: _processing 
+                //         ? const SizedBox(
+                //             width: 16,
+                //             height: 16,
+                //             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                //           )
+                //         : const Icon(Icons.payment),
+                //       label: Text('order.continuePayment'.tr()),
+                //       style: ElevatedButton.styleFrom(
+                //         backgroundColor: const Color(0xFF8B5CF6),
+                //         foregroundColor: Colors.white,
+                //         padding: const EdgeInsets.symmetric(vertical: 12),
+                //       ),
+                //     ),
+                //   ),
+                // ],
               ],
             ),
             const SizedBox(height: 16),
@@ -296,13 +305,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   String _statusText(int status) {
     switch (status) {
-      case 1: return 'Paid';
-      case 2: return 'Failed';
-      case 3: return 'Cancelled';
-      case 4: return 'Refunded';
+      case 1: return 'order.status.paid'.tr();
+      case 2: return 'order.status.failed'.tr();
+      case 3: return 'order.status.cancelled'.tr();
+      case 4: return 'order.status.refunded'.tr();
       case 0:
       default:
-        return 'Pending';
+        return 'order.status.pending'.tr();
     }
   }
 }

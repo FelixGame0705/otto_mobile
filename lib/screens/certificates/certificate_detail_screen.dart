@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:ottobit/models/certificate_model.dart';
 import 'package:ottobit/services/certificate_service.dart';
 import 'package:ottobit/widgets/common/section_card.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CertificateDetailScreen extends StatefulWidget {
   final String certificateId;
@@ -56,7 +57,7 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
         
         if (!certificateResponse.isSuccess || certificateResponse.data == null) {
           setState(() {
-            _error = certificateResponse.message ?? 'Failed to load certificate';
+            _error = certificateResponse.message ?? 'certificate.loadErrorDetail'.tr(namedArgs: {'err': ''});
             _isLoading = false;
           });
           return;
@@ -69,7 +70,7 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
       
       if (!templateResponse.isSuccess || templateResponse.data == null) {
         setState(() {
-          _error = templateResponse.message ?? 'Failed to load certificate template';
+          _error = templateResponse.message ?? 'certificate.loadTemplateError'.tr();
           _isLoading = false;
         });
         return;
@@ -93,7 +94,7 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = 'Error loading certificate: $e';
+        _error = 'certificate.loadErrorDetail'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
         _isLoading = false;
       });
     }
@@ -105,26 +106,27 @@ class _CertificateDetailScreenState extends State<CertificateDetailScreen> {
     try {
       // Create a simple text share with certificate info
       final shareText = '''
-🎓 Certificate of Completion
+🎓 ${'certificate.shareTitle'.tr()}
 
-Student: ${_certificate!.studentFullname}
-Course: ${_certificate!.courseTitle}
-Certificate No: ${_certificate!.certificateNo}
-Verification Code: ${_certificate!.verificationCode}
-Issued: ${DateFormat('MMMM dd, yyyy').format(_certificate!.issuedAt)}
+${'certificate.shareStudent'.tr()}: ${_certificate!.studentFullname}
+${'certificate.shareCourse'.tr()}: ${_certificate!.courseTitle}
+${'certificate.shareCertificateNo'.tr()}: ${_certificate!.certificateNo}
+${'certificate.shareVerificationCode'.tr()}: ${_certificate!.verificationCode}
+${'certificate.shareIssued'.tr()}: ${DateFormat('MMMM dd, yyyy').format(_certificate!.issuedAt)}
 
-This certificate was issued by Ottobit Academy.
+${'certificate.shareFooter'.tr()}
       ''';
       
       await Share.share(
         shareText,
-        subject: 'Certificate: ${_certificate!.courseTitle}',
+        subject: 'certificate.shareSubject'.tr(namedArgs: {'courseTitle': _certificate!.courseTitle}),
       );
     } catch (e) {
       if (mounted) {
+        final msg = 'certificate.shareError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sharing certificate: $e'),
+            content: Text(msg),
             backgroundColor: Colors.red,
           ),
         );
@@ -172,9 +174,10 @@ This certificate was issued by Ottobit Academy.
       if (mounted) Navigator.of(context).pop();
       
       if (mounted) {
+        final msg = 'certificate.downloadError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error generating PDF: $e'),
+            content: Text(msg),
             backgroundColor: Colors.red,
           ),
         );
@@ -187,7 +190,7 @@ This certificate was issued by Ottobit Academy.
     
     Clipboard.setData(ClipboardData(text: _certificate!.verificationCode));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Verification code copied to clipboard')),
+      SnackBar(content: Text('certificate.verificationCodeCopied'.tr())),
     );
   }
 
@@ -442,7 +445,7 @@ This certificate was issued by Ottobit Academy.
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Certificate Details'),
+        title: Text('certificate.details'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
       ),
@@ -487,27 +490,27 @@ This certificate was issued by Ottobit Academy.
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: _loadCertificateDetails,
-                            child: const Text('Retry'),
+                            child: Text('common.retry'.tr()),
                           ),
                         ],
                       ),
                     )
                   : _certificate == null || _template == null
-                      ? const Center(child: Text('Certificate not found'))
+                      ? Center(child: Text('certificate.notFound'.tr()))
                       : SingleChildScrollView(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
                           // Certificate Actions
                           SectionCard(
-                            title: 'Certificate Actions',
+                            title: 'certificate.actions'.tr(),
                             child: Row(
                               children: [
                                 Expanded(
                                   child: ElevatedButton.icon(
                                     onPressed: _shareCertificate,
                                     icon: const Icon(Icons.share),
-                                    label: const Text('Share'),
+                                    label: Text('certificate.share'.tr()),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF3182CE),
                                       foregroundColor: Colors.white,
@@ -519,7 +522,7 @@ This certificate was issued by Ottobit Academy.
                                   child: OutlinedButton.icon(
                                     onPressed: _downloadCertificate,
                                     icon: const Icon(Icons.download),
-                                    label: const Text('Download'),
+                                    label: Text('certificate.download'.tr()),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: const Color(0xFF00ba4a),
                                       side: const BorderSide(color: Color(0xFF00ba4a)),
@@ -532,40 +535,40 @@ This certificate was issued by Ottobit Academy.
                           const SizedBox(height: 16),
                           // Certificate Information
                           SectionCard(
-                            title: 'Certificate Information',
+                            title: 'certificate.information'.tr(),
                             child: Column(
                               children: [
                                 _InfoRow(
-                                  label: 'Certificate Number',
+                                  label: 'certificate.certificateNumber'.tr(),
                                   value: _certificate!.certificateNo,
                                   onTap: _copyVerificationCode,
                                 ),
                                 _InfoRow(
-                                  label: 'Verification Code',
+                                  label: 'certificate.verificationCode'.tr(),
                                   value: _certificate!.verificationCode,
                                   onTap: _copyVerificationCode,
                                   copyable: true,
                                 ),
                                 _InfoRow(
-                                  label: 'Student Name',
+                                  label: 'certificate.studentName'.tr(),
                                   value: _certificate!.studentFullname,
                                 ),
                                 _InfoRow(
-                                  label: 'Course Title',
+                                  label: 'certificate.courseTitle'.tr(),
                                   value: _certificate!.courseTitle,
                                 ),
                                 _InfoRow(
-                                  label: 'Issue Date',
+                                  label: 'certificate.issueDateLabel'.tr(),
                                   value: DateFormat('MMMM dd, yyyy').format(_certificate!.issuedAt),
                                 ),
                                 if (_certificate!.expiresAt != null)
                                   _InfoRow(
-                                    label: 'Expiry Date',
+                                    label: 'certificate.expiryDate'.tr(),
                                     value: DateFormat('MMMM dd, yyyy').format(_certificate!.expiresAt!),
                                     valueColor: _certificate!.isExpired ? Colors.red : Colors.orange,
                                   ),
                                 _InfoRow(
-                                  label: 'Status',
+                                  label: 'certificate.status'.tr(),
                                   value: _certificate!.statusText,
                                   valueColor: _certificate!.isActive ? Colors.green : Colors.grey,
                                 ),
@@ -575,7 +578,7 @@ This certificate was issued by Ottobit Academy.
                           const SizedBox(height: 16),
                           // Certificate Preview
                           SectionCard(
-                            title: 'Certificate Preview',
+                            title: 'certificate.preview'.tr(),
                             child: Column(
                               children: [
                                 Container(
@@ -627,7 +630,7 @@ This certificate was issued by Ottobit Academy.
                                                     ),
                                                     const SizedBox(height: 16),
                                                     Text(
-                                                      'Certificate preview unavailable',
+                                                      'certificate.previewUnavailable'.tr(),
                                                       style: TextStyle(
                                                         fontSize: 16,
                                                         color: Colors.red[600],
@@ -636,7 +639,7 @@ This certificate was issued by Ottobit Academy.
                                                     ),
                                                     const SizedBox(height: 8),
                                                     Text(
-                                                      'Please try the full screen view',
+                                                      'certificate.previewUnavailableMessage'.tr(),
                                                       style: TextStyle(
                                                         fontSize: 14,
                                                         color: Colors.grey[600],
@@ -645,10 +648,10 @@ This certificate was issued by Ottobit Academy.
                                                   ],
                                                 ),
                                               )
-                                            : const Center(
+                                            : Center(
                                                 child: Padding(
-                                                  padding: EdgeInsets.all(32.0),
-                                                  child: Text('Certificate preview not available'),
+                                                  padding: const EdgeInsets.all(32.0),
+                                                  child: Text('certificate.previewNotAvailable'.tr()),
                                                 ),
                                               ),
                                   ),
@@ -659,7 +662,7 @@ This certificate was issued by Ottobit Academy.
                                   child: OutlinedButton.icon(
                                     onPressed: _openFullScreenCertificate,
                                     icon: const Icon(Icons.fullscreen),
-                                    label: const Text('View Full Screen'),
+                                    label: Text('certificate.viewFullScreen'.tr()),
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: const Color(0xFF00ba4a),
                                       side: const BorderSide(color: Color(0xFF00ba4a)),
@@ -673,12 +676,12 @@ This certificate was issued by Ottobit Academy.
                           const SizedBox(height: 16),
                           // Verification Information
                           SectionCard(
-                            title: 'Verification',
+                            title: 'certificate.verification'.tr(),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'This certificate can be verified using the verification code above.',
+                                  'certificate.verificationDescription'.tr(),
                                   style: TextStyle(
                                     color: Colors.grey[600],
                                     fontSize: 14,
@@ -686,7 +689,7 @@ This certificate was issued by Ottobit Academy.
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'To verify this certificate, contact the issuing organization or use the verification portal.',
+                                  'certificate.verificationInstructions'.tr(),
                                   style: TextStyle(
                                     color: Colors.grey[500],
                                     fontSize: 12,
@@ -790,23 +793,24 @@ class _FullScreenCertificateView extends StatelessWidget {
             onPressed: () async {
               try {
                 final shareText = '''
-🎓 Certificate of Completion
+🎓 ${'certificate.shareTitle'.tr()}
 
-Student: $certificateTitle
-Certificate: $certificateTitle
+${'certificate.shareStudent'.tr()}: $certificateTitle
+${'certificate.shareCourse'.tr()}: $certificateTitle
 
-This certificate was issued by Ottobit Academy.
+${'certificate.shareFooter'.tr()}
                 ''';
                 
                 await Share.share(
                   shareText,
-                  subject: 'Certificate: $certificateTitle',
+                  subject: 'certificate.shareSubject'.tr(namedArgs: {'courseTitle': certificateTitle}),
                 );
               } catch (e) {
                 if (context.mounted) {
+                  final msg = 'certificate.shareError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Error sharing certificate: $e'),
+                      content: Text(msg),
                       backgroundColor: Colors.red,
                     ),
                   );

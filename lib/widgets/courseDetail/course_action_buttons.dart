@@ -90,9 +90,9 @@ class CourseActionButtons extends StatelessWidget {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Robot cần thiết',
-                        style: TextStyle(
+                      Text(
+                        'course.requiredRobot'.tr(),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0EA5E9),
                         ),
@@ -108,9 +108,9 @@ class CourseActionButtons extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Bạn cần có robot này để tham gia khóa học',
-                    style: TextStyle(
+                  Text(
+                    'course.robotRequiredMessage'.tr(),
+                    style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF64748B),
                     ),
@@ -131,15 +131,15 @@ class CourseActionButtons extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.grey[300]!),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  SizedBox(width: 12),
-                  Text('Đang tải thông tin robot...'),
+                  const SizedBox(width: 12),
+                  Text('course.loadingRobotInfo'.tr()),
                 ],
               ),
             ),
@@ -157,9 +157,9 @@ class CourseActionButtons extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: onActivateRobot,
                     icon: const Icon(Icons.smart_toy, size: 18),
-                    label: const Text(
-                      'Kích hoạt Robot',
-                      style: TextStyle(
+                    label: Text(
+                      'course.activateRobot'.tr(),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -318,7 +318,7 @@ class CourseActionButtons extends StatelessWidget {
                           ? (isPaid ? 'cart.adding'.tr() : 'course.enrolling'.tr())
                           : isPaid
                               ? (isInCart ? 'cart.inCart'.tr() : 'cart.addToCart'.tr())
-                              : (isEnrolled ? 'course.enrolled'.tr() : 'Tham gia miễn phí'),
+                              : (isEnrolled ? 'course.enrolled'.tr() : 'course.joinForFree'.tr()),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_model.dart';
 import 'package:ottobit/models/lesson_resource_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
@@ -30,7 +31,7 @@ class LearningPath extends StatelessWidget {
             const Icon(Icons.hourglass_empty, size: 40, color: Colors.grey),
             const SizedBox(height: 8),
             Text(
-              'Chưa có bài học trong khóa này',
+              'learningPath.noLessons'.tr(),
               style: TextStyle(color: Colors.grey[700]),
             ),
           ],
@@ -334,12 +335,12 @@ class _LessonMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String label = status == _NodeStatus.current
-        ? 'Hiện tại'
+        ? 'learningPath.status.current'.tr()
         : (status == _NodeStatus.available
-            ? 'Sẵn sàng'
+            ? 'learningPath.status.available'.tr()
             : (status == _NodeStatus.completed
-                ? 'Hoàn thành'
-                : (status == _NodeStatus.mastered ? 'Thành thạo' : 'Bị khóa')));
+                ? 'learningPath.status.completed'.tr()
+                : (status == _NodeStatus.mastered ? 'learningPath.status.mastered'.tr() : 'learningPath.status.locked'.tr())));
     final IconData icon = status == _NodeStatus.current
         ? Icons.flag
         : (status == _NodeStatus.available

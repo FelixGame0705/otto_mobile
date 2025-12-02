@@ -26,11 +26,16 @@ class LessonDetailService {
           return 'Bắt đầu học thành công';
         }
       }
-      throw Exception('Không thể bắt đầu học (mã ${res.statusCode}).');
+      final friendly = ApiErrorMapper.fromBody(
+        res.body,
+        statusCode: res.statusCode,
+        fallback: 'Không thể bắt đầu học (mã ${res.statusCode}).',
+      );
+      throw Exception(friendly);
     } catch (e) {
-      final raw = e.toString();
-      print('LessonDetailService: startLesson exception: $raw');
-      throw Exception(raw.replaceFirst('Exception: ', ''));
+      final friendly = ApiErrorMapper.fromException(e);
+      print('LessonDetailService error (startLesson): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -62,8 +67,9 @@ class LessonDetailService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('LessonDetailService: Exception: $e');
-      rethrow;
+      final friendly = ApiErrorMapper.fromException(e);
+      print('LessonDetailService error (getLessonDetail): $friendly');
+      throw Exception(friendly);
     }
   }
 }

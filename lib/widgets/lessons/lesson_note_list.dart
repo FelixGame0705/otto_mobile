@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_note_model.dart';
 import 'package:ottobit/services/lesson_note_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonNoteList extends StatefulWidget {
   final String lessonId;
@@ -42,7 +44,9 @@ class LessonNoteListState extends State<LessonNoteList> {
       setState(() => _page = page);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+      setState(() => _error = friendly);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -71,16 +75,16 @@ class LessonNoteListState extends State<LessonNoteList> {
           const Icon(Icons.error_outline, color: Colors.red),
           const SizedBox(height: 8),
           Text(_error!),
-          TextButton(onPressed: _load, child: const Text('Thử lại')),
+          TextButton(onPressed: _load, child: Text('common.retry'.tr())),
         ],
       );
     }
 
     final items = _page?.items ?? const <LessonNote>[];
     if (items.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('Chưa có ghi chú'),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('lessonNote.noNotes'.tr()),
       );
     }
 
@@ -110,19 +114,19 @@ class LessonNoteListState extends State<LessonNoteList> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                tooltip: 'Tua đến thời gian',
+                tooltip: 'lessonNote.jumpToTime'.tr(),
                 icon: const Icon(Icons.play_circle_outline),
                 onPressed: note.timestampInSeconds > 0 && widget.onJumpTo != null
                     ? () => widget.onJumpTo!(note.timestampInSeconds)
                     : null,
               ),
               IconButton(
-                tooltip: 'Sửa ghi chú',
+                tooltip: 'lessonNote.editNote'.tr(),
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: () => _onEdit(note),
               ),
               IconButton(
-                tooltip: 'Xoá ghi chú',
+                tooltip: 'lessonNote.deleteNote'.tr(),
                 icon: const Icon(Icons.delete_outline),
                 onPressed: () => _onDelete(note),
               ),
@@ -140,7 +144,7 @@ class LessonNoteListState extends State<LessonNoteList> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Sửa ghi chú'),
+          title: Text('lessonNote.editNote'.tr()),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -148,14 +152,14 @@ class LessonNoteListState extends State<LessonNoteList> {
                 controller: contentController,
                 minLines: 1,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Nội dung',
+                decoration: InputDecoration(
+                  labelText: 'lessonNote.content'.tr(),
                 ),
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  const Text('Thời gian: '),
+                  Text('lessonNote.time'.tr() + ': '),
                   Text(_format(tempSeconds)),
                   const Spacer(),
                   TextButton(
@@ -165,15 +169,15 @@ class LessonNoteListState extends State<LessonNoteList> {
                         tempSeconds = picked;
                       }
                     },
-                    child: const Text('Chọn'),
+                    child: Text('lessonNote.select'.tr()),
                   )
                 ],
               )
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Huỷ')),
-            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Lưu')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('common.cancel'.tr())),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text('common.save'.tr())),
           ],
         );
       },
@@ -187,10 +191,12 @@ class LessonNoteListState extends State<LessonNoteList> {
         );
         if (!mounted) return;
         await reload();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã cập nhật')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('lessonNote.updated'.tr())));
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendly)));
       }
     }
   }
@@ -205,7 +211,7 @@ class LessonNoteListState extends State<LessonNoteList> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
-              const Text('Chọn thời gian', style: TextStyle(fontWeight: FontWeight.w600)),
+              Text('lessonNote.selectTime'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
               SizedBox(
                 height: 200,
                 child: CupertinoTimerPicker(
@@ -221,14 +227,14 @@ class LessonNoteListState extends State<LessonNoteList> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Huỷ'),
+                        child: Text('common.cancel'.tr()),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(temp.inSeconds),
-                        child: const Text('Xong'),
+                        child: Text('lessonNote.done'.tr()),
                       ),
                     ),
                   ],
@@ -246,11 +252,11 @@ class LessonNoteListState extends State<LessonNoteList> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Xoá ghi chú'),
-        content: const Text('Bạn có chắc muốn xoá ghi chú này?'),
+        title: Text('lessonNote.deleteNote'.tr()),
+        content: Text('lessonNote.deleteConfirm'.tr()),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Huỷ')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xoá')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('common.cancel'.tr())),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text('lessonNote.delete'.tr())),
         ],
       ),
     );
@@ -259,10 +265,12 @@ class LessonNoteListState extends State<LessonNoteList> {
         await _service.deleteNote(note.id);
         if (!mounted) return;
         await reload();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã xoá')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('lessonNote.deleted'.tr())));
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(friendly)));
       }
     }
   }

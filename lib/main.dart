@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/http_service.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Initialize locale in ApiErrorMapper
+    ApiErrorMapper.updateLocale(context.locale);
+    
     return MaterialApp(
       title: 'OttoBit MB',
       localizationsDelegates: context.localizationDelegates,

@@ -33,8 +33,9 @@ class OrderService {
       );
       throw Exception(friendly);
     } catch (e) {
-      print('OrderService: Exception: $e');
-      throw Exception('Error creating order: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('OrderService error (createOrder): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -73,8 +74,9 @@ class OrderService {
       );
       throw Exception(friendly);
     } catch (e) {
-      print('OrderService: Exception: $e');
-      throw Exception('Error getting orders: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('OrderService error (getOrders): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -97,8 +99,9 @@ class OrderService {
       );
       throw Exception(friendly);
     } catch (e) {
-      print('OrderService: Exception: $e');
-      throw Exception('Error getting order: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('OrderService error (getOrderById): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -123,7 +126,11 @@ class OrderService {
         final data = jsonData['data'] as Map<String, dynamic>;
         final url = (data['paymentUrl'] ?? '').toString();
         if (url.isEmpty) {
-          throw Exception('Missing paymentUrl');
+          final friendly = ApiErrorMapper.toFriendlyMessage(
+            null,
+            fallback: 'Missing paymentUrl',
+          );
+          throw Exception(friendly);
         }
         return url;
       }
@@ -134,7 +141,8 @@ class OrderService {
       );
       throw Exception(friendly);
     } catch (e) {
-      throw Exception('Error initiating payment: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      throw Exception(friendly);
     }
   }
 
@@ -162,8 +170,9 @@ class OrderService {
       );
       throw Exception(friendly);
     } catch (e) {
-      print('OrderService: Cancel exception: $e');
-      throw Exception('Error cancelling order: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('OrderService error (cancelOrder): $friendly');
+      throw Exception(friendly);
     }
   }
 }

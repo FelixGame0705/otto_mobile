@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/lesson_note_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonNoteComposer extends StatefulWidget {
   final String lessonId;
@@ -56,13 +58,15 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
       if (!mounted) return;
       _controller.clear();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã lưu ghi chú')),
+        SnackBar(content: Text('lessonNote.saved'.tr())),
       );
       widget.onSaved?.call();
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(content: Text(friendly)),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -79,7 +83,7 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
-              const Text('Chọn thời gian', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF00ba4a))),
+              Text('lessonNote.selectTime'.tr(), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF00ba4a))),
               SizedBox(
                 height: 200,
                 child: CupertinoTimerPicker(
@@ -97,14 +101,14 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Huỷ'),
+                        child: Text('common.cancel'.tr()),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(temp.inSeconds),
-                        child: const Text('Xong'),
+                        child: Text('lessonNote.done'.tr()),
                       ),
                     ),
                   ],
@@ -137,15 +141,15 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
             children: [
               const Icon(Icons.note_add_outlined, color: Color(0xFF4A5568)),
               const SizedBox(width: 8),
-              const Text(
-                'Thêm ghi chú',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              Text(
+                'lessonNote.addNote'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const Spacer(),
               Text(_format(_timestamp), style: const TextStyle(color: Color(0xFF4A5568))),
               const SizedBox(width: 8),
               IconButton(
-                tooltip: 'Lấy thời gian hiện tại',
+                tooltip: 'lessonNote.getCurrentTime'.tr(),
                 icon: const Icon(Icons.timelapse_outlined),
                 onPressed: () {
                   final getSeconds = widget.getCurrentSeconds;
@@ -173,7 +177,7 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
                   ),
                 ),
                 icon: const Icon(Icons.access_time),
-                label: const Text('Chọn thời gian', style: TextStyle(fontWeight: FontWeight.w600)),
+                label: Text('lessonNote.selectTime'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -182,9 +186,9 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
             controller: _controller,
             minLines: 1,
             maxLines: 4,
-            decoration: const InputDecoration(
-              hintText: 'Nội dung ghi chú...',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              hintText: 'lessonNote.contentHint'.tr(),
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
           ),
@@ -202,7 +206,7 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               icon: const Icon(Icons.save_outlined, size: 18),
-              label: _submitting ? const Text('Đang lưu...') : const Text('Lưu', style: TextStyle(fontWeight: FontWeight.w600)),
+              label: _submitting ? Text('lessonNote.saving'.tr()) : Text('common.save'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
             ),
           ),
         ],

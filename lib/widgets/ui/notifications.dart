@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 
 void showErrorToast(BuildContext context, String message) {
   final raw = message.trim();
   if (raw.isEmpty) return;
 
-  // Nếu backend trả JSON (message, errorCode, ...) thì map sang tiếng Việt thân thiện,
-  // còn nếu chỉ là chuỗi thường (đã được map trước đó) thì dùng nguyên văn, tránh lặp xử lý.
-  final bool looksLikeJson =
-      raw.startsWith('{') && (raw.endsWith('}') || raw.endsWith('}\n'));
-  final friendly =
-      looksLikeJson ? ApiErrorMapper.fromBody(raw, fallback: raw) : raw;
+  // Detect current locale
+  final isEnglish = context.locale.languageCode == 'en';
+  
+  // Luôn xử lý qua fromException để loại bỏ "Exception:" và đảm bảo không duplicate
+  // fromException sẽ tự động phát hiện JSON và xử lý phù hợp
+  final friendly = ApiErrorMapper.fromException(
+    raw,
+    isEnglish: isEnglish,
+    fallback: raw,
+  );
+  
+  // Loại bỏ duplicate messages nếu có (tiếng Việt và tiếng Anh cùng lúc)
+  final cleaned = _removeDuplicateMessages(friendly, isEnglish);
 
   final messenger = ScaffoldMessenger.of(context);
   messenger.clearSnackBars();
@@ -34,7 +42,7 @@ void showErrorToast(BuildContext context, String message) {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              friendly,
+              cleaned,
               style: TextStyle(
                 color: Colors.red.shade900,
                 fontSize: 13,
@@ -86,6 +94,36 @@ class InlineErrorText extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Helper function to remove duplicate messages (Vietnamese and English together)
+String _removeDuplicateMessages(String message, bool isEnglish) {
+  // Nếu message chứa cả tiếng Việt và tiếng Anh, chỉ lấy phần phù hợp với locale
+  if (message.contains('Đã xảy ra lỗi') && message.contains('An error occurred')) {
+    if (isEnglish) {
+      // Lấy phần tiếng Anh (từ "An error occurred" đến trước "Đã xảy ra lỗi")
+      final englishStart = message.indexOf('An error occurred');
+      final vietnameseStart = message.indexOf('Đã xảy ra lỗi', englishStart);
+      if (englishStart >= 0) {
+        if (vietnameseStart > englishStart) {
+          return message.substring(englishStart, vietnameseStart).trim();
+        }
+        return message.substring(englishStart).trim();
+      }
+    } else {
+      // Lấy phần tiếng Việt (từ "Đã xảy ra lỗi" đến trước "An error occurred")
+      final vietnameseStart = message.indexOf('Đã xảy ra lỗi');
+      final englishStart = message.indexOf('An error occurred', vietnameseStart);
+      if (vietnameseStart >= 0) {
+        if (englishStart > vietnameseStart) {
+          return message.substring(vietnameseStart, englishStart).trim();
+        }
+        return message.substring(vietnameseStart).trim();
+      }
+    }
+  }
+  
+  return message;
 }
 
 

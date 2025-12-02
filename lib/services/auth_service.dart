@@ -90,7 +90,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -109,9 +110,10 @@ class AuthService {
       final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
       return data;
     } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
       return {
-        'message': 'Login Google failed',
-        'error': e.toString(),
+        'message': friendly,
+        'error': friendly,
       };
     }
   }
@@ -171,7 +173,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -193,7 +196,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -218,7 +222,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -290,7 +295,8 @@ class AuthService {
         return AuthResult.failure(message: data['message'] ?? 'Phiên đăng nhập đã hết hạn');
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi làm mới token: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -316,7 +322,8 @@ class AuthService {
       final message = data['message']?.toString() ?? 'Không thể lấy thông tin profile';
       return AuthResult.failure(message: message);
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -355,7 +362,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -374,7 +382,8 @@ class AuthService {
 
       return AuthResult.success(message: 'Đăng xuất thành công');
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi đăng xuất: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -421,7 +430,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 }

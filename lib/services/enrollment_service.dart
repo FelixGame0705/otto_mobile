@@ -55,7 +55,12 @@ class EnrollmentService {
     if (res.statusCode == 400) {
       final responseBody = res.body.toLowerCase();
       if (responseBody.contains('student not found')) {
-        throw Exception('Bạn chưa là học sinh, vui lòng đăng ký.');
+        final friendly = ApiErrorMapper.fromBody(
+          res.body,
+          statusCode: res.statusCode,
+          fallback: 'Bạn chưa là học sinh, vui lòng đăng ký.',
+        );
+        throw Exception(friendly);
       }
     }
     

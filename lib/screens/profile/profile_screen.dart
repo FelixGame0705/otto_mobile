@@ -21,6 +21,7 @@ import 'dart:typed_data';
 // removed ui/rendering imports used by old editor
 import 'package:ottobit/services/location_service.dart';
 import 'package:ottobit/models/location_model.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -56,16 +57,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return (jsonMap['secure_url'] ?? jsonMap['url'])?.toString();
       } else {
         if (mounted) {
+          final msg = 'profile.uploadFailed'.tr(namedArgs: {
+            'status': resp.statusCode.toString(),
+            'reason': resp.reasonPhrase ?? '',
+          });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Upload failed: ${resp.statusCode} ${resp.reasonPhrase}')),
+            SnackBar(content: Text(msg)),
           );
         }
         return null;
       }
     } catch (e) {
       if (mounted) {
+        final msg = 'profile.uploadError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload error: $e')),
+          SnackBar(content: Text(msg)),
         );
       }
       return null;
@@ -87,7 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             horizontal: isWide ? mq.size.width * 0.25 : 16,
             vertical: 24,
           ),
-          title: const Text('Cập nhật hồ sơ'),
+          title: Text('profile.updateProfile'.tr()),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 520),
             child: Padding(
@@ -127,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 }
                               },
                               icon: const Icon(Icons.cloud_upload),
-                              label: const Text('Upload'),
+                              label: Text('profile.upload'.tr()),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -137,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 avatarController.clear();
                                 setDialogState(() {});
                               },
-                              child: const Text('Xóa ảnh'),
+                              child: Text('profile.removeImage'.tr()),
                             ),
                         ],
                       ),
@@ -150,8 +156,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Huỷ')),
-            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Lưu')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('common.cancel'.tr())),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text('profile.save'.tr())),
           ],
         );
       },
@@ -164,11 +170,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (res.isSuccess) {
         setState(() { _user = res.user; });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'Cập nhật thành công')),
+          SnackBar(content: Text(res.message ?? 'profile.updateSuccess'.tr())),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'Cập nhật thất bại'), backgroundColor: Colors.red),
+          SnackBar(content: Text(res.message ?? 'profile.updateFailed'.tr()), backgroundColor: Colors.red),
         );
       }
     }
@@ -293,7 +299,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
                               icon: const Icon(Icons.edit_outlined),
-                              label: const Text('Chỉnh sửa hồ sơ', style: TextStyle(fontWeight: FontWeight.w600)),
+                              label: Text('profile.editProfile'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -319,7 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           // Quick actions
           SectionCard(
-            title: 'Quick actions',
+            title: 'profile.quickActions'.tr(),
             child: GridView.count(
               crossAxisCount: 2,
               mainAxisSpacing: 12,
@@ -333,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => Scaffold(
-                          appBar: AppBar(title: const Text('My Courses')),
+                          appBar: AppBar(title: Text('profile.myCourses'.tr())),
                           body: const Padding(
                             padding: EdgeInsets.only(top: 8),
                             child: MyEnrollmentsGrid(),
@@ -348,7 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.library_books),
-                  label: const Text('My Courses', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text('profile.myCourses'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
@@ -362,7 +368,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.code),
-                  label: const Text('My Submissions', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text('profile.mySubmissions'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
@@ -382,7 +388,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.receipt_long),
-                  label: const Text('My Orders', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text('profile.myOrders'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.certificates),
@@ -392,7 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.workspace_premium),
-                  label: const Text('My Certificates', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text('profile.myCertificates'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
@@ -417,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.smart_toy),
-                  label: const Text('Kích hoạt Robot', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text('profile.activateRobot'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: _handleLogout,
@@ -427,7 +433,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: const Icon(Icons.logout),
-                  label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.w600)),
+                  label: Text('profile.logout'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -487,8 +493,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           : const Icon(Icons.edit),
                       label: Text(
                           _creatingStudent
-                              ? 'Updating...'
-                              : 'Edit Student Profile',
+                              ? 'profile.student.registering'.tr()
+                              : 'profile.editStudentProfile'.tr(),
                           style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ),
@@ -599,18 +605,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final updated = resp.data;
       if (updated != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Student updated successfully'), backgroundColor: Colors.green),
+          SnackBar(content: Text('profile.student.updateSuccess'.tr()), backgroundColor: Colors.green),
         );
         await _loadStudent();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(resp.message.isNotEmpty ? resp.message : 'Failed to update student'), backgroundColor: Colors.orange),
+          SnackBar(content: Text(resp.message.isNotEmpty ? resp.message : 'profile.student.updateFailed'.tr()), backgroundColor: Colors.orange),
         );
       }
     } catch (e) {
       if (!mounted) return;
+      final msg = 'profile.student.updateError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating student: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(msg), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _creatingStudent = false);
@@ -646,13 +653,13 @@ extension _StudentCard on _ProfileScreenState {
           const SizedBox(height: 8),
           _infoRow('${'profile.student.fullname'.tr()}:', s.fullname),
           const SizedBox(height: 6),
-          _infoRow('Phone:', s.phoneNumber),
+          _infoRow('${'profile.phone'.tr()}:', s.phoneNumber),
           const SizedBox(height: 6),
-          _infoRow('Address:', s.address),
+          _infoRow('${'profile.address'.tr()}:', s.address),
           const SizedBox(height: 6),
-          _infoRow('State:', s.state),
+          _infoRow('${'profile.state'.tr()}:', s.state),
           const SizedBox(height: 6),
-          _infoRow('City:', s.city),
+          _infoRow('${'profile.city'.tr()}:', s.city),
           const SizedBox(height: 6),
           _infoRow('${'profile.student.dob'.tr()}:', '${s.dateOfBirth.day.toString().padLeft(2, '0')}/${s.dateOfBirth.month.toString().padLeft(2, '0')}/${s.dateOfBirth.year}'),
           const SizedBox(height: 6),
@@ -745,8 +752,9 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
       setState(() {
         _locationsLoading = false;
       });
+      final msg = 'profile.loadProvincesError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load provinces: $e')),
+        SnackBar(content: Text(msg)),
       );
     }
   }
@@ -794,7 +802,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        widget.isUpdate ? 'Edit Student Profile' : 'profile.student.dialogTitle'.tr(),
+        widget.isUpdate ? 'profile.editStudentProfile'.tr() : 'profile.student.dialogTitle'.tr(),
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: Form(
@@ -825,15 +833,15 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number *',
-                  hintText: 'Enter phone number',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
+                decoration: InputDecoration(
+                  labelText: '${'profile.phoneNumber'.tr()} *',
+                  hintText: 'profile.phoneNumberHint'.tr(),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.phone),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Phone number is required';
+                    return 'profile.phoneNumberRequired'.tr();
                   }
                   return null;
                 },
@@ -841,15 +849,15 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
               const SizedBox(height: 16),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Address *',
-                  hintText: 'Enter address',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.location_on),
+                decoration: InputDecoration(
+                  labelText: '${'profile.address'.tr()} *',
+                  hintText: 'profile.addressHint'.tr(),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.location_on),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Address is required';
+                    return 'profile.addressRequired'.tr();
                   }
                   return null;
                 },
@@ -860,10 +868,10 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
               else ...[
                 DropdownButtonFormField<Province>(
                   value: _selectedProvince,
-                  decoration: const InputDecoration(
-                    labelText: 'Province/City *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.location_city),
+                  decoration: InputDecoration(
+                    labelText: '${'profile.provinceCity'.tr()} *',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.location_city),
                   ),
                   items: _provinces
                       .map(
@@ -881,7 +889,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                   },
                   validator: (value) {
                     if (value == null) {
-                      return 'State/Province is required';
+                      return 'profile.stateProvinceRequired'.tr();
                     }
                     return null;
                   },
@@ -889,10 +897,10 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                 const SizedBox(height: 16),
                 DropdownButtonFormField<Ward>(
                   value: _selectedWard,
-                  decoration: const InputDecoration(
-                    labelText: 'District/Ward *',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.location_city),
+                  decoration: InputDecoration(
+                    labelText: '${'profile.districtWard'.tr()} *',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.location_city),
                   ),
                   items: (_selectedProvince?.wards ?? const [])
                       .map(
@@ -911,10 +919,10 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                         },
                   validator: (value) {
                     if (_selectedProvince == null) {
-                      return 'Please select province first';
+                      return 'profile.selectProvinceFirst'.tr();
                     }
                     if (value == null) {
-                      return 'City/Ward is required';
+                      return 'profile.cityWardRequired'.tr();
                     }
                     return null;
                   },
@@ -969,7 +977,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                   width: 16,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
-              : Text(widget.isUpdate ? 'Update' : 'common.register'.tr()),
+              : Text(widget.isUpdate ? 'profile.update'.tr() : 'common.register'.tr()),
         ),
       ],
     );

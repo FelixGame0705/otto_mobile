@@ -39,8 +39,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error creating ticket: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (createTicket): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -95,8 +96,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error getting tickets: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (getMyTickets): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -128,8 +130,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error getting ticket: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (getTicketById): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -162,8 +165,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error creating message: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (createMessage): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -220,8 +224,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error getting messages: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (getTicketMessages): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -256,8 +261,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error creating rating: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (createRating): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -291,8 +297,9 @@ class AssistanceTicketService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('AssistanceTicketService: Exception: $e');
-      throw Exception('Error getting rating: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('AssistanceTicketService error (getRatingByTicketId): $friendly');
+      throw Exception(friendly);
     }
   }
 }

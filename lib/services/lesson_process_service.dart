@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:ottobit/services/http_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonProcessService {
   static final LessonProcessService _instance = LessonProcessService._internal();
@@ -22,7 +23,12 @@ class LessonProcessService {
     if (res.statusCode == 200) {
       return jsonDecode(res.body) as Map<String, dynamic>;
     }
-    throw Exception('Failed to fetch lesson progress: ${res.statusCode}');
+    final friendly = ApiErrorMapper.fromBody(
+      res.body,
+      statusCode: res.statusCode,
+      fallback: 'Failed to fetch lesson progress: ${res.statusCode}',
+    );
+    throw Exception(friendly);
   }
 }
 

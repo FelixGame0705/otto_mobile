@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 
 /// Represents a standardized error parsed from backend responses.
 class ApiError {
@@ -218,77 +220,200 @@ class ApiErrorMapper {
   };
 
   /// Returns a friendly message from [ApiError].
-  /// Priority: known errorCode → rawMessage (server) → statusCode default → generic.
-  static String toFriendlyMessage(ApiError? error, {String? fallback}) {
+  /// Priority for Vietnamese: known errorCode → rawMessage (server) → statusCode default → generic.
+  /// Priority for English: rawMessage (server) → statusCode default → generic.
+  /// If [isEnglish] is true, always returns rawMessage from backend instead of mapped Vietnamese message.
+  static String toFriendlyMessage(ApiError? error, {String? fallback, bool? isEnglish}) {
     if (error == null) {
+      final defaultMsg = (isEnglish == true) 
+          ? 'An error occurred. Please try again.'
+          : 'Đã xảy ra lỗi. Vui lòng thử lại.';
       return fallback?.trim().isNotEmpty == true
           ? fallback!.trim()
-          : 'Đã xảy ra lỗi. Vui lòng thử lại.';
+          : defaultMsg;
     }
 
+    // Check if locale is English (use parameter or try to detect)
+    final isEn = isEnglish ?? _isEnglishLocale();
+
+    // For English: Always prioritize rawMessage from backend first
+    if (isEn) {
+      final serverMsg = error.rawMessage?.trim();
+      if (serverMsg != null && serverMsg.isNotEmpty) {
+        return serverMsg;
+      }
+      
+      // If no rawMessage, try status code message
+      final status = error.statusCode;
+      if (status != null) {
+        final englishStatusMsg = _getEnglishStatusMessage(status);
+        if (englishStatusMsg != null && englishStatusMsg.isNotEmpty) {
+          return englishStatusMsg;
+        }
+      }
+      
+      // Fallback to generic English message
+      return fallback?.trim().isNotEmpty == true
+          ? fallback!.trim()
+          : 'An error occurred. Please try again.';
+    }
+
+    // For Vietnamese: Use mapped messages first, then rawMessage
     final code = error.errorCode?.trim();
     if (code != null && code.isNotEmpty) {
       final mapped = _codeToMessage[code];
-      if (mapped != null && mapped.isNotEmpty) return mapped;
+      if (mapped != null && mapped.isNotEmpty) {
+        return mapped;
+      }
     }
 
+    // Fallback to rawMessage if no mapped message
     final serverMsg = error.rawMessage?.trim();
     if (serverMsg != null && serverMsg.isNotEmpty) return serverMsg;
 
+    // Try status code message
     final status = error.statusCode;
     if (status != null) {
       final byStatus = _statusToMessage[status];
-      if (byStatus != null && byStatus.isNotEmpty) return byStatus;
+      if (byStatus != null && byStatus.isNotEmpty) {
+        return byStatus;
+      }
     }
 
+    // Final fallback
     return fallback?.trim().isNotEmpty == true
         ? fallback!.trim()
         : 'Đã xảy ra lỗi. Vui lòng thử lại.';
   }
 
+  /// Current locale cache (updated when locale changes)
+  static Locale? _currentLocale;
+
+  /// Check if current locale is English
+  /// Tries multiple methods to get locale
+  static bool _isEnglishLocale() {
+    try {
+      // Method 1: Use cached locale if available
+      if (_currentLocale != null) {
+        return _currentLocale!.languageCode == 'en';
+      }
+
+      // Method 2: Try to get locale from navigator context
+      final context = _navigatorKey?.currentContext;
+      if (context != null) {
+        final locale = context.locale;
+        _currentLocale = locale; // Cache it
+        return locale.languageCode == 'en';
+      }
+    } catch (_) {
+      // If context is not available, default to Vietnamese
+    }
+    return false; // Default to Vietnamese
+  }
+
+  /// Navigator key for accessing context (should be set from main app)
+  static GlobalKey<NavigatorState>? _navigatorKey;
+
+  /// Set the navigator key to enable automatic locale detection
+  static void setNavigatorKey(GlobalKey<NavigatorState> key) {
+    _navigatorKey = key;
+  }
+
+  /// Update current locale (should be called when locale changes)
+  static void updateLocale(Locale locale) {
+    _currentLocale = locale;
+  }
+
+  /// Get English status messages
+  static String? _getEnglishStatusMessage(int statusCode) {
+    const englishStatusMessages = <int, String>{
+      400: 'Invalid request. Please check and try again.',
+      401: 'Session expired or invalid. Please log in again.',
+      403: 'You do not have permission to perform this action.',
+      404: 'Resource not found.',
+      500: 'Server error. Please try again later.',
+    };
+    return englishStatusMessages[statusCode];
+  }
+
   /// Convenience: derive a message from a response body string and optional status.
-  static String fromBody(String? body, {int? statusCode, String? fallback}) {
+  static String fromBody(String? body, {int? statusCode, String? fallback, bool? isEnglish}) {
     final err = ApiError.tryParseBody(body, statusCode: statusCode);
-    return toFriendlyMessage(err, fallback: fallback);
+    return toFriendlyMessage(err, fallback: fallback, isEnglish: isEnglish);
   }
 
   /// Convenience: derive a friendly message from an [error] object (e.g. Exception),
   /// stripping common prefixes like "Exception: " and optionally parsing JSON bodies.
   ///
+  /// - Loại bỏ tất cả các pattern "Exception:" hoặc "Exception: " trong message
   /// - Nếu chuỗi bên trong trông giống JSON (bắt đầu bằng '{' và kết thúc bằng '}'),
   ///   hàm sẽ gọi [fromBody] để map theo `errorCode` / `message`.
   /// - Ngược lại, trả về phần message đã được làm sạch (không còn tiền tố "Exception: ").
+  /// - Nếu [isEnglish] là true, trả về message gốc từ backend thay vì message đã dịch.
+  /// - Đảm bảo không có duplicate messages (tiếng Việt và tiếng Anh cùng lúc).
   static String fromException(
     Object error, {
     int? statusCode,
     String? fallback,
+    bool? isEnglish,
   }) {
     final raw = error.toString().trim();
+    final defaultMsg = (isEnglish == true)
+        ? 'An error occurred. Please try again.'
+        : 'Đã xảy ra lỗi. Vui lòng thử lại.';
+    
     if (raw.isEmpty) {
       return fallback?.trim().isNotEmpty == true
           ? fallback!.trim()
-          : 'Đã xảy ra lỗi. Vui lòng thử lại.';
+          : defaultMsg;
     }
 
-    // Loại bỏ tiền tố "Exception: " nếu có
-    final withoutPrefix = raw.startsWith('Exception:')
-        ? raw.substring('Exception:'.length).trim()
-        : raw;
+    // Loại bỏ tất cả các pattern "Exception:" hoặc "Exception: " ở mọi vị trí
+    // Sử dụng regex để loại bỏ tất cả các occurrence (case-insensitive)
+    String cleaned = raw.replaceAll(RegExp(r'Exception:\s*', caseSensitive: false), '').trim();
+
+    // Kiểm tra và loại bỏ duplicate messages (tiếng Việt và tiếng Anh cùng lúc)
+    if (cleaned.contains('Đã xảy ra lỗi') && cleaned.contains('An error occurred')) {
+      final isEn = isEnglish ?? _isEnglishLocale();
+      if (isEn) {
+        // Lấy phần tiếng Anh (từ "An error occurred" đến trước "Đã xảy ra lỗi")
+        final englishStart = cleaned.indexOf('An error occurred');
+        final vietnameseStart = cleaned.indexOf('Đã xảy ra lỗi', englishStart);
+        if (englishStart >= 0) {
+          if (vietnameseStart > englishStart) {
+            cleaned = cleaned.substring(englishStart, vietnameseStart).trim();
+          } else {
+            cleaned = cleaned.substring(englishStart).trim();
+          }
+        }
+      } else {
+        // Lấy phần tiếng Việt (từ "Đã xảy ra lỗi" đến trước "An error occurred")
+        final vietnameseStart = cleaned.indexOf('Đã xảy ra lỗi');
+        final englishStart = cleaned.indexOf('An error occurred', vietnameseStart);
+        if (vietnameseStart >= 0) {
+          if (englishStart > vietnameseStart) {
+            cleaned = cleaned.substring(vietnameseStart, englishStart).trim();
+          } else {
+            cleaned = cleaned.substring(vietnameseStart).trim();
+          }
+        }
+      }
+    }
 
     // Nếu phần còn lại là JSON thì parse qua fromBody,
     // ngược lại trả về nguyên văn (đã được service map sẵn nếu có).
-    final looksLikeJson = withoutPrefix.startsWith('{') &&
-        (withoutPrefix.endsWith('}') || withoutPrefix.endsWith('}\n'));
+    final looksLikeJson = cleaned.startsWith('{') &&
+        (cleaned.endsWith('}') || cleaned.endsWith('}\n'));
 
     if (looksLikeJson) {
-      return fromBody(withoutPrefix, statusCode: statusCode, fallback: fallback);
+      return fromBody(cleaned, statusCode: statusCode, fallback: fallback, isEnglish: isEnglish);
     }
 
-    return withoutPrefix.isNotEmpty
-        ? withoutPrefix
+    return cleaned.isNotEmpty
+        ? cleaned
         : (fallback?.trim().isNotEmpty == true
             ? fallback!.trim()
-            : 'Đã xảy ra lỗi. Vui lòng thử lại.');
+            : defaultMsg);
   }
 
   /// Allows updating or adding mappings at runtime (e.g., feature flags or A/B tests).

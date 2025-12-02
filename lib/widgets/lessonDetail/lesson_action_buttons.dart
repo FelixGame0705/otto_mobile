@@ -11,7 +11,7 @@ class LessonActionButtons extends StatelessWidget {
   final bool isCheckingEnrollment;
   final String lockedMessage;
 
-  const LessonActionButtons({
+  LessonActionButtons({
     super.key,
     required this.onStartLesson,
     required this.onViewChallenges,
@@ -20,8 +20,8 @@ class LessonActionButtons extends StatelessWidget {
     required this.challengesCount,
     this.canStartLesson = true,
     this.isCheckingEnrollment = false,
-    this.lockedMessage = 'Bạn cần đăng ký khóa học để bắt đầu bài học này.',
-  });
+    String? lockedMessage,
+  }) : lockedMessage = lockedMessage ?? 'lesson.enrollRequired';
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +239,11 @@ class LessonActionButtons extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  lockedMessage,
+                  // If lockedMessage is a translation key (starts with 'lesson.' or 'common.'), translate it
+                  // Otherwise, use it as-is (it's already a friendly message from ApiErrorMapper)
+                  lockedMessage.startsWith('lesson.') || lockedMessage.startsWith('common.')
+                      ? lockedMessage.tr()
+                      : lockedMessage,
                   style: const TextStyle(
                     color: Color(0xFFDD6B20),
                     fontWeight: FontWeight.w600,

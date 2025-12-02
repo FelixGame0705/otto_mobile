@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ottobit/models/activation_code_model.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class ActivationCodeService {
   static const String _baseUrl = 'https://ottobit-be.felixtien.dev/api/v1';
@@ -10,7 +11,7 @@ class ActivationCodeService {
     try {
       final token = await StorageService.getToken();
       if (token == null) {
-        throw Exception('No authentication token found');
+        throw Exception(ApiErrorMapper.fromException('No authentication token found'));
       }
 
       final uri = Uri.parse('$_baseUrl/activation-codes/redeem');
@@ -41,19 +42,17 @@ class ActivationCodeService {
           throw Exception('Unexpected response format: ${jsonData.runtimeType}');
         }
       } else {
-        try {
-          final errorData = json.decode(response.body);
-          final errorMessage = errorData is Map<String, dynamic> 
-              ? (errorData['message'] ?? 'Failed to redeem activation code')
-              : 'Failed to redeem activation code';
-          throw Exception(errorMessage);
-        } catch (parseError) {
-          throw Exception('Failed to redeem activation code: ${response.body}');
-        }
+        final errorMsg = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to redeem activation code',
+        );
+        throw Exception(errorMsg);
       }
     } catch (e) {
       print('Activation code error: $e');
-      throw Exception('Error redeeming activation code: $e');
+      final friendlyMsg = ApiErrorMapper.fromException(e);
+      throw Exception(friendlyMsg);
     }
   }
 }

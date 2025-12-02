@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/activation_code_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class ActivationCodeDialog extends StatefulWidget {
   final String? courseTitle;
@@ -32,8 +34,8 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
     final code = _codeController.text.trim();
     if (code.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng nhập mã kích hoạt'),
+        SnackBar(
+          content: Text('activationCode.codeRequired'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -60,9 +62,11 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
       }
     } catch (e) {
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi kích hoạt mã: $e'),
+            content: Text(friendly),
             backgroundColor: Colors.red,
           ),
         );
@@ -101,13 +105,13 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Kích hoạt Robot',
+                        'activationCode.title'.tr(),
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Nhập mã kích hoạt để sử dụng robot cho khóa học này',
+                        'activationCode.description'.tr(),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -137,14 +141,14 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
                   children: [
                     if (widget.courseTitle != null) ...[
                       Text(
-                        'Khóa học: ${widget.courseTitle}',
+                        'activationCode.course'.tr(namedArgs: {'courseName': widget.courseTitle!}),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
                     if (widget.robotName != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'Robot: ${widget.robotName}',
+                        'activationCode.robot'.tr(namedArgs: {'robotName': widget.robotName!}),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -156,7 +160,7 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
             
             // Activation Code Input
             Text(
-              'Mã kích hoạt',
+              'activationCode.codeLabel'.tr(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -165,7 +169,7 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
             TextField(
               controller: _codeController,
               decoration: InputDecoration(
-                hintText: 'Nhập mã kích hoạt robot',
+                hintText: 'activationCode.codeHint'.tr(),
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.vpn_key),
                 suffixIcon: IconButton(
@@ -185,7 +189,7 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
               children: [
                 TextButton(
                   onPressed: _isRedeeming ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Hủy', style: TextStyle(color: Colors.red)),
+                  child: Text('common.cancel'.tr(), style: const TextStyle(color: Colors.red)),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
@@ -204,7 +208,7 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Kích hoạt'),
+                      : Text('activationCode.activate'.tr()),
                 ),
               ],
             ),

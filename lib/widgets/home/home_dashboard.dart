@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/home/home_shimmers.dart';
 import 'package:ottobit/services/lesson_process_service.dart';
@@ -146,7 +147,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
           children: [
             Text(_error!),
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: _load, child: const Text('Retry')),
+            ElevatedButton(onPressed: _load, child: Text('common.retry'.tr())),
           ],
         ),
       );
@@ -160,7 +161,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
             padding: const EdgeInsets.all(16),
             children: [
               Text(
-                'Lộ trình học',
+                'home.learningPath'.tr(),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -190,10 +191,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
                 child: _selectedCourseId == null || _selectedCourseId!.isEmpty
                     ? Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          SizedBox(height: 8),
-                          Text('Hãy chọn một khóa học để xem lộ trình'),
-                          SizedBox(height: 8),
+                        children: [
+                          const SizedBox(height: 8),
+                          Text('home.selectCourseMessage'.tr()),
+                          const SizedBox(height: 8),
                         ],
                       )
                     : LearningPath(
@@ -217,7 +218,7 @@ class _HomeDashboardState extends State<HomeDashboard> {
               );
             },
             icon: const Icon(Icons.smart_toy, color: Colors.white),
-            label: const Text('AI Support', style: TextStyle(color: Colors.white)),
+            label: Text('home.aiSupport'.tr(), style: const TextStyle(color: Colors.white)),
             backgroundColor: const Color(0xFF17a64b),
           ),
         ),

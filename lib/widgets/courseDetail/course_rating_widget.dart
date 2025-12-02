@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:ottobit/models/course_rating_model.dart';
 import 'package:ottobit/services/course_rating_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CourseRatingWidget extends StatefulWidget {
   final String courseId;
@@ -77,8 +78,10 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         setState(() {
           _isLoading = false;
         });
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
         );
       }
     }
@@ -126,8 +129,10 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         setState(() {
           _isLoading = false;
         });
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
         );
       }
     }
@@ -176,8 +181,10 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
           SnackBar(content: Text('course.ratingDeleted'.tr())),
         );
       } catch (e) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
         );
       }
     }
@@ -500,8 +507,10 @@ class _RatingCard extends StatelessWidget {
       
       onRefresh?.call();
     } catch (e) {
+      final isEnglish = context.locale.languageCode == 'en';
+      final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('course.ratingError'.tr(args: [e.toString()]))),
+        SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
       );
     }
   }
@@ -583,8 +592,10 @@ class _RatingDialogState extends State<_RatingDialog> {
       Navigator.of(context).pop();
       widget.onSubmit();
     } catch (e) {
+      final isEnglish = context.locale.languageCode == 'en';
+      final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('course.ratingError'.tr(args: [e.toString()]))),
+        SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
       );
     } finally {
       if (mounted) {

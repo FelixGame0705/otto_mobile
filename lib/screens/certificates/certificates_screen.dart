@@ -5,6 +5,7 @@ import 'package:ottobit/models/certificate_model.dart';
 import 'package:ottobit/services/certificate_service.dart';
 import 'package:ottobit/widgets/common/section_card.dart';
 import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CertificatesScreen extends StatefulWidget {
   const CertificatesScreen({super.key});
@@ -84,9 +85,10 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
         });
       } else {
         if (mounted) {
+          final msg = response.message ?? 'certificate.loadError'.tr();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message ?? 'Failed to load certificates'),
+              content: Text(msg),
               backgroundColor: Colors.red,
             ),
           );
@@ -94,9 +96,10 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final msg = 'certificate.loadError'.tr();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading certificates: $e'),
+            content: Text(msg),
             backgroundColor: Colors.red,
           ),
         );
@@ -136,29 +139,30 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
   void _shareCertificate(Certificate certificate) async {
     try {
       final shareText = '''
-🎓 Certificate of Completion
+🎓 ${'certificate.shareTitle'.tr()}
 
-Student: ${certificate.studentFullname}
-Course: ${certificate.courseTitle}
-Certificate No: ${certificate.certificateNo}
-Verification Code: ${certificate.verificationCode}
-Issued: ${DateFormat('MMMM dd, yyyy').format(certificate.issuedAt)}
-${certificate.expiresAt != null ? 'Expires: ${DateFormat('MMMM dd, yyyy').format(certificate.expiresAt!)}' : ''}
-Status: ${certificate.statusText}
+${'certificate.shareStudent'.tr()}: ${certificate.studentFullname}
+${'certificate.shareCourse'.tr()}: ${certificate.courseTitle}
+${'certificate.shareCertificateNo'.tr()}: ${certificate.certificateNo}
+${'certificate.shareVerificationCode'.tr()}: ${certificate.verificationCode}
+${'certificate.shareIssued'.tr()}: ${DateFormat('MMMM dd, yyyy').format(certificate.issuedAt)}
+${certificate.expiresAt != null ? '${'certificate.shareExpires'.tr()}: ${DateFormat('MMMM dd, yyyy').format(certificate.expiresAt!)}' : ''}
+${'certificate.shareStatus'.tr()}: ${certificate.statusText}
 
-This certificate was issued by Ottobit Academy.
-Verify at: https://ottobit.academy/verify
+${'certificate.shareFooter'.tr()}
+${'certificate.shareVerifyUrl'.tr()}
       ''';
       
       await Share.share(
         shareText,
-        subject: 'Certificate: ${certificate.courseTitle}',
+        subject: 'certificate.shareSubject'.tr(namedArgs: {'courseTitle': certificate.courseTitle}),
       );
     } catch (e) {
       if (mounted) {
+        final msg = 'certificate.shareError'.tr(namedArgs: {'err': ApiErrorMapper.fromException(e)});
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sharing certificate: $e'),
+            content: Text(msg),
             backgroundColor: Colors.red,
           ),
         );
@@ -178,7 +182,7 @@ Verify at: https://ottobit.academy/verify
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Certificates'),
+        title: Text('certificate.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
       ),
@@ -197,13 +201,13 @@ Verify at: https://ottobit.academy/verify
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: SectionCard(
-                      title: 'Search & Filter',
+                      title: 'certificate.searchFilter'.tr(),
                       child: Column(
                         children: [
                           TextField(
                             controller: _searchController,
                             decoration: InputDecoration(
-                              hintText: 'Search certificates...',
+                              hintText: 'certificate.searchHint'.tr(),
                               suffixIcon: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -233,15 +237,15 @@ Verify at: https://ottobit.academy/verify
                                   children: [
                                     Expanded(
                                       child: DropdownButtonFormField<String>(
-                                        decoration: const InputDecoration(
-                                          labelText: 'Sort by',
-                                          border: OutlineInputBorder(),
+                                        decoration: InputDecoration(
+                                          labelText: 'certificate.sortBy'.tr(),
+                                          border: const OutlineInputBorder(),
                                         ),
                                         value: _orderBy,
-                                        items: const [
-                                          DropdownMenuItem(value: 'updatedAt', child: Text('Recently Updated')),
-                                          DropdownMenuItem(value: 'issuedAt', child: Text('Issue Date')),
-                                          DropdownMenuItem(value: 'courseTitle', child: Text('Course Name')),
+                                        items: [
+                                          DropdownMenuItem(value: 'updatedAt', child: Text('certificate.recentlyUpdated'.tr())),
+                                          DropdownMenuItem(value: 'issuedAt', child: Text('certificate.issueDate'.tr())),
+                                          DropdownMenuItem(value: 'courseTitle', child: Text('certificate.courseName'.tr())),
                                         ],
                                         onChanged: (value) {
                                           if (value != null) _sortCertificates(value);
@@ -253,7 +257,7 @@ Verify at: https://ottobit.academy/verify
                                       child: OutlinedButton.icon(
                                         onPressed: _refreshCertificates,
                                         icon: const Icon(Icons.refresh, color: Color(0xFF00ba4a),),
-                                        label: const Text('Refresh', style: TextStyle(color: Color(0xFF00ba4a)),),
+                                        label: Text('certificate.refresh'.tr(), style: const TextStyle(color: Color(0xFF00ba4a)),),
                                       ),
                                     ),
                                   ],
@@ -263,15 +267,15 @@ Verify at: https://ottobit.academy/verify
                                 return Column(
                                   children: [
                                     DropdownButtonFormField<String>(
-                                      decoration: const InputDecoration(
-                                        labelText: 'Sort by',
-                                        border: OutlineInputBorder(),
+                                      decoration: InputDecoration(
+                                        labelText: 'certificate.sortBy'.tr(),
+                                        border: const OutlineInputBorder(),
                                       ),
                                       value: _orderBy,
-                                      items: const [
-                                        DropdownMenuItem(value: 'updatedAt', child: Text('Recently Updated')),
-                                        DropdownMenuItem(value: 'issuedAt', child: Text('Issue Date')),
-                                        DropdownMenuItem(value: 'courseTitle', child: Text('Course Name')),
+                                      items: [
+                                        DropdownMenuItem(value: 'updatedAt', child: Text('certificate.recentlyUpdated'.tr())),
+                                        DropdownMenuItem(value: 'issuedAt', child: Text('certificate.issueDate'.tr())),
+                                        DropdownMenuItem(value: 'courseTitle', child: Text('certificate.courseName'.tr())),
                                       ],
                                       onChanged: (value) {
                                         if (value != null) _sortCertificates(value);
@@ -283,7 +287,7 @@ Verify at: https://ottobit.academy/verify
                                       child: OutlinedButton.icon(
                                         onPressed: _refreshCertificates,
                                         icon: const Icon(Icons.refresh, color: Color(0xFF00ba4a),),
-                                        label: const Text('Refresh', style: TextStyle(color: Color(0xFF00ba4a)),),
+                                        label: Text('certificate.refresh'.tr(), style: const TextStyle(color: Color(0xFF00ba4a)),),
                                       ),
                                     ),
                                   ],
@@ -309,7 +313,7 @@ Verify at: https://ottobit.academy/verify
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No certificates found',
+                              'certificate.empty'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey[600],
@@ -318,7 +322,7 @@ Verify at: https://ottobit.academy/verify
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Complete courses to earn certificates',
+                              'certificate.emptyMessage'.tr(),
                               style: TextStyle(
                                 color: Colors.grey[500],
                               ),
@@ -599,7 +603,7 @@ class _CertificateCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onTap,
                         icon: const Icon(Icons.visibility, size: 16),
-                        label: const Text('View Details'),
+                        label: Text('certificate.viewDetails'.tr()),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF00ba4a),
                           side: const BorderSide(color: Color(0xFF00ba4a)),
@@ -611,7 +615,7 @@ class _CertificateCard extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: onShare,
                       icon: const Icon(Icons.share, size: 16),
-                      label: const Text('Share'),
+                      label: Text('certificate.share'.tr()),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF3182CE),
                         side: const BorderSide(color: Color(0xFF3182CE)),
@@ -629,7 +633,7 @@ class _CertificateCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onTap,
                         icon: const Icon(Icons.visibility, size: 14),
-                        label: const Text('View Details'),
+                        label: Text('certificate.viewDetails'.tr()),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF00ba4a),
                           side: const BorderSide(color: Color(0xFF00ba4a)),
@@ -643,7 +647,7 @@ class _CertificateCard extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onShare,
                         icon: const Icon(Icons.share, size: 14),
-                        label: const Text('Share'),
+                        label: Text('certificate.share'.tr()),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF3182CE),
                           side: const BorderSide(color: Color(0xFF3182CE)),

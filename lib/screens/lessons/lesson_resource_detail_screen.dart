@@ -6,6 +6,7 @@ import 'package:ottobit/widgets/lessons/lesson_resource_meta.dart';
 import 'package:ottobit/widgets/lessons/lesson_resource_view.dart';
 import 'package:ottobit/widgets/lessons/lesson_note_composer.dart';
 import 'package:ottobit/widgets/lessons/lesson_note_list.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonResourceDetailScreen extends StatefulWidget {
   final String resourceId;
@@ -42,8 +43,10 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
         _loading = false;
       });
     } catch (e) {
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = friendly;
         _loading = false;
       });
     }
@@ -118,12 +121,12 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
                             Container(
                               margin: const EdgeInsets.symmetric(horizontal: 16),
                               child: Row(
-                                children: const [
-                                  Icon(Icons.sticky_note_2_outlined, size: 18, color: Color(0xFF475569)),
-                                  SizedBox(width: 8),
+                                children: [
+                                  const Icon(Icons.sticky_note_2_outlined, size: 18, color: Color(0xFF475569)),
+                                  const SizedBox(width: 8),
                                   Text(
-                                    'Ghi chú của tôi',
-                                    style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F2937)),
+                                    'lesson.myNotes'.tr(),
+                                    style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F2937)),
                                   ),
                                 ],
                               ),

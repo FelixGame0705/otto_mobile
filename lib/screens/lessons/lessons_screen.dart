@@ -7,6 +7,7 @@ import 'package:ottobit/widgets/lessons/lesson_card.dart';
 import 'package:ottobit/widgets/lessons/lesson_search_bar.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String courseId;
@@ -90,8 +91,10 @@ class _LessonsScreenState extends State<LessonsScreen> {
     } catch (e) {
       print('Error loading lessons: $e');
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = friendly;
           _isLoading = false;
         });
         if (_errorMessage.isNotEmpty) {
@@ -152,20 +155,18 @@ class _LessonsScreenState extends State<LessonsScreen> {
       Navigator.pushNamed(context, AppRoutes.lessonDetail, arguments: lessonId);
     } catch (e) {
       if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+      final message = friendly.isNotEmpty ? friendly : 'lesson.unknownError'.tr();
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Không thể mở bài học'),
-          content: Text(
-            message.isNotEmpty
-                ? message
-                : 'Có lỗi không xác định xảy ra',
-          ),
+          title: Text('lesson.cannotOpen'.tr()),
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Đóng'),
+              child: Text('common.close'.tr()),
             ),
           ],
         ),
@@ -183,7 +184,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Làm mới',
+            tooltip: 'lesson.refresh'.tr(),
             onPressed: () => _loadLessons(isRefresh: true),
           ),
         ],

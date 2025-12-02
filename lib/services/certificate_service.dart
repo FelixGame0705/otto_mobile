@@ -68,8 +68,9 @@ class CertificateService {
         );
       }
     } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
       return ApiResponse.failure(
-        message: 'Error loading certificates: $e',
+        message: friendly,
       );
     }
   }
@@ -105,8 +106,9 @@ class CertificateService {
         );
       }
     } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
       return ApiResponse.failure(
-        message: 'Error loading certificate template: $e',
+        message: friendly,
       );
     }
   }
@@ -142,8 +144,9 @@ class CertificateService {
         );
       }
     } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
       return ApiResponse.failure(
-        message: 'Error loading certificate: $e',
+        message: friendly,
       );
     }
   }
@@ -179,8 +182,9 @@ class CertificateService {
         );
       }
     } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
       return ApiResponse.failure(
-        message: 'Error verifying certificate: $e',
+        message: friendly,
       );
     }
   }

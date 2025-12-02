@@ -77,7 +77,8 @@ class ComponentService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('ComponentService: Exception: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('ComponentService error: $friendly');
       rethrow;
     }
   }

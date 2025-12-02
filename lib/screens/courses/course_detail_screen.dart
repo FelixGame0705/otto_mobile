@@ -18,7 +18,6 @@ import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
-import 'package:ottobit/screens/support/tickets_screen.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -127,8 +126,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     } catch (e) {
       print('Error loading course detail: $e');
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
         setState(() {
-          _errorMessage = ApiErrorMapper.fromException(e);
+          _errorMessage = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
           _isLoading = false;
         });
       }
@@ -151,7 +151,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(resp.message.isNotEmpty ? resp.message : 'Đăng ký khóa học thành công!'),
+          content: Text(resp.message.isNotEmpty ? resp.message : 'course.enrollSuccess'.tr()),
           backgroundColor: const Color(0xFF48BB78),
         ),
       );
@@ -160,7 +160,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       setState(() {
         _isEnrolling = false;
       });
-      final msg = ApiErrorMapper.fromException(e);
+      final isEnglish = context.locale.languageCode == 'en';
+      final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(msg),
@@ -247,9 +248,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _isAddingToCart = false;
         });
         
+        final isEnglish = context.locale.languageCode == 'en';
+        final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('cart.addError'.tr() + ': $e'),
+            content: Text(msg),
             backgroundColor: Colors.red,
           ),
         );
@@ -267,7 +270,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   Future<void> _showCreateTicketDialog() async {
     if (_course == null) return;
 
-    final result = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       builder: (context) => CreateTicketDialog(
         courseId: _course!.id,

@@ -104,8 +104,9 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
       });
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
       setState(() {
-        _errorMessage = ApiErrorMapper.fromException(e);
+        _errorMessage = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         _isLoading = false;
       });
     }
@@ -336,7 +337,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                         const Icon(Icons.tune, color: Color(0xFF17a64b)),
                         const SizedBox(width: 8),
                         Text(
-                          'Bộ lọc khóa học',
+                          'courses.filter.title'.tr(),
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -350,7 +351,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Khoảng giá (VNĐ)',
+                    'courses.filter.priceRange'.tr(),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -404,7 +405,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Loại khóa học',
+                    'courses.filter.courseType'.tr(),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -415,17 +416,17 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                     spacing: 8,
                     children: [
                       ChoiceChip(
-                        label: const Text('Tất cả'),
+                        label: Text('courses.filter.all'.tr()),
                         selected: _draftType == null,
                         onSelected: (_) => setDrawerState(() => _draftType = null),
                       ),
                       ChoiceChip(
-                        label: const Text('Miễn phí'),
+                        label: Text('courses.filter.free'.tr()),
                         selected: _draftType == 1,
                         onSelected: (_) => setDrawerState(() => _draftType = 1),
                       ),
                       ChoiceChip(
-                        label: const Text('Trả phí'),
+                        label: Text('courses.filter.paid'.tr()),
                         selected: _draftType == 2,
                         onSelected: (_) => setDrawerState(() => _draftType = 2),
                       ),
@@ -433,7 +434,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Sắp xếp theo',
+                    'courses.filter.sortBy'.tr(),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -442,9 +443,9 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
                     value: _draftSortBy,
-                    items: const [
-                      DropdownMenuItem(value: 0, child: Text('Tiêu đề')),
-                      DropdownMenuItem(value: 1, child: Text('Ngày tạo')),
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text('courses.filter.sortByTitle'.tr())),
+                      DropdownMenuItem(value: 1, child: Text('courses.filter.sortByCreated'.tr())),
                     ],
                     onChanged: (value) =>
                         setDrawerState(() => _draftSortBy = value ?? _defaultSortBy),
@@ -454,7 +455,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Thứ tự',
+                    'courses.filter.sortOrder'.tr(),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -463,9 +464,9 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                   const SizedBox(height: 8),
                   DropdownButtonFormField<int>(
                     value: _draftSortDirection,
-                    items: const [
-                      DropdownMenuItem(value: 0, child: Text('Tăng dần')),
-                      DropdownMenuItem(value: 1, child: Text('Giảm dần')),
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text('courses.filter.ascending'.tr())),
+                      DropdownMenuItem(value: 1, child: Text('courses.filter.descending'.tr())),
                     ],
                     onChanged: (value) => setDrawerState(
                         () => _draftSortDirection = value ?? _defaultSortDirection),
@@ -490,7 +491,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                             });
                           },
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Đặt lại'),
+                          label: Text('courses.filter.reset'.tr()),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF17a64b),
                             side: const BorderSide(color: Color(0xFF17a64b)),
@@ -517,7 +518,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
                             _loadCourses(isRefresh: true);
                           },
                           icon: const Icon(Icons.check),
-                          label: const Text('Áp dụng'),
+                          label: Text('courses.filter.apply'.tr()),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF17a64b),
                             foregroundColor: Colors.white,

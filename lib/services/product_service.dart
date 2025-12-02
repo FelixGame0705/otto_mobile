@@ -31,7 +31,8 @@ class ProductService {
       );
       throw Exception(friendly);
     } catch (e) {
-      print('ProductService: Exception: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('ProductService error (getProductDetail): $friendly');
       rethrow;
     }
   }

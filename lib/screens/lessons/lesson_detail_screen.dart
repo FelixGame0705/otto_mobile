@@ -6,6 +6,7 @@ import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_detail_header.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_content_section.dart';
 import 'package:ottobit/widgets/lessonDetail/lesson_action_buttons.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonDetailScreen extends StatefulWidget {
   final String lessonId;
@@ -52,8 +53,10 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = friendly;
           _isLoading = false;
           _isCourseEnrolled = null;
           _enrollmentError = null;
@@ -81,10 +84,12 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       setState(() {
         _isCourseEnrolled = false;
         _isCheckingEnrollment = false;
-        _enrollmentError = e.toString().replaceFirst('Exception: ', '');
+        _enrollmentError = friendly;
       });
     }
   }
@@ -94,8 +99,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
     if (!isEnrolled) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Bạn cần đăng ký khóa học để bắt đầu bài học này.'),
+        SnackBar(
+          content: Text('lesson.enrollRequired'.tr()),
           backgroundColor: Colors.orange,
         ),
       );
@@ -115,9 +120,11 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       await _loadLessonDetail();
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          content: Text(friendly),
           backgroundColor: Colors.red,
         ),
       );
@@ -231,8 +238,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     canStartLesson:
                         !_isCheckingEnrollment && (_isCourseEnrolled ?? false),
                     isCheckingEnrollment: _isCheckingEnrollment,
-                    lockedMessage: _enrollmentError ??
-                        'Bạn cần đăng ký khóa học để bắt đầu bài học này.',
+                    lockedMessage: _enrollmentError,
                   ),
 
                   // Bottom padding for safe area

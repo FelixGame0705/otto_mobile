@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_resource_model.dart';
 import 'package:ottobit/services/lesson_resource_service.dart';
 import 'package:ottobit/widgets/lessons/lesson_resource_card.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonResourcesScreen extends StatefulWidget {
   final String lessonId;
@@ -39,8 +40,10 @@ class _LessonResourcesScreenState extends State<LessonResourcesScreen> {
         _loading = false;
       });
     } catch (e) {
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = friendly;
         _loading = false;
       });
     }

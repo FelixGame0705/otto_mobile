@@ -4,6 +4,7 @@ import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/models/order_model.dart';
 import 'package:ottobit/services/order_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -79,8 +80,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       setState(() {
-        _errorMessage = '$e';
+        _errorMessage = friendly;
         _isLoading = false;
       });
     }

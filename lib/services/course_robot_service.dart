@@ -14,7 +14,11 @@ class CourseRobotService {
     try {
       final token = await StorageService.getToken();
       if (token == null) {
-        throw Exception('No authentication token found');
+        final friendly = ApiErrorMapper.toFriendlyMessage(
+          null,
+          fallback: 'No authentication token found',
+        );
+        throw Exception(friendly);
       }
 
       final uri = Uri.parse('$_baseUrl/course-robots?Page=$page&Size=$size');

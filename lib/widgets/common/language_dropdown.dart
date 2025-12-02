@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LanguageDropdown extends StatelessWidget {
   final void Function(Locale)? onLocaleChanged;
@@ -47,6 +48,8 @@ class LanguageDropdown extends StatelessWidget {
       onChanged: (Locale? locale) async {
         if (locale == null) return;
         await context.setLocale(locale);
+        // Update locale in ApiErrorMapper
+        ApiErrorMapper.updateLocale(locale);
         if (onLocaleChanged != null) {
           onLocaleChanged!(locale);
         }
