@@ -1090,11 +1090,15 @@
             case "pin_color_compare":
               const pinColor2 = block.getFieldValue("COLOR");
               const pinOperator = block.getFieldValue("OP");
+              // Convert color to function name: "green" -> "isGreen", "red" -> "isRed", "yellow" -> "isYellow"
+              const colorName = pinColor2.charAt(0).toUpperCase() + pinColor2.slice(1);
+              const functionName = `is${colorName}`;
+              // EQ means check is true, NEQ means check is false
+              const checkValue = pinOperator === "EQ";
               return {
-                type: "variableComparison",
-                variable: "pinColor",
-                operator: pinOperator,
-                value: pinColor2
+                type: "condition",
+                function: functionName,
+                check: checkValue
               };
             case "logical_operation":
               const leftLogic = block.getInputTargetBlock("A");

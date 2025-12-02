@@ -274,26 +274,6 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         courseName: _course!.title,
       ),
     );
-
-    if (result == true && mounted) {
-      // Optionally show a success message or navigate to tickets list
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ticket created successfully'),
-          backgroundColor: Colors.green,
-          action: SnackBarAction(
-            label: 'View Tickets',
-            textColor: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const TicketsScreen()),
-              );
-            },
-          ),
-        ),
-      );
-    }
   }
 
   @override

@@ -78,71 +78,87 @@ class _CreateTicketDialogState extends State<CreateTicketDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = screenWidth > 600 ? 500.0 : screenWidth * 0.9;
+
     return AlertDialog(
       title: Text('ticket.create'.tr()),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'ticket.course'.tr(namedArgs: {'courseName': widget.courseName}),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
+      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: maxWidth,
+          maxHeight: MediaQuery.of(context).size.height * 0.4,
+        ),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ticket.course'.tr(namedArgs: {'courseName': widget.courseName}),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  labelText: 'ticket.title'.tr() + ' *',
-                  hintText: 'ticket.titleHint'.tr(),
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.title),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: 'ticket.title'.tr() + ' *',
+                    hintText: 'ticket.titleHint'.tr(),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.title),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'ticket.titleRequired'.tr();
+                    }
+                    if (value.trim().length < 3) {
+                      return 'ticket.titleMin'.tr();
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'ticket.titleRequired'.tr();
-                  }
-                  if (value.trim().length < 3) {
-                    return 'ticket.titleMin'.tr();
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'ticket.description'.tr() + ' *',
-                  hintText: 'ticket.descriptionHint'.tr(),
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.description),
-                  alignLabelWithHint: true,
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'ticket.description'.tr() + ' *',
+                    hintText: 'ticket.descriptionHint'.tr(),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.description),
+                    alignLabelWithHint: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  maxLines: 4,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'ticket.descriptionRequired'.tr();
+                    }
+                    if (value.trim().length < 10) {
+                      return 'ticket.descriptionMin'.tr();
+                    }
+                    return null;
+                  },
                 ),
-                maxLines: 5,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'ticket.descriptionRequired'.tr();
-                  }
-                  if (value.trim().length < 10) {
-                    return 'ticket.descriptionMin'.tr();
-                  }
-                  return null;
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.of(context).pop(false),
-          child: Text('common.cancel'.tr(), style: const TextStyle(color: Colors.red),),
+          child: Text('common.cancel'.tr(), style: const TextStyle(color: Colors.red)),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _submit,
