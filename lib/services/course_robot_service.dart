@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CourseRobotService {
   static const String _baseUrl = 'https://ottobit-be.felixtien.dev/api/v1';
@@ -30,10 +31,18 @@ class CourseRobotService {
         final jsonData = json.decode(response.body);
         return CourseRobotResponse.fromJson(jsonData);
       } else {
-        throw Exception('Failed to load course robots: ${response.statusCode}');
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load course robots: ${response.statusCode}',
+        );
+        throw Exception(friendly);
       }
     } catch (e) {
-      throw Exception('Error fetching course robots: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      // Log thân thiện, tránh lộ Exception thô
+      print('CourseRobotService error (getCourseRobots): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -49,7 +58,9 @@ class CourseRobotService {
       }
       return null;
     } catch (e) {
-      throw Exception('Error fetching course robot: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseRobotService error (getCourseRobotByCourseId): $friendly');
+      throw Exception(friendly);
     }
   }
 }

@@ -16,6 +16,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:ottobit/services/course_robot_service.dart';
 import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/auth_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
 import 'package:ottobit/screens/support/tickets_screen.dart';
 
@@ -37,6 +38,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   final CourseDetailService _courseDetailService = CourseDetailService();
   final CartService _cartService = CartService();
   final CourseRobotService _courseRobotService = CourseRobotService();
+  final EnrollmentService _enrollmentService = EnrollmentService();
 
   CourseDetail? _course;
   bool _isLoading = true;
@@ -70,6 +72,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
   }
 
+  Future<void> _checkEnrollmentStatus() async {
+    try {
+      final enrolled = await _enrollmentService.isEnrolledInCourse(
+        courseId: widget.courseId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isEnrolled = enrolled;
+        if (enrolled) {
+          // If already enrolled, we don't care about cart status anymore
+          _isInCart = false;
+        }
+      });
+    } catch (e) {
+      print('Error checking enrollment status: $e');
+    }
+  }
+
 
   Future<void> _loadCourseDetail() async {
     print('=== Loading Course Detail ===');
@@ -91,6 +111,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _isLoading = false;
         });
         print('State updated with course: ${_course?.title}');
+        // Check if user is already enrolled in this course
+        await _checkEnrollmentStatus();
         
         // Check cart status for paid courses
         if (_course != null && _course!.isPaid) {
@@ -106,7 +128,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       print('Error loading course detail: $e');
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = ApiErrorMapper.fromException(e);
           _isLoading = false;
         });
       }
@@ -138,9 +160,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       setState(() {
         _isEnrolling = false;
       });
+      final msg = ApiErrorMapper.fromException(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Có lỗi xảy ra: $e'),
+          content: Text(msg),
           backgroundColor: Colors.red,
         ),
       );
@@ -384,8 +407,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           // Action Buttons
           if (!widget.hideEnroll)
             CourseActionButtons(
-              onEnroll: _course!.isFree ? _handleEnroll : null,
-              onAddToCart: _course!.isPaid ? _handleAddToCart : null,
+              onEnroll: _course!.isFree && !_isEnrolled ? _handleEnroll : null,
+              // Only allow adding to cart if course is paid, not enrolled yet, and not already in cart
+              onAddToCart: _course!.isPaid && !_isEnrolled && !_isInCart
+                  ? _handleAddToCart
+                  : null,
               onShare: _handleShare,
               isEnrolled: _isEnrolled,
               isLoading: _isEnrolling || _isAddingToCart,

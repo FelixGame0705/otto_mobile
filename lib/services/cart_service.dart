@@ -35,8 +35,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error getting cart: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (getCart): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -66,8 +67,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error creating cart: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (createCart): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -96,8 +98,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error deleting cart: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (deleteCart): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -126,8 +129,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error getting cart summary: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (getCartSummary): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -157,8 +161,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error validating cart: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (validateCart): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -192,8 +197,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error getting cart items: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (getCartItems): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -223,8 +229,10 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error adding item to cart: $e');
+      // Log dạng thân thiện, nhưng vẫn rethrow nguyên Exception ở trên
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (addToCart): $friendly');
+      rethrow;
     }
   }
 
@@ -253,8 +261,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error removing item from cart: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (removeFromCart): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -284,8 +293,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error updating item price: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (updateItemPrice): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -315,8 +325,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error validating item: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (validateItem): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -345,8 +356,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error checking item existence: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (checkItemExists): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -378,8 +390,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error applying discount: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (applyDiscount): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -410,8 +423,9 @@ class CartService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CartService: Exception: $e');
-      throw Exception('Error removing discount: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (removeDiscount): $friendly');
+      throw Exception(friendly);
     }
   }
 }

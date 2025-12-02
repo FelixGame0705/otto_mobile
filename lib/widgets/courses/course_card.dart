@@ -23,6 +23,8 @@ class CourseCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isCompact = constraints.maxWidth < 360;
+        final minHeight = isCompact ? 180.0 : 200.0;
+        final textBlockHeight = isCompact ? 90.0 : 110.0;
         final padding = EdgeInsets.all(isCompact ? 12 : 16);
         final titleStyle = TextStyle(
           fontSize: isCompact ? 16 : 18,
@@ -31,80 +33,121 @@ class CourseCard extends StatelessWidget {
         final bodyStyle = TextStyle(fontSize: isCompact ? 13 : 14);
         const metaStyle = TextStyle(fontSize: 12, color: Colors.grey);
 
-        return Card(
-          margin: EdgeInsets.symmetric(
-            horizontal: isCompact ? 8 : 16,
-            vertical: isCompact ? 8 : 12,
-          ),
-          child: Padding(
-            padding: padding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Title
-                Text(
-                  course.title,
-                  style: titleStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-                SizedBox(height: isCompact ? 6 : 8),
+        return SizedBox(
+          height: minHeight,
+          child: Card(
+            margin: EdgeInsets.symmetric(
+              horizontal: isCompact ? 8 : 16,
+              vertical: isCompact ? 8 : 12,
+            ),
+            child: Padding(
+              padding: padding,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  // Text content block with fixed height so bottom buttons align
+                  SizedBox(
+                    height: textBlockHeight,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          course.title,
+                          style: titleStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                        SizedBox(height: isCompact ? 6 : 8),
 
-                // Description
-                Text(
-                  course.description,
-                  style: bodyStyle,
-                  maxLines: isCompact ? 2 : 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: isCompact ? 6 : 8),
+                        // Description
+                        Text(
+                          course.description,
+                          style: bodyStyle,
+                          maxLines: isCompact ? 2 : 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: isCompact ? 6 : 8),
 
-                // Stats
-                Text(
-                  '${course.lessonsCount} ${'course.lessonsUnit'.tr()} • ${course.enrollmentsCount} ${'course.peopleUnit'.tr()}',
-                  style: metaStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-                SizedBox(height: isCompact ? 4 : 6),
+                        // Stats
+                        Text(
+                          '${course.lessonsCount} ${'course.lessonsUnit'.tr()} • ${course.enrollmentsCount} ${'course.peopleUnit'.tr()}',
+                          style: metaStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                        SizedBox(height: isCompact ? 4 : 6),
 
-                // Created by
-                Text(
-                  'course.createdBy'.tr(namedArgs: {'name': course.createdByName}),
-                  style: metaStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-                SizedBox(height: isCompact ? 10 : 16),
-
-                // Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : onEnroll,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        vertical: isCompact ? 10 : 14,
-                      ),
+                        // Created by
+                        Text(
+                          'course.createdBy'
+                              .tr(namedArgs: {'name': course.createdByName}),
+                          style: metaStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
+                      ],
                     ),
-                    child: isLoading
-                        ? SizedBox(
-                            width: isCompact ? 16 : 20,
-                            height: isCompact ? 16 : 20,
-                            child: const CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(
-                            isEnrolled
-                                ? 'course.enrolled'.tr()
-                                : 'course.enrollNow'.tr(),
-                          ),
                   ),
-                ),
-              ],
+
+                  SizedBox(height: isCompact ? 8 : 12),
+
+                  // Bottom actions (fixed position block)
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // View detail button
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: onTap,
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              vertical: isCompact ? 6 : 8,
+                            ),
+                            foregroundColor: const Color(0xFF4299E1),
+                          ),
+                          child: Text(
+                            'course.viewDetail'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: isCompact ? 4 : 8),
+                      // Enroll button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : onEnroll,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              vertical: isCompact ? 10 : 14,
+                            ),
+                          ),
+                          child: isLoading
+                              ? SizedBox(
+                                  width: isCompact ? 16 : 20,
+                                  height: isCompact ? 16 : 20,
+                                  child: const CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : Text(
+                                  isEnrolled
+                                      ? 'course.enrolled'.tr()
+                                      : 'course.enrollNow'.tr(),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );

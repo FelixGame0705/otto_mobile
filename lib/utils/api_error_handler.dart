@@ -35,24 +35,177 @@ class ApiError {
 class ApiErrorMapper {
   /// Registry of errorCode → friendly message. Update here to customize.
   static final Map<String, String> _codeToMessage = <String, String>{
-    // Lesson/Access
-    'USER_003': 'Bạn cần hoàn thành các bài học trước đó trước khi xem nội dung này.',
-    // Challenge/Access
+    // ================= AUTH errors =================
+    'AUTH_001': 'Email hoặc mật khẩu không đúng.',
+    'AUTH_002': 'Tài khoản đã bị khóa. Vui lòng thử lại sau.',
+    'AUTH_003': 'Email chưa được xác nhận. Vui lòng xác nhận email trước.',
+    'AUTH_004': 'Token không hợp lệ hoặc đã hết hạn.',
+    'AUTH_005': 'Token có thể không hợp lệ hoặc đã hết hạn.',
+    'AUTH_006': 'Refresh token không hợp lệ hoặc đã hết hạn.',
+    'AUTH_007': 'Người dùng chưa được xác thực.',
+    'AUTH_008': 'Email đã được xác nhận trước đó.',
+
+    // ================= USER errors =================
+    'USER_001': 'Không tìm thấy người dùng.',
+    'USER_002': 'Email đã được đăng ký.',
+    'USER_003':
+        'Bạn cần hoàn thành các bài học trước đó trước khi xem nội dung này.',
+    'USER_005':
+        'Đổi mật khẩu thất bại: Mật khẩu hiện tại không chính xác.',
+    'USER_006': 'Thao tác với người dùng thất bại. Vui lòng thử lại.',
+    'USER_007': 'Người dùng chưa được xác thực.',
+
+    // ================= VALIDATION errors =================
+    'VAL_001': 'Dữ liệu không hợp lệ hoặc thiếu thông tin bắt buộc.',
+    'VAL_002': 'Định dạng email không hợp lệ.',
+    'VAL_003': 'Mật khẩu không đúng định dạng yêu cầu.',
+    'VAL_004': 'Mật khẩu xác nhận không khớp.',
+
+    // ================= COURSE / MAP / ROBOT / COMPONENT / IMAGE =================
+    'COU_001': 'Không tìm thấy khóa học.',
+    'COU_006': 'Khóa học không có thử thách để theo dõi tiến trình.',
+    'CR_001': 'Không tìm thấy cấu hình robot cho khóa học.',
+    'CR_002': 'Cấu hình robot cho khóa học đã tồn tại hoặc không thể xoá.',
+
+    'MAP_001': 'Không tìm thấy bản đồ.',
+    'MAP_002': 'Đã tồn tại bản đồ với tiêu đề này.',
+    'MAP_004': 'Không thể xóa bản đồ đang được sử dụng bởi các thử thách.',
+    'MAP_005': 'Bản đồ được chọn không thuộc về khóa học này.',
+
+    'COURSEMAP_001': 'Không tìm thấy bản đồ khóa học.',
+    'COURSEMAP_002': 'Bản đồ này đã được gán cho khóa học.',
+
+    'ROB_001': 'Không tìm thấy robot.',
+    'ROB_002': 'Đã tồn tại robot với tên và model này.',
+
+    'COM_001': 'Không tìm thấy linh kiện.',
+    'COM_002': 'Đã tồn tại linh kiện với tên này.',
+
+    'IMG_001': 'Không tìm thấy hình ảnh.',
+
+    // ================= LESSON errors =================
+    'LES_001': 'Không tìm thấy bài học hoặc bài học đã bị xoá.',
+    'LES_005': 'Bạn không có quyền truy cập bài học hoặc tài nguyên này.',
+    'LES_007':
+        'Bài học đang bị khoá. Hãy hoàn thành các bài học trước đó trước khi tiếp tục.',
+    'LES_008': 'Bài học này đã được hoàn thành.',
+    'LES_009':
+        'Không tìm thấy tiến trình bài học. Vui lòng bắt đầu bài học trước.',
+    'LES_010': 'Trạng thái tiến trình bài học không hợp lệ.',
+    'LEN_001':
+        'Không tìm thấy ghi chú bài học hoặc bạn không có quyền truy cập.',
+    'LEN_002':
+        'Không tìm thấy tài nguyên bài học hoặc tài nguyên không thuộc bài học này.',
+
+    // ================= CHALLENGE errors =================
+    'CHA_001': 'Không tìm thấy thử thách hoặc thử thách đã bị xoá.',
+    'CHA_004': 'Không tìm thấy bài học của thử thách này.',
+    'CHA_005':
+        'Bạn không thể truy cập thử thách hoặc lời giải này. Hãy hoàn thành các thử thách trước hoặc bắt đầu bài học.',
     'CHA_009':
-        'Bạn không thể truy cập thử thách này. Hãy hoàn thành các thử thách trước hoặc bắt đầu bài học.',
-    // ================= Auth errors =================
-    'AUTH_001': 'Email hoặc mật khẩu không đúng.', // INVALID_CREDENTIALS
-    'AUTH_002': 'Tài khoản đã bị khóa. Vui lòng thử lại sau.', // ACCOUNT_LOCKED
-    'AUTH_003': 'Email chưa được xác nhận. Vui lòng xác nhận email trước.', // EMAIL_NOT_CONFIRMED
-    'AUTH_006': 'Refresh token không hợp lệ hoặc đã hết hạn.', // REFRESH_TOKEN_INVALID
+        'Bạn không thể nộp bài/truy cập thử thách này. Hãy hoàn thành các thử thách trước hoặc bắt đầu bài học.',
+    'CHA_010': 'Lời giải cho thử thách này hiện chưa khả dụng.',
 
-    // ================= User errors =================
-    'USER_001': 'Không tìm thấy người dùng.', // USER_NOT_FOUND
-    'USER_002': 'Email đã được đăng ký.', // EMAIL_ALREADY_EXISTS
-    'USER_005': 'Đổi mật khẩu thất bại: Mật khẩu hiện tại không chính xác.', // CURRENT_PASSWORD_INCORRECT
+    // ================= CART / ORDER / PAYMENT =================
+    'CART_001': 'Không tìm thấy giỏ hàng.',
+    'CART_002': 'Giỏ hàng đã tồn tại cho người dùng này.',
+    'CART_003': 'ID giỏ hàng không khớp với giỏ hàng của người dùng.',
+    'CART_004': 'Không tìm thấy sản phẩm trong giỏ hàng.',
+    'CART_005': 'Khoá học đã tồn tại trong giỏ hàng.',
+    'CART_006':
+        'Khoá học này yêu cầu robot tương thích. Vui lòng kích hoạt robot phù hợp trước khi mua.',
+    'CART_007': 'Giỏ hàng đang trống.',
+    'CART_008': 'Mã giảm giá không hợp lệ.',
 
-    // ================= Voucher errors =================
-    'VOU_012': 'Voucher đã đạt giới hạn sử dụng hoặc không còn hiệu lực.',
+    'ORDER_001': 'Không tìm thấy đơn hàng.',
+    'ORDER_004':
+        'Trạng thái đơn hàng không hợp lệ hoặc không thể chuyển đổi trạng thái này.',
+    'ORDER_006': 'Khoá học đã tồn tại trong đơn hàng.',
+
+    'PAY_001': 'Không tìm thấy giao dịch thanh toán.',
+    'PAY_005': 'Thanh toán không còn ở trạng thái chờ xử lý.',
+    'PAY_006': 'Bạn không có quyền truy cập thanh toán này.',
+    'PAY_007':
+        'Đây là khóa học trả phí. Vui lòng hoàn tất thanh toán trước khi ghi danh.',
+
+    // ================= BLOG / TAG / COMMENT / TICKET / RATING =================
+    'BLOG_001': 'Không tìm thấy bài viết hoặc bài viết đã bị xoá.',
+    'BLOG_003': 'Đã tồn tại bài viết với tiêu đề này.',
+
+    'TAG_001': 'Không tìm thấy thẻ (tag).',
+    'TAG_003': 'Đã tồn tại thẻ (tag) với tên này.',
+    'TAG_004': 'Không thể xoá thẻ đang được sử dụng trong các bài viết.',
+
+    'COMMENT_001': 'Không tìm thấy bình luận.',
+
+    'TICKET_001':
+        'Không tìm thấy phiếu hỗ trợ hoặc bạn không có quyền truy cập.',
+    'TICKET_004':
+        'Không thể gán phiếu hỗ trợ đã đóng hoặc phiếu hỗ trợ đã được đóng.',
+
+    'RATING_001':
+        'Không tìm thấy đánh giá hoặc đánh giá không tồn tại cho phiếu hỗ trợ này.',
+
+    // ================= STUDENT / ENROLLMENT / SUBMISSION / VOUCHER / ACTIVATION =================
+    'STU_001': 'Không tìm thấy học sinh.',
+    'STU_005': 'Hồ sơ học sinh đã tồn tại cho người dùng này.',
+
+    'ENR_001': 'Không tìm thấy lượt ghi danh hoặc tiến trình ghi danh.',
+    'ENR_002': 'Học sinh đã ghi danh khóa học này.',
+    'ENR_003': 'Dữ liệu ghi danh không hợp lệ.',
+    'ENR_004': 'Không tìm thấy học sinh cho lượt ghi danh này.',
+    'ENR_005': 'Không tìm thấy khoá học cho lượt ghi danh này.',
+    'ENR_006': 'Khóa học này đã được hoàn thành.',
+    'ENR_007': 'Bạn không có quyền thực hiện thao tác này.',
+    'ENR_008':
+        'Bạn chưa có robot đã kích hoạt phù hợp với khóa học này. Vui lòng kích hoạt robot trước.',
+
+    'SUB_001':
+        'Không tìm thấy bài nộp hoặc bạn không có quyền xem bài nộp này.',
+    'SUB_004': 'Không tìm thấy thử thách cho bài nộp này.',
+    'SUB_005': 'Không tìm thấy học sinh cho bài nộp này.',
+
+    'VOU_001': 'Không tìm thấy voucher hoặc voucher đã bị xoá.',
+    'VOU_003': 'Mã voucher đã tồn tại.',
+    'VOU_005': 'Voucher chưa bắt đầu hiệu lực.',
+    'VOU_006': 'Voucher đã hết hạn.',
+    'VOU_007': 'Voucher đã đạt giới hạn sử dụng.',
+    'VOU_008': 'Voucher không còn khả dụng.',
+    'VOU_012': 'Voucher không còn khả dụng hoặc đã đạt giới hạn sử dụng.',
+
+    'VOU_USAGE_001': 'Không tìm thấy lịch sử sử dụng voucher.',
+
+    'AC_001': 'Không tìm thấy mã kích hoạt.',
+    'AC_002':
+        'Số lượng mã kích hoạt không hợp lệ. Số lượng phải từ 1 đến 10000.',
+    'AC_003': 'Thời gian hết hạn phải ở tương lai.',
+    'AC_004': 'Không thể thay đổi trạng thái của mã kích hoạt đã được sử dụng.',
+    'AC_005': 'Mã kích hoạt chưa ở trạng thái hoạt động.',
+    'AC_006':
+        'Bạn đã kích hoạt một mã cho robot này trước đó. Không thể kích hoạt thêm.',
+
+    // ================= SYSTEM / GENERAL =================
+    'SYS_001': 'Lỗi hệ thống nội bộ. Vui lòng thử lại sau.',
+    'GEN_005': 'Lỗi hệ thống nội bộ. Vui lòng thử lại sau.',
+    'SYS_002': 'Đã xảy ra lỗi khi gửi email xác nhận.',
+    'SYS_003': 'Lỗi khi gọi dịch vụ bên ngoài. Vui lòng thử lại sau.',
+    'SYS_004': 'Lỗi cấu hình hệ thống.',
+
+    'GEN_001': 'Dữ liệu đầu vào không hợp lệ.',
+    'GEN_002':
+        'Thao tác không hợp lệ (ví dụ: không thể khóa tài khoản admin, không thể đóng phiếu hỗ trợ này).',
+    'GEN_003':
+        'Dữ liệu bị trùng lặp (ví dụ: bạn đã đánh giá phiếu hỗ trợ này trước đó).',
+    'GEN_004': 'Bạn không có quyền thực hiện thao tác này.',
+
+    'BGJ_001': 'Lỗi khi xử lý hết hạn đơn hàng trong nền.',
+
+    // ================= CERTIFICATE / MESSAGE / PAYOS =================
+    'CT_001': 'Không tìm thấy mẫu chứng chỉ.',
+    'CER_001': 'Không tìm thấy chứng chỉ.',
+    'MESSAGE_001': 'Không tìm thấy tin nhắn.',
+    'PAYOS_001':
+        'Yêu cầu webhook không hợp lệ hoặc payload webhook không hợp lệ.',
   };
 
   /// Optional mapping by HTTP status to a default message.
@@ -97,6 +250,45 @@ class ApiErrorMapper {
   static String fromBody(String? body, {int? statusCode, String? fallback}) {
     final err = ApiError.tryParseBody(body, statusCode: statusCode);
     return toFriendlyMessage(err, fallback: fallback);
+  }
+
+  /// Convenience: derive a friendly message from an [error] object (e.g. Exception),
+  /// stripping common prefixes like "Exception: " and optionally parsing JSON bodies.
+  ///
+  /// - Nếu chuỗi bên trong trông giống JSON (bắt đầu bằng '{' và kết thúc bằng '}'),
+  ///   hàm sẽ gọi [fromBody] để map theo `errorCode` / `message`.
+  /// - Ngược lại, trả về phần message đã được làm sạch (không còn tiền tố "Exception: ").
+  static String fromException(
+    Object error, {
+    int? statusCode,
+    String? fallback,
+  }) {
+    final raw = error.toString().trim();
+    if (raw.isEmpty) {
+      return fallback?.trim().isNotEmpty == true
+          ? fallback!.trim()
+          : 'Đã xảy ra lỗi. Vui lòng thử lại.';
+    }
+
+    // Loại bỏ tiền tố "Exception: " nếu có
+    final withoutPrefix = raw.startsWith('Exception:')
+        ? raw.substring('Exception:'.length).trim()
+        : raw;
+
+    // Nếu phần còn lại là JSON thì parse qua fromBody,
+    // ngược lại trả về nguyên văn (đã được service map sẵn nếu có).
+    final looksLikeJson = withoutPrefix.startsWith('{') &&
+        (withoutPrefix.endsWith('}') || withoutPrefix.endsWith('}\n'));
+
+    if (looksLikeJson) {
+      return fromBody(withoutPrefix, statusCode: statusCode, fallback: fallback);
+    }
+
+    return withoutPrefix.isNotEmpty
+        ? withoutPrefix
+        : (fallback?.trim().isNotEmpty == true
+            ? fallback!.trim()
+            : 'Đã xảy ra lỗi. Vui lòng thử lại.');
   }
 
   /// Allows updating or adding mappings at runtime (e.g., feature flags or A/B tests).

@@ -74,8 +74,9 @@ class CourseService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseService: Exception: $e');
-      throw Exception('Error fetching courses: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (getCourses): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -92,7 +93,9 @@ class CourseService {
       }
       return null;
     } catch (e) {
-      throw Exception('Error fetching course: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (getCourseById): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -105,7 +108,9 @@ class CourseService {
 
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      throw Exception('Error enrolling in course: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (enrollInCourse): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -118,7 +123,9 @@ class CourseService {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      throw Exception('Error unenrolling from course: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (unenrollFromCourse): $friendly');
+      throw Exception(friendly);
     }
   }
 

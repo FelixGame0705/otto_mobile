@@ -6,6 +6,7 @@ import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/course_service.dart';
 import 'package:ottobit/widgets/courses/course_search_bar.dart';
 import 'package:ottobit/screens/home/home_screen.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 class ExploreCoursesTab extends StatefulWidget {
   const ExploreCoursesTab({super.key});
 
@@ -105,7 +106,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = ApiErrorMapper.fromException(e);
         _isLoading = false;
       });
     }
@@ -548,6 +549,7 @@ class _CourseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Fixed image header
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: SizedBox(
@@ -562,59 +564,124 @@ class _CourseCard extends StatelessWidget {
                   : _placeholder(),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(course.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3748)), maxLines: 2, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 6),
-                Text(course.description, style: const TextStyle(fontSize: 12, color: Color(0xFF718096), height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 8),
-                    _PriceTag(price: course.price, type: course.type),
-                const SizedBox(height: 8),
-                Column(
-                  children: [
-                    Row(
+          // Body with fixed button position
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Text + stats occupy available space
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        Expanded(child: _buildStatChip(Icons.play_lesson, '${course.lessonsCount}', const Color(0xFF48BB78))),
-                        const SizedBox(width: 4),
-                        Expanded(child: _buildStatChip(Icons.people, '${course.enrollmentsCount}', const Color(0xFFED8936))),
+                        Text(
+                          course.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3748),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          course.description,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF718096),
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        _PriceTag(price: course.price, type: course.type),
+                        const SizedBox(height: 8),
+                        Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildStatChip(
+                                    Icons.play_lesson,
+                                    '${course.lessonsCount}',
+                                    const Color(0xFF48BB78),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: _buildStatChip(
+                                    Icons.people,
+                                    '${course.enrollmentsCount}',
+                                    const Color(0xFFED8936),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildStatChip(
+                                    Icons.star,
+                                    course.ratingCount > 0
+                                        ? course.ratingAverage
+                                            .toStringAsFixed(1)
+                                        : 'N/A',
+                                    const Color(0xFFF6AD55),
+                                  ),
+                                ),
+                                const Expanded(child: SizedBox()),
+                              ],
+                            ),
+                          ],
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Expanded(child: _buildStatChip(Icons.star, course.ratingCount > 0 ? course.ratingAverage.toStringAsFixed(1) : 'N/A', const Color(0xFFF6AD55))),
-                        const Expanded(child: SizedBox()),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.courseDetail, arguments: course.id).then((_) {
-                        // Refresh cart count when returning from course detail
-                        HomeScreen.refreshCartCount(context);
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: course.isEnrolled == true ? const Color(0xFF48BB78) : const Color(0xFF4299E1),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      elevation: 1,
-                    ),
-                    child: Text(
-                      course.isEnrolled == true ? 'courses.continueLearning'.tr() : 'common.viewDetails'.tr(),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  // Button fixed at bottom of card body
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.courseDetail,
+                          arguments: course.id,
+                        ).then((_) {
+                          // Refresh cart count when returning from course detail
+                          HomeScreen.refreshCartCount(context);
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: course.isEnrolled == true
+                            ? const Color(0xFF48BB78)
+                            : const Color(0xFF4299E1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        elevation: 1,
+                      ),
+                      child: Text(
+                        course.isEnrolled == true
+                            ? 'courses.continueLearning'.tr()
+                            : 'common.viewDetails'.tr(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

@@ -102,6 +102,46 @@
           if (typeof v === "string") return v;
           return JSON.stringify(v);
         }
+        function getVariableName(variable) {
+          if (!variable) return null;
+          if (typeof variable === "string") return variable;
+          if (typeof variable === "object") {
+            if (variable.type === "function" && variable.name) {
+              return String(variable.name);
+            }
+            if (variable.name) {
+              return String(variable.name);
+            }
+          }
+          return null;
+        }
+        function normalizeCompareOperator(op) {
+          if (!op) return "EQ";
+          switch (op) {
+            case "EQ":
+            case "=":
+            case "==":
+              return "EQ";
+            case "NEQ":
+            case "!=":
+            case "<>":
+              return "NEQ";
+            case "LT":
+            case "<":
+              return "LT";
+            case "GT":
+            case ">":
+              return "GT";
+            case "LTE":
+            case "<=":
+              return "LTE";
+            case "GTE":
+            case ">=":
+              return "GTE";
+            default:
+              return "EQ";
+          }
+        }
         function condToPy(cond) {
           if (!cond) return "True";
           switch (cond.type) {
@@ -138,11 +178,11 @@
                 LTE: " <= ",
                 GTE: " >= ",
               };
-              var op = opMap[cond.operator] || " == ";
+              var canonOp = normalizeCompareOperator(cond.operator);
+              var op = opMap[canonOp] || " == ";
               if (cond.type === "variableComparison") {
-                return (
-                  "(" + (cond.variable || "x") + op + pyVal(cond.value) + ")"
-                );
+                var vName = getVariableName(cond.variable) || "x";
+                return "(" + vName + op + pyVal(cond.value) + ")";
               } else {
                 return "(" + pyVal(cond.left) + op + pyVal(cond.right) + ")";
               }
@@ -365,6 +405,33 @@
           if (!trimmed.startsWith("{{") || !trimmed.endsWith("}}")) return null;
           var name = trimmed.substring(2, trimmed.length - 2).trim();
           return name ? name : null;
+        }
+        function normalizeCompareOperator(op) {
+          if (!op) return "EQ";
+          switch (op) {
+            case "EQ":
+            case "=":
+            case "==":
+              return "EQ";
+            case "NEQ":
+            case "!=":
+            case "<>":
+              return "NEQ";
+            case "LT":
+            case "<":
+              return "LT";
+            case "GT":
+            case ">":
+              return "GT";
+            case "LTE":
+            case "<=":
+              return "LTE";
+            case "GTE":
+            case ">=":
+              return "GTE";
+            default:
+              return "EQ";
+          }
         }
         // Minimal custom blocks subset to visualize program
         if (!C.Blocks["start"])
@@ -772,27 +839,35 @@
             return b;
           }
           if (cond.type === "variableComparison") {
-            if (cond.variable === "pinColor") {
+            const rawVar = cond.variable;
+            const varName =
+              typeof rawVar === "string"
+                ? rawVar
+                : rawVar && typeof rawVar === "object"
+                ? rawVar.name || null
+                : null;
+            const canonOp = normalizeCompareOperator(cond.operator);
+            if (varName === "pinColor") {
               const b = workspace.newBlock("pin_color_compare");
-              b.setFieldValue(cond.operator || "EQ", "OP");
+              b.setFieldValue(canonOp || "EQ", "OP");
               b.setFieldValue(cond.value || "green", "COLOR");
               b.initSvg();
               b.render();
               return b;
             }
             const cmp = workspace.newBlock("compare");
-            cmp.setFieldValue(cond.operator || "EQ", "OP");
+            cmp.setFieldValue(canonOp || "EQ", "OP");
             let left = null;
-            if (cond.variable === "batteryCount")
+            if (varName === "batteryCount")
               left = workspace.newBlock("batteryCount");
-            else if (cond.variable === "warehouseCount")
+            else if (varName === "warehouseCount")
               left = workspace.newBlock("warehouseCount");
-            else if (cond.variable === "getNumberBox")
+            else if (varName === "getNumberBox")
               left = workspace.newBlock("getNumberBox");
-            else if (typeof cond.variable === "string") {
-              ensureVariableOption(cond.variable);
+            else if (typeof varName === "string") {
+              ensureVariableOption(varName);
               left = workspace.newBlock("var_ref");
-              left.setFieldValue(cond.variable, "VAR");
+              left.setFieldValue(varName, "VAR");
             }
             if (left) {
               left.initSvg();
@@ -817,7 +892,8 @@
           }
           if (cond.type === "compare") {
             const b = workspace.newBlock("compare");
-            b.setFieldValue(cond.operator || "EQ", "OP");
+            const canonOp2 = normalizeCompareOperator(cond.operator);
+            b.setFieldValue(canonOp2 || "EQ", "OP");
             connectValue(b.getInput("A").connection, cond.left ?? 0);
             connectValue(b.getInput("B").connection, cond.right ?? 0);
             b.initSvg();

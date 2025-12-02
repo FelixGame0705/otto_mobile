@@ -67,7 +67,7 @@ class BlogService {
       print('BlogService: Query params: $queryParams');
       
       final response = await _httpService.get(
-        '/v1/Blog',
+        '/v1/blogs',
         queryParams: queryParams,
         throwOnError: false,
       );
@@ -89,18 +89,21 @@ class BlogService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error fetching blogs: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (getBlogs): $friendly');
+      throw Exception(friendly);
     }
   }
 
   /// Get a specific blog by slug
   Future<Blog?> getBlogBySlug(String slug) async {
     try {
-      print('BlogService: Making request to /v1/Blog/slug/$slug');
+      // Ensure slug is safely encoded for use in URL path (handles spaces, punctuation, unicode, etc.)
+      final encodedSlug = Uri.encodeComponent(slug);
+      print('BlogService: Making request to /v1/blogs/slug/$encodedSlug');
       
       final response = await _httpService.get(
-        '/v1/Blog/slug/$slug',
+        '/v1/blogs/slug/$encodedSlug',
         throwOnError: false,
       );
 
@@ -123,8 +126,9 @@ class BlogService {
       }
       return null;
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error fetching blog: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (getBlogBySlug): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -139,11 +143,11 @@ class BlogService {
         'PageSize': pageSize.toString(),
       };
 
-      print('BlogService: Making request to /v1/Tag');
+      print('BlogService: Making request to /v1/tags');
       print('BlogService: Query params: $queryParams');
       
       final response = await _httpService.get(
-        '/v1/Tag',
+        '/v1/tags',
         queryParams: queryParams,
         throwOnError: false,
       );
@@ -165,8 +169,9 @@ class BlogService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error fetching tags: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (getTags): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -208,8 +213,9 @@ class BlogService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error fetching comments: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (getBlogComments): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -250,8 +256,9 @@ class BlogService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error creating comment: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (createComment): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -291,8 +298,9 @@ class BlogService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error updating comment: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (updateComment): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -325,8 +333,9 @@ class BlogService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('BlogService: Exception: $e');
-      throw Exception('Error deleting comment: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('BlogService error (deleteComment): $friendly');
+      throw Exception(friendly);
     }
   }
 }
