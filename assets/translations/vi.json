@@ -118,7 +118,9 @@
     "store": "Cửa hàng",
     "learningPath": "Lộ trình học",
     "selectCourseMessage": "Hãy chọn một khóa học để xem lộ trình",
-    "aiSupport": "Hỗ trợ AI"
+    "aiSupport": "Hỗ trợ AI",
+    "noEnrollmentsMessage": "Bạn chưa đăng ký khóa học nào. Hãy khám phá và đăng ký!",
+    "exploreCoursesButton": "Khám phá khóa học"
   },
   "learningPath": {
     "noLessons": "Chưa có bài học trong khóa này",

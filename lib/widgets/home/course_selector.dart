@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/enrollment_model.dart';
 
 class CourseSelector extends StatelessWidget {
@@ -27,17 +28,17 @@ class CourseSelector extends StatelessWidget {
           children: [
             const Icon(Icons.school, color: Colors.orange),
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               child: Text(
-                'Bạn chưa đăng ký khóa học nào. Hãy khám phá và đăng ký!',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                'home.noEnrollmentsMessage'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pushNamed('/home', arguments: {'initialIndex': 1});
               },
-              child: const Text('Khám phá khóa học'),
+              child: Text('home.exploreCoursesButton'.tr()),
             ),
           ],
         ),

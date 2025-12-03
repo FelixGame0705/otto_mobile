@@ -65,6 +65,28 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   }
   bool get _isUploadMode => _challengeMode == 1;
 
+  // Challenge type: 0 = Battery, 1 = Box
+  int? get _challengeType {
+    final dynamic raw = widget.initialChallengeJson?['challengeType'];
+    if (raw is int) return raw;
+    if (raw is String) {
+      final parsed = int.tryParse(raw);
+      if (parsed != null) return parsed;
+    }
+    return null;
+  }
+
+  // Get HTML file path based on challenge type
+  String get _blocklyHtmlPath {
+    if (_challengeType == 1) {
+      // Box challenge
+      return 'assets/blockly/indexBox.html';
+    } else {
+      // Battery challenge (default) or null
+      return 'assets/blockly/indexBattery.html';
+    }
+  }
+
   // Right Phaser pane resize
   bool _isDragging = false;
   double _rightPaneWidth = 420.0;
@@ -112,11 +134,11 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (url) async {
-            debugPrint('Blockly loaded: ' + url);
+            debugPrint('Blockly loaded: $url (challengeType: $_challengeType)');
           },
         ),
       )
-      ..loadFlutterAsset('assets/blockly/index.html');
+      ..loadFlutterAsset(_blocklyHtmlPath);
 
     _bridge = BlocklyBridge(
       controller: _controller,

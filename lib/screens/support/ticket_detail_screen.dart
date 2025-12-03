@@ -6,6 +6,7 @@ import 'dart:async';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:ottobit/utils/constants.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class TicketDetailScreen extends StatefulWidget {
   final AssistanceTicket ticket;
@@ -117,8 +118,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ticket.messages.errorLoadingMessages'.tr())),
+          SnackBar(content: Text('ticket.messages.errorLoadingMessages'.tr() + ': $errorMsg')),
         );
       }
     }
@@ -165,10 +168,12 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         final target = beforePixels + delta;
         _scrollController.jumpTo(target);
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
+      final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ticket.messages.errorLoadingMessages'.tr())),
+        SnackBar(content: Text('ticket.messages.errorLoadingMessages'.tr() + ': $errorMsg')),
       );
     } finally {
       if (mounted) setState(() => _isLoadingMore = false);
@@ -196,9 +201,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('ticket.messages.errorSendingMessage'.tr()),
+            content: Text('ticket.messages.errorSendingMessage'.tr() + ': $errorMsg'),
             backgroundColor: Colors.red,
           ),
         );
@@ -541,8 +548,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       ),
           ),
 
-          // Message input
-          if (widget.ticket.status != 4) // Don't show input for closed tickets
+          // Message input - Only allow messaging when status is 2 (inProgress)
+          if (widget.ticket.status == 2)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -760,8 +767,10 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
+      final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ticket.rating.error'.tr(args: [e.toString()]))),
+        SnackBar(content: Text('ticket.rating.error'.tr(args: [errorMsg]))),
       );
     } finally {
       if (mounted) {

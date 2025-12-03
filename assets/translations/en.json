@@ -116,7 +116,9 @@
     "store": "Store",
     "learningPath": "Learning Path",
     "selectCourseMessage": "Please select a course to view the learning path",
-    "aiSupport": "AI Support"
+    "aiSupport": "AI Support",
+    "noEnrollmentsMessage": "You have not enrolled in any course yet. Explore and enroll now!",
+    "exploreCoursesButton": "Explore courses"
   },
   "learningPath": {
     "noLessons": "No lessons in this course yet",

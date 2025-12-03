@@ -4,6 +4,7 @@ import 'package:ottobit/models/assistance_ticket_model.dart';
 import 'package:ottobit/services/assistance_ticket_service.dart';
 import 'package:ottobit/services/student_service.dart';
 import 'package:ottobit/screens/support/ticket_detail_screen.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class TicketsScreen extends StatefulWidget {
   const TicketsScreen({super.key});
@@ -68,8 +69,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
       print('Error loading tickets: $e');
       print('Error stack: ${StackTrace.current}');
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = errorMsg;
           _isLoading = false;
         });
       }
@@ -239,7 +242,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Created: ${_formatDate(ticket.createdAt)}',
+                            '${'common.createdAt'.tr()}: ${_formatDate(ticket.createdAt)}',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[500],
@@ -276,8 +279,12 @@ class _TicketsScreenState extends State<TicketsScreen> {
         label = 'ticket.status.resolved'.tr();
         color = Colors.green;
         break;
+      case 4:
+        label = 'ticket.status.closed'.tr();
+        color = Colors.red;
+        break;
       default:
-        label = 'Unknown';
+        label = 'ticket.status.open'.tr();
         color = Colors.grey;
     }
 
@@ -307,6 +314,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
         return Colors.blue;
       case 3:
         return Colors.green;
+      case 4:
+        return Colors.red;
       default:
         return Colors.grey;
     }
