@@ -36,6 +36,10 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   bool _isDialogShowing = false;
   bool _sentInitialLoad = false;
   String _cachedCodeJson = '{}';
+  double _webViewZoom = 1.0;
+  static const double _minZoom = 0.5;
+  static const double _maxZoom = 3.0;
+  static const double _zoomStep = 0.1;
 
   @override
   void initState() {
@@ -54,6 +58,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
 
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..enableZoom(true)
       ..addJavaScriptChannel(
         'FlutterFromPhaser',
         onMessageReceived: (msg) {
@@ -74,6 +79,8 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
               _isGameReady = true;
             });
             _bridge.initialize(_controller);
+            // Apply initial zoom after page loads
+            _applyWebViewZoom(_webViewZoom);
             debugPrint(
               '⏳ Waiting for READY from Phaser before sending payload',
             );
@@ -342,6 +349,66 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     }
   }
 
+  Future<void> _zoomInWebView() async {
+    final newZoom = (_webViewZoom + _zoomStep).clamp(_minZoom, _maxZoom);
+    if (newZoom != _webViewZoom) {
+      setState(() {
+        _webViewZoom = newZoom;
+      });
+      await _applyWebViewZoom(newZoom);
+    }
+  }
+
+  Future<void> _zoomOutWebView() async {
+    final newZoom = (_webViewZoom - _zoomStep).clamp(_minZoom, _maxZoom);
+    if (newZoom != _webViewZoom) {
+      setState(() {
+        _webViewZoom = newZoom;
+      });
+      await _applyWebViewZoom(newZoom);
+    }
+  }
+
+  Future<void> _resetWebViewZoom() async {
+    if (_webViewZoom != 1.0) {
+      setState(() {
+        _webViewZoom = 1.0;
+      });
+      await _applyWebViewZoom(1.0);
+    }
+  }
+
+  Future<void> _applyWebViewZoom(double zoom) async {
+    try {
+      final zoomStr = zoom.toStringAsFixed(2);
+      await _controller.runJavaScript('''
+        (function() {
+          // Method 1: Sử dụng CSS zoom property (hỗ trợ tốt nhất)
+          var body = document.body;
+          var html = document.documentElement;
+          if (body) {
+            body.style.zoom = $zoomStr;
+          }
+          if (html) {
+            html.style.zoom = $zoomStr;
+          }
+          
+          // Method 2: Sử dụng CSS transform scale (fallback)
+          var gameContainer = document.getElementById('game-container') || 
+                              document.querySelector('canvas')?.parentElement ||
+                              body;
+          if (gameContainer && !gameContainer.style.zoom) {
+            gameContainer.style.transform = 'scale(' + $zoomStr + ')';
+            gameContainer.style.transformOrigin = 'top left';
+          }
+        })();
+      ''');
+      debugPrint('🔍 WebView zoom applied: $zoomStr');
+    } catch (e) {
+      debugPrint('❌ Error applying WebView zoom: $e');
+    }
+  }
+
   Widget _buildBodyOnly() {
     return Stack(
       children: [
@@ -354,6 +421,40 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
                 Text('Loading game...'),
+              ],
+            ),
+          ),
+        // Zoom controls overlay
+        if (_isGameReady)
+          Positioned(
+            right: 16,
+            top: 16,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'zoom_in',
+                  onPressed: _zoomInWebView,
+                  tooltip: 'Zoom In',
+                  child: const Icon(Icons.zoom_in),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'zoom_out',
+                  onPressed: _zoomOutWebView,
+                  tooltip: 'Zoom Out',
+                  child: const Icon(Icons.zoom_out),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  mini: true,
+                  heroTag: 'zoom_reset',
+                  onPressed: _resetWebViewZoom,
+                  tooltip: 'Reset Zoom',
+                  child: const Icon(Icons.fit_screen),
+                ),
               ],
             ),
           ),
@@ -379,6 +480,21 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
               tooltip: 'Reload Map & Challenge',
             ),
           if (_isGameReady) ...[
+            IconButton(
+              icon: const Icon(Icons.zoom_in),
+              onPressed: _zoomInWebView,
+              tooltip: 'Zoom In',
+            ),
+            IconButton(
+              icon: const Icon(Icons.zoom_out),
+              onPressed: _zoomOutWebView,
+              tooltip: 'Zoom Out',
+            ),
+            IconButton(
+              icon: const Icon(Icons.fit_screen),
+              onPressed: _resetWebViewZoom,
+              tooltip: 'Reset Zoom',
+            ),
             IconButton(
               icon: const Icon(Icons.play_circle),
               onPressed: _runProgram,

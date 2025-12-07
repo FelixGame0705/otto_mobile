@@ -698,6 +698,51 @@ class PhaserBridge {
     }
   }
 
+  /// Phóng to map
+  Future<void> zoomIn() async {
+    if (_controller == null) return;
+    
+    await _controller!.runJavaScript('''
+      console.log('🔍 Sending zoom_in event...');
+      if (window.PhaserChannel) {
+        window.PhaserChannel.sendEvent('ZOOM_IN', {});
+        console.log('✅ zoom_in event sent');
+      } else {
+        console.log('❌ PhaserChannel not available');
+      }
+    ''');
+  }
+
+  /// Thu nhỏ map
+  Future<void> zoomOut() async {
+    if (_controller == null) return;
+    
+    await _controller!.runJavaScript('''
+      console.log('🔍 Sending zoom_out event...');
+      if (window.PhaserChannel) {
+        window.PhaserChannel.sendEvent('ZOOM_OUT', {});
+        console.log('✅ zoom_out event sent');
+      } else {
+        console.log('❌ PhaserChannel not available');
+      }
+    ''');
+  }
+
+  /// Reset zoom về mức mặc định
+  Future<void> zoomReset() async {
+    if (_controller == null) return;
+    
+    await _controller!.runJavaScript('''
+      console.log('🔍 Sending zoom_reset event...');
+      if (window.PhaserChannel) {
+        window.PhaserChannel.sendEvent('ZOOM_RESET', {});
+        console.log('✅ zoom_reset event sent');
+      } else {
+        console.log('❌ PhaserChannel not available');
+      }
+    ''');
+  }
+
   void dispose() {
     _pendingRequests.clear();
     
