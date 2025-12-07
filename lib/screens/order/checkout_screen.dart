@@ -617,17 +617,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           });
                         },
                       ),
-                      RadioListTile<String>(
-                        title: Text('order.cod'.tr()),
-                        subtitle: Text('order.codDesc'.tr()),
-                        value: 'cod',
-                        groupValue: _paymentMethod,
-                        onChanged: (value) {
-                          setState(() {
-                            _paymentMethod = value!;
-                          });
-                        },
-                      ),
                     ],
                   ),
                 ),

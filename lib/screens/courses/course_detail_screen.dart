@@ -18,6 +18,7 @@ import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
+import 'package:ottobit/widgets/ui/notifications.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -162,12 +163,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       });
       final isEnglish = context.locale.languageCode == 'en';
       final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showErrorToast(context, msg);
     }
   }
 
@@ -250,12 +246,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         
         final isEnglish = context.locale.languageCode == 'en';
         final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorToast(context, msg);
       }
     }
   }

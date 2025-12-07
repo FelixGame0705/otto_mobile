@@ -36,7 +36,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   bool _isDialogShowing = false;
   bool _sentInitialLoad = false;
   String _cachedCodeJson = '{}';
-  double _webViewZoom = 1.0;
+  double _webViewZoom = 0.8; // Giảm zoom mặc định từ 1.0 xuống 0.8 (80%)
   static const double _minZoom = 0.5;
   static const double _maxZoom = 3.0;
   static const double _zoomStep = 0.1;
@@ -370,11 +370,12 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   }
 
   Future<void> _resetWebViewZoom() async {
-    if (_webViewZoom != 1.0) {
+    const defaultZoom = 0.8; // Zoom mặc định
+    if (_webViewZoom != defaultZoom) {
       setState(() {
-        _webViewZoom = 1.0;
+        _webViewZoom = defaultZoom;
       });
-      await _applyWebViewZoom(1.0);
+      await _applyWebViewZoom(defaultZoom);
     }
   }
 

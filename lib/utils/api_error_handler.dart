@@ -153,15 +153,14 @@ class ApiErrorMapper {
     'STU_001': 'Không tìm thấy học sinh.',
     'STU_005': 'Hồ sơ học sinh đã tồn tại cho người dùng này.',
 
-    'ENR_001': 'Không tìm thấy lượt ghi danh hoặc tiến trình ghi danh.',
+    'ENR_001': 'Học sinh chưa đăng ký khóa học này.',
     'ENR_002': 'Học sinh đã ghi danh khóa học này.',
     'ENR_003': 'Dữ liệu ghi danh không hợp lệ.',
     'ENR_004': 'Không tìm thấy học sinh cho lượt ghi danh này.',
     'ENR_005': 'Không tìm thấy khoá học cho lượt ghi danh này.',
     'ENR_006': 'Khóa học này đã được hoàn thành.',
     'ENR_007': 'Bạn không có quyền thực hiện thao tác này.',
-    'ENR_008':
-        'Bạn chưa có robot đã kích hoạt phù hợp với khóa học này. Vui lòng kích hoạt robot trước.',
+    'ENR_008': 'Tiến độ khóa học của bạn phải đạt ít nhất 50% để có thể đánh giá.',
 
     'SUB_001':
         'Không tìm thấy bài nộp hoặc bạn không có quyền xem bài nộp này.',
@@ -200,6 +199,9 @@ class ApiErrorMapper {
     'GEN_003':
         'Dữ liệu bị trùng lặp (ví dụ: bạn đã đánh giá phiếu hỗ trợ này trước đó).',
     'GEN_004': 'Bạn không có quyền thực hiện thao tác này.',
+    
+    // ================= RATING errors =================
+    'PERMISSION_DENIED': 'Tiến độ khóa học của bạn phải đạt ít nhất 50% để có thể đánh giá.',
 
     'BGJ_001': 'Lỗi khi xử lý hết hạn đơn hàng trong nền.',
 
@@ -259,7 +261,7 @@ class ApiErrorMapper {
           : 'An error occurred. Please try again.';
     }
 
-    // For Vietnamese: Use mapped messages first, then rawMessage
+    // For Vietnamese: Use mapped messages first, then translate rawMessage if available
     final code = error.errorCode?.trim();
     if (code != null && code.isNotEmpty) {
       final mapped = _codeToMessage[code];
@@ -268,9 +270,15 @@ class ApiErrorMapper {
       }
     }
 
-    // Fallback to rawMessage if no mapped message
+    // If no mapped message but have rawMessage, try to translate it
     final serverMsg = error.rawMessage?.trim();
-    if (serverMsg != null && serverMsg.isNotEmpty) return serverMsg;
+    if (serverMsg != null && serverMsg.isNotEmpty) {
+      // Try to find translation for common messages
+      final translated = _translateCommonMessage(serverMsg);
+      if (translated != null) return translated;
+      // If no translation found, return rawMessage (will be in English)
+      return serverMsg;
+    }
 
     // Try status code message
     final status = error.statusCode;
@@ -442,6 +450,25 @@ class ApiErrorMapper {
   static void registerStatusMessage(int statusCode, String message) {
     if (message.trim().isEmpty) return;
     _statusToMessage[statusCode] = message.trim();
+  }
+
+  /// Translate common English error messages to Vietnamese
+  static String? _translateCommonMessage(String englishMessage) {
+    final lowerMsg = englishMessage.toLowerCase();
+    
+    // Common enrollment/rating error messages
+    if (lowerMsg.contains('student is not enrolled') || 
+        lowerMsg.contains('not enrolled in this course')) {
+      return 'Học sinh chưa đăng ký khóa học này.';
+    }
+    
+    if (lowerMsg.contains('course progress must be at least 50%') ||
+        lowerMsg.contains('progress must be at least 50% to rate')) {
+      return 'Tiến độ khóa học của bạn phải đạt ít nhất 50% để có thể đánh giá.';
+    }
+    
+    // Add more common translations as needed
+    return null;
   }
 }
 

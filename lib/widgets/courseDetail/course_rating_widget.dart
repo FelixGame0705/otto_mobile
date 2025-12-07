@@ -81,7 +81,7 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         final isEnglish = context.locale.languageCode == 'en';
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -132,7 +132,7 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         final isEnglish = context.locale.languageCode == 'en';
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -184,7 +184,7 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         final isEnglish = context.locale.languageCode == 'en';
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -510,7 +510,7 @@ class _RatingCard extends StatelessWidget {
       final isEnglish = context.locale.languageCode == 'en';
       final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
+        SnackBar(content: Text(errorMsg)),
       );
     }
   }
@@ -595,7 +595,7 @@ class _RatingDialogState extends State<_RatingDialog> {
       final isEnglish = context.locale.languageCode == 'en';
       final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('course.ratingError'.tr(args: [errorMsg]))),
+        SnackBar(content: Text(errorMsg)),
       );
     } finally {
       if (mounted) {

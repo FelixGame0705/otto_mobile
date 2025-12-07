@@ -9,13 +9,20 @@ void showErrorToast(BuildContext context, String message) {
   // Detect current locale
   final isEnglish = context.locale.languageCode == 'en';
   
-  // Luôn xử lý qua fromException để loại bỏ "Exception:" và đảm bảo không duplicate
-  // fromException sẽ tự động phát hiện JSON và xử lý phù hợp
-  final friendly = ApiErrorMapper.fromException(
-    raw,
-    isEnglish: isEnglish,
-    fallback: raw,
-  );
+  // Kiểm tra xem message đã được xử lý chưa (không phải Exception object)
+  // Nếu message không chứa "Exception:" và không phải JSON, thì đã được xử lý rồi
+  String friendly;
+  if (!raw.contains('Exception:') && !raw.startsWith('{')) {
+    // Message đã được xử lý, chỉ cần loại bỏ duplicate nếu có
+    friendly = raw;
+  } else {
+    // Message chưa được xử lý, xử lý qua fromException
+    friendly = ApiErrorMapper.fromException(
+      raw,
+      isEnglish: isEnglish,
+      fallback: raw,
+    );
+  }
   
   // Loại bỏ duplicate messages nếu có (tiếng Việt và tiếng Anh cùng lúc)
   final cleaned = _removeDuplicateMessages(friendly, isEnglish);

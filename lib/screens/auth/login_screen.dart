@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/widgets/common/language_dropdown.dart';
 import 'package:ottobit/routes/app_routes.dart';
@@ -38,41 +39,143 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Xử lý lỗi PlatformException từ Google Sign-In
+  String _handleGoogleSignInError(dynamic error) {
+    if (error is PlatformException) {
+      final code = error.code;
+      final message = error.message ?? '';
+      
+      switch (code) {
+        case 'sign_in_canceled':
+        case 'SIGN_IN_CANCELLED':
+          return 'auth.googleLoginCanceled'.tr();
+        case 'sign_in_failed':
+        case 'SIGN_IN_FAILED':
+          return 'auth.googleSignInFailed'.tr();
+        case 'network_error':
+        case 'SIGN_IN_NETWORK_ERROR':
+          return 'auth.googleNetworkError'.tr();
+        case 'sign_in_required':
+        case 'SIGN_IN_REQUIRED':
+          return 'auth.googleSignInRequired'.tr();
+        case 'internal_error':
+          return 'auth.googleInternalError'.tr();
+        case 'invalid_account':
+        case 'INVALID_ACCOUNT':
+          return 'auth.googleInvalidAccount'.tr();
+        case 'account_disabled':
+          return 'auth.googleAccountDisabled'.tr();
+        case 'DEVELOPER_ERROR':
+          return 'auth.googleDeveloperError'.tr();
+        default:
+          // Nếu có message từ PlatformException, sử dụng nó
+          if (message.isNotEmpty) {
+            return message;
+          }
+          return 'auth.googleSignInFailed'.tr();
+      }
+    }
+    
+    // Xử lý các loại lỗi khác
+    final errorStr = error.toString().toLowerCase();
+    if (errorStr.contains('canceled') || errorStr.contains('cancelled')) {
+      return 'auth.googleLoginCanceled'.tr();
+    }
+    if (errorStr.contains('network') || errorStr.contains('connection')) {
+      return 'auth.googleNetworkError'.tr();
+    }
+    if (errorStr.contains('sign_in_failed') || errorStr.contains('sign_in_error')) {
+      return 'auth.googleSignInFailed'.tr();
+    }
+    
+    return 'auth.googleSignInFailed'.tr();
+  }
+
   Future<void> _handleGoogleLogin() async {
+    if (!mounted) return;
+    
     try {
       setState(() => _isLoading = true);
       
       // Sign out trước để luôn hiển thị dialog chọn tài khoản
       try {
         await _googleSignIn.signOut();
-      } catch (_) {
-        // Ignore errors khi sign out
+      } catch (e) {
+        // Log nhưng không báo lỗi khi sign out
+        debugPrint('Google Sign-Out error (ignored): $e');
       }
       
       // Sign in - sẽ luôn hiển thị dialog chọn tài khoản
-      final account = await _googleSignIn.signIn();
-      if (account == null) {
+      GoogleSignInAccount? account;
+      try {
+        account = await _googleSignIn.signIn();
+      } on PlatformException catch (e) {
         setState(() => _isLoading = false);
-        showErrorToast(context, 'Đăng nhập Google bị hủy.');
+        if (mounted) {
+          final errorMsg = _handleGoogleSignInError(e);
+          showErrorToast(context, errorMsg);
+        }
+        return;
+      } catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          final errorMsg = _handleGoogleSignInError(e);
+          showErrorToast(context, errorMsg);
+        }
         return;
       }
-      final auth = await account.authentication;
+      
+      if (account == null) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          showErrorToast(context, 'auth.googleLoginCanceled'.tr());
+        }
+        return;
+      }
+      
+      // Lấy authentication
+      GoogleSignInAuthentication? auth;
+      try {
+        auth = await account.authentication;
+      } on PlatformException catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          final errorMsg = _handleGoogleSignInError(e);
+          showErrorToast(context, errorMsg);
+        }
+        return;
+      } catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          showErrorToast(context, 'Lỗi khi lấy thông tin xác thực Google: ${_handleGoogleSignInError(e)}');
+        }
+        return;
+      }
+      
       final idtoken = auth.idToken;
       if (idtoken == null || idtoken.isEmpty) {
         setState(() => _isLoading = false);
-        showErrorToast(context, 'Không lấy được Google ID token. $auth');
+        if (mounted) {
+          showErrorToast(context, 'auth.googleIdTokenError'.tr());
+        }
         return;
       }
 
+      // Gọi API đăng nhập với backend
       final response = await AuthService.loginWithGoogle(idtoken);
 
-      // Handle like _handleLogin: persist tokens, user, then navigate
+      // Handle response: persist tokens, user, then navigate
       try {
         final message = (response['message'] ?? '').toString();
         final data = response['data'] as Map<String, dynamic>?;
         if (data == null) {
           setState(() => _isLoading = false);
-          showErrorToast(context, message.isNotEmpty ? message : 'Đăng nhập Google thất bại');
+        if (mounted) {
+          showErrorToast(
+            context,
+            message.isNotEmpty ? message : 'auth.googleLoginFailed'.tr(),
+          );
+        }
           return;
         }
 
@@ -84,7 +187,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (accessToken.isEmpty) {
           setState(() => _isLoading = false);
-          showErrorToast(context, 'Đăng nhập Google thất bại: thiếu accessToken');
+          if (mounted) {
+            showErrorToast(context, 'auth.googleLoginFailed'.tr());
+          }
           return;
         }
 
@@ -126,11 +231,25 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } catch (e) {
         setState(() => _isLoading = false);
-        showErrorToast(context, 'Lỗi xử lý đăng nhập Google: $e');
+        if (mounted) {
+          final errorMsg = e is PlatformException 
+              ? _handleGoogleSignInError(e)
+              : 'auth.googleAuthError'.tr();
+          showErrorToast(context, errorMsg);
+        }
+      }
+    } on PlatformException catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        final errorMsg = _handleGoogleSignInError(e);
+        showErrorToast(context, errorMsg);
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      showErrorToast(context, 'Google Sign-In lỗi: $e');
+      if (mounted) {
+        final errorMsg = _handleGoogleSignInError(e);
+        showErrorToast(context, errorMsg);
+      }
     }
   }
 
