@@ -63,7 +63,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               AppTextField(
                 controller: _currentPassController,
-                label: 'auth.changePassword.current'.tr(),
+                label: 'auth.changePassword.current',
                 prefixIcon: Icons.lock_outline,
                 isPassword: true,
                 validator: (v) => (v == null || v.isEmpty) ? 'auth.changePassword.currentRequired'.tr() : null,
@@ -71,7 +71,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 12),
               AppTextField(
                 controller: _newPassController,
-                label: 'auth.changePassword.new'.tr(),
+                label: 'auth.changePassword.new',
                 prefixIcon: Icons.lock,
                 isPassword: true,
                 validator: (v) {
@@ -83,7 +83,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               const SizedBox(height: 12),
               AppTextField(
                 controller: _confirmNewPassController,
-                label: 'auth.changePassword.confirm'.tr(),
+                label: 'auth.changePassword.confirm',
                 prefixIcon: Icons.lock,
                 isPassword: true,
                 validator: (v) => v != _newPassController.text ? 'auth.changePassword.notMatch'.tr() : null,

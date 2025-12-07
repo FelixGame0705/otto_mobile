@@ -41,6 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleGoogleLogin() async {
     try {
       setState(() => _isLoading = true);
+      
+      // Sign out trước để luôn hiển thị dialog chọn tài khoản
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {
+        // Ignore errors khi sign out
+      }
+      
+      // Sign in - sẽ luôn hiển thị dialog chọn tài khoản
       final account = await _googleSignIn.signIn();
       if (account == null) {
         setState(() => _isLoading = false);
@@ -233,13 +242,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
               AppTextField(
                 controller: _emailController,
-                label: 'auth.email'.tr(),
-                hint: 'auth.enterEmail'.tr(),
+                label: 'auth.email',
+                hint: 'auth.enterEmail',
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'auth.enterEmail'.tr();
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Email không hợp lệ';
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'auth.emailInvalid'.tr();
                   return null;
                 },
               ),
@@ -251,13 +260,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
               AppTextField(
                 controller: _passwordController,
-                label: 'auth.password'.tr(),
-                hint: 'auth.enterPassword'.tr(),
+                label: 'auth.password',
+                hint: 'auth.enterPassword',
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) return 'auth.enterPassword'.tr();
-                  if (value.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  if (value.length < 6) return 'auth.min6'.tr();
                   return null;
                 },
               ),

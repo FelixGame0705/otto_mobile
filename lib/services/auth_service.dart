@@ -236,13 +236,17 @@ class AuthService {
         return AuthResult.failure(message: 'Không có refresh token');
       }
 
+      // Xóa accessToken cũ trước khi gọi refresh token endpoint
+      // để đảm bảo không gửi accessToken cũ trong header
+      await StorageService.clearToken();
+
       final response = await HttpService().post(
         _refreshTokenEndpoint,
         body: {
           'userId': currentUser?.id ?? '',
           'refreshToken': storedRefreshToken,
         },
-        includeAuth: false,
+        includeAuth: false, // Quan trọng: không gửi accessToken trong header
       );
 
       final data = jsonDecode(response.body);

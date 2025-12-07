@@ -108,8 +108,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               if (!_isEmailSent) ...[
                 AppTextField(
                   controller: _emailController,
-                  label: 'auth.email'.tr(),
-                  hint: 'auth.enterEmail'.tr(),
+                  label: 'auth.email',
+                  hint: 'auth.enterEmail',
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {

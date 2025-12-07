@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/http_service.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/services/navigation_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 
 void main() async {
@@ -30,8 +31,14 @@ class MyApp extends StatelessWidget {
     // Initialize locale in ApiErrorMapper
     ApiErrorMapper.updateLocale(context.locale);
     
+    // Tạo navigator key và set vào NavigationService và ApiErrorMapper
+    final navigatorKey = GlobalKey<NavigatorState>();
+    NavigationService().setNavigatorKey(navigatorKey);
+    ApiErrorMapper.setNavigatorKey(navigatorKey);
+    
     return MaterialApp(
       title: 'OttoBit MB',
+      navigatorKey: navigatorKey,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,

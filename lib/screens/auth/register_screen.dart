@@ -108,8 +108,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               AppTextField(
                 controller: _emailController,
-                label: 'auth.email'.tr(),
-                hint: 'auth.enterEmail'.tr(),
+                label: 'auth.email',
+                hint: 'auth.enterEmail',
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
@@ -122,8 +122,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               AppTextField(
                 controller: _passwordController,
-                label: 'auth.password'.tr(),
-                hint: 'auth.enterPassword'.tr(),
+                label: 'auth.password',
+                hint: 'auth.enterPassword',
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {
@@ -136,8 +136,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               AppTextField(
                 controller: _confirmPasswordController,
-                label: 'auth.confirmPassword'.tr(),
-                hint: 'auth.confirmPassword.hint'.tr(),
+                label: 'auth.confirmPassword',
+                hint: 'auth.confirmPassword.hint',
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {

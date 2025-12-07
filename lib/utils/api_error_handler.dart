@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:ottobit/services/navigation_service.dart';
 
 /// Represents a standardized error parsed from backend responses.
 class ApiError {
@@ -299,7 +300,8 @@ class ApiErrorMapper {
       }
 
       // Method 2: Try to get locale from navigator context
-      final context = _navigatorKey?.currentContext;
+      final navKey = navigatorKey;
+      final context = navKey?.currentContext;
       if (context != null) {
         final locale = context.locale;
         _currentLocale = locale; // Cache it
@@ -317,6 +319,20 @@ class ApiErrorMapper {
   /// Set the navigator key to enable automatic locale detection
   static void setNavigatorKey(GlobalKey<NavigatorState> key) {
     _navigatorKey = key;
+  }
+
+  /// Get navigator key from NavigationService if available
+  static GlobalKey<NavigatorState>? get navigatorKey {
+    try {
+      // Try to get from NavigationService first
+      final navService = NavigationService();
+      if (navService.navigatorKey != null) {
+        return navService.navigatorKey;
+      }
+    } catch (_) {
+      // Fallback to local key
+    }
+    return _navigatorKey;
   }
 
   /// Update current locale (should be called when locale changes)
