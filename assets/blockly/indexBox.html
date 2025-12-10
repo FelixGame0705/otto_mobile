@@ -156,11 +156,13 @@
         <block type="forward"></block>
         <block type="turn"></block>
       </category>
-        <category name="🎮" colour="#4ecdc4">
+      <category name="🔄" colour="#4ecdc4">
         <block type="repeat_simple"></block>
         <block type="repeat_range"></block>
+      </category>
+      <category name="🎮" colour="#4ecdc4">
         <block type="if_color"></block>
-          <block type="if_else_if"></block>
+        <block type="if_else_if"></block>
         <block type="while_color"></block>
       </category>
       <category name="📦" colour="#4ecdc4">
@@ -319,7 +321,7 @@
             this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-            this.setColour("#ff6b36"); // teal sáng
+            this.setColour("#ffbe3b"); // teal sáng
             const shadow = Blockly.utils.xml.createElement("shadow");
             shadow.setAttribute("type", "math_number");
 
@@ -361,7 +363,7 @@
             this.setInputsInline(true);
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-            this.setColour("#ff6b36"); // teal sáng
+            this.setColour("#ffbe3b"); // teal sáng
             this.setTooltip("for VAR in range(FROM, TO, STEP)");
 
             // ---- Gắn shadow mặc định cho FROM / TO / STEP ----
@@ -648,7 +650,7 @@
               );
             this.setOutput(true, "Number");
             this.setInputsInline(true);
-            this.setColour("#45b7d1"); // blue sáng
+            this.setColour("#48a84c"); // blue sáng
             this.setTooltip("Perform arithmetic operations on two numbers");
             this.setHelpUrl("");
           },
@@ -666,7 +668,7 @@
               "VALUE"
             );
             this.setOutput(true, "Boolean");
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#8e44ad"); // mint sáng
             this.setTooltip("Boolean true/false value");
           },
         };
@@ -685,7 +687,7 @@
                 "COLOR"
               );
             this.setOutput(true, "Boolean");
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#8e44ad"); // mint sáng
             this.setTooltip("Check if pin is a specific color");
             this.setHelpUrl("");
           },
@@ -750,7 +752,7 @@
               "VAR"
             );
             this.setOutput(true, "Number");
-            this.setColour("#9b27b0"); // blue sáng
+            this.setColour("#ff8c19"); // blue sáng
             this.setTooltip("Reference to loop variable");
             this.setHelpUrl("");
           },
@@ -805,7 +807,7 @@
               );
             this.setOutput(true, "Boolean");
             this.setInputsInline(true);
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#ffbe3b"); // mint sáng
             this.setTooltip("Compare two values (numbers or strings)");
           },
         };
@@ -820,7 +822,7 @@
             this.appendStatementInput("BODY").appendField("do");
             this.setPreviousStatement(false); // Functions are top-level
             this.setNextStatement(false);
-            this.setColour("#ff9f43"); // orange sáng
+            this.setColour("#40e0d0"); // orange sáng
             this.setTooltip("Define a custom function");
             this.setHelpUrl("");
           },
@@ -845,7 +847,7 @@
               .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
             this.setPreviousStatement(true, null);
             this.setNextStatement(true, null);
-            this.setColour("#ff9f43"); // orange sáng
+            this.setColour("#40e0d0"); // orange sáng
             this.setTooltip("Call a custom function");
             this.setHelpUrl("");
           },
@@ -865,7 +867,26 @@
             return Number(target.getFieldValue("NUM"));
           if (target.type === "batteryCount") return "batteryCount";
           if (target.type === "getNumberBox") return "getNumberBox";
+          // warehouseCount: return string for actions, function object will be handled in comparison
           if (target.type === "warehouseCount") return "warehouseCount";
+          if (target.type === "var_ref") {
+            const v = target.getFieldValue("VAR");
+            // Serialize loop variable references as template tokens for Phaser
+            return `{{${v}}}`;
+          }
+      return 0;
+    }
+        
+        // Helper function to get value for comparison (returns function object for warehouseCount)
+        function numFromForComparison(block, name) {
+      const target = block.getInputTargetBlock(name);
+      if (!target) return 0;
+          if (target.type === "math_number")
+            return Number(target.getFieldValue("NUM"));
+          if (target.type === "batteryCount") return "batteryCount";
+          if (target.type === "getNumberBox") return "getNumberBox";
+          // When warehouseCount is used in comparison, return function object for Phaser
+          if (target.type === "warehouseCount") return { type: "function", name: "warehouseCount" };
           if (target.type === "var_ref") {
             const v = target.getFieldValue("VAR");
             // Serialize loop variable references as template tokens for Phaser
@@ -1111,12 +1132,74 @@
               };
             case "var_ref":
               return { type: "variable", name: block.getFieldValue("VAR") };
+            case "warehouseCount":
+              // When warehouseCount is used directly as condition
+              // Note: warehouseCount is a Number block, so it should be used in comparison
+              // But if used directly, treat it as checking if warehouseCount > 0
+              return {
+                type: "condition",
+                function: "warehouseCount",  // For compatibility with Phaser
+                functionName: "warehouseCount",  // New format
+                operator: ">",
+                value: 0,
+                check: true
+              };
             case "compare":
-              const leftComp = numFrom(block, "A");
-              const rightComp = numFrom(block, "B");
+              // Use numFromForComparison to get function objects for warehouseCount
+              const leftComp = numFromForComparison(block, "A");
+              const rightComp = numFromForComparison(block, "B");
               const operator = block.getFieldValue("OP");
               
-              // Check if comparing with battery count
+              // Map operator to Phaser format
+              const operatorMap = {
+                "EQ": "==",
+                "NEQ": "!=",
+                "LT": "<",
+                "GT": ">",
+                "LTE": "<=",
+                "GTE": ">="
+              };
+              
+              // Check if left value is a function call (like warehouseCount)
+              if (typeof leftComp === "object" && leftComp && leftComp.type === "function") {
+                const rightValue = typeof rightComp === "number" ? rightComp : (typeof rightComp === "string" ? parseInt(rightComp) || 0 : 0);
+                // Use variableComparison format with nested function object for Phaser
+                return {
+                  type: "variableComparison",
+                  variable: {
+                    type: "function",
+                    name: leftComp.name
+                  },
+                  operator: operatorMap[operator] || "==",
+                  value: rightValue
+                };
+              }
+              
+              // Check if right value is a function call (like warehouseCount)
+              if (typeof rightComp === "object" && rightComp && rightComp.type === "function") {
+                const leftValue = typeof leftComp === "number" ? leftComp : (typeof leftComp === "string" ? parseInt(leftComp) || 0 : 0);
+                // Reverse operator for right-side function
+                const reverseOpMap = {
+                  "EQ": "==",
+                  "NEQ": "!=",
+                  "LT": ">",
+                  "GT": "<",
+                  "LTE": ">=",
+                  "GTE": "<="
+                };
+                // Use variableComparison format with nested function object for Phaser
+                return {
+                  type: "variableComparison",
+                  variable: {
+                    type: "function",
+                    name: rightComp.name
+                  },
+                  operator: reverseOpMap[operator] || "==",
+                  value: leftValue
+                };
+              }
+              
+              // Check if comparing with battery count (legacy string format)
               if (leftComp === "batteryCount" || rightComp === "batteryCount") {
                 return {
                   type: "variableComparison",
@@ -1126,17 +1209,7 @@
                 };
               }
               
-              // Check if comparing with warehouse count
-              if (leftComp === "warehouseCount" || rightComp === "warehouseCount") {
-                return {
-                  type: "variableComparison",
-                  variable: "warehouseCount",
-                  operator: operator,
-                  value: leftComp === "warehouseCount" ? rightComp : leftComp
-                };
-              }
-              
-              // Check if comparing with number box
+              // Check if comparing with number box (legacy string format)
               if (leftComp === "getNumberBox" || rightComp === "getNumberBox") {
                 return {
                   type: "variableComparison",
@@ -1384,7 +1457,21 @@
           }
         }
       }
-      emit(program.actions, 0);
+      // Emit functions first if present
+      if (program.functions && Array.isArray(program.functions) && program.functions.length > 0) {
+        program.functions.forEach(function (fn) {
+          const name = fn.name || "myFunction1";
+          lines.push("def " + name + "():");
+          if (!fn.body || fn.body.length === 0) {
+            lines.push("    pass");
+          } else {
+            emit(fn.body || [], 1);
+          }
+          lines.push("");
+        });
+      }
+      // Emit main actions
+      emit(program.actions || [], 0);
           return lines.join("\n");
     };
 

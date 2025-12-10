@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Blockly Editor</title>
-  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-  <style>
+    <title>Blockly Editor</title>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <style>
       html,
       body,
       #root {
         height: 100%;
         margin: 0;
       }
-    body {
+      body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
           "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
           "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-      background: #f7f9fc;
-      color: #111827;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+        background: #f7f9fc;
+        color: #111827;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
       #root {
         display: flex;
       }
@@ -29,18 +29,18 @@
         flex: 1;
       }
 
-    /* Toolbox panel */
-    .blocklyToolboxDiv {
-      background: #ffffff !important;
-      border-right: 1px solid #e5e7eb;
+      /* Toolbox panel */
+      .blocklyToolboxDiv {
+        background: #ffffff !important;
+        border-right: 1px solid #e5e7eb;
         box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.06);
-    }
-    .blocklyTreeRow {
-      height: 32px;
-      border-radius: 6px;
-      margin: 2px 6px;
-      padding: 4px 8px;
-    }
+      }
+      .blocklyTreeRow {
+        height: 32px;
+        border-radius: 6px;
+        margin: 2px 6px;
+        padding: 4px 8px;
+      }
       .blocklyTreeLabel {
         color: #111827;
         font-size: 13px;
@@ -52,7 +52,7 @@
         background: #e5f3ff !important;
       }
 
-    /* Flyout (category contents) */
+      /* Flyout (category contents) */
       .blocklyFlyoutBackground {
         fill: #ffffff !important;
         fill-opacity: 1 !important;
@@ -62,13 +62,13 @@
         font-size: 12px;
       }
 
-    /* Workspace grid/background */
+      /* Workspace grid/background */
       .blocklyMainBackground {
         stroke: #e5e7eb;
         stroke-width: 1;
       }
 
-    /* Scrollbars */
+      /* Scrollbars */
       ::-webkit-scrollbar {
         width: 10px;
         height: 10px;
@@ -145,34 +145,36 @@
         padding: 4px 8px;
         margin: 6px 0;
       }
-  </style>
-</head>
-<body>
-  <div id="root">
-    <div id="blocklyDiv"></div>
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="blocklyDiv"></div>
       <xml id="toolbox" style="display: none">
         <category name="🤖" colour="#ff6b6b">
-        <block type="start"></block>
-        <block type="forward"></block>
-        <block type="turn"></block>
-      </category>
+          <block type="start"></block>
+          <block type="forward"></block>
+          <block type="turn"></block>
+        </category>
+        <category name="🔄" colour="#4ecdc4">
+          <block type="repeat_simple"></block>
+          <block type="repeat_range"></block>
+        </category>
         <category name="🎮" colour="#4ecdc4">
-        <block type="repeat_simple"></block>
-        <block type="repeat_range"></block>
-        <block type="if_color"></block>
+          <block type="if_color"></block>
           <block type="if_else_if"></block>
-        <block type="while_color"></block>
-      </category>
-      <category name="🔋" colour="#4ecdc4">
-        <block type="batteryCount"></block>
-        <block type="collect"></block>
-        <block type="check_pin_boolean"></block>
-        <block type="pin_color_compare"></block>
-      </category>
+          <block type="while_color"></block>
+        </category>
+        <category name="🔋" colour="#4ecdc4">
+          <block type="batteryCount"></block>
+          <block type="collect"></block>
+          <block type="check_pin_boolean"></block>
+          <block type="pin_color_compare"></block>
+        </category>
         <category name="📊" colour="#45b7d1">
-        <block type="math_number"></block>
-        <block type="math_arithmetic"></block>
-        <block type="var_ref"></block>
+          <block type="math_number"></block>
+          <block type="math_arithmetic"></block>
+          <block type="var_ref"></block>
         </category>
         <category name="🧠" colour="#a8e6cf">
           <block type="boolean_value"></block>
@@ -182,16 +184,16 @@
         <category name="⚡" colour="#ff9f43">
           <block type="function_define"></block>
           <block type="function_call"></block>
-      </category>
-    </xml>
-  </div>
-  <script>
-  // BEGIN inlined custom_blocks.js
+        </category>
+      </xml>
+    </div>
+    <script>
+      // BEGIN inlined custom_blocks.js
       (function () {
-    const C = Blockly;
-    // Khai báo block "start" (màu vàng, gọn gàng, có tooltip, top-level only, single instance)
+        const C = Blockly;
+        // Khai báo block "start" (màu vàng, gọn gàng, có tooltip, top-level only, single instance)
         C.Blocks["start"] = {
-  init: function () {
+          init: function () {
             this.appendDummyInput().appendField("▶︎ Start"); // nhấn mạnh bắt đầu
             this.setPreviousStatement(false); // không cho nối phía trên
             this.setNextStatement(true, null); // cho phép nối phía dưới
@@ -201,44 +203,44 @@
               "Điểm bắt đầu của chương trình. Kết nối các khối ở phía dưới để chạy."
             );
             this.setHelpUrl("https://developers.google.com/blockly"); // có thể thay link docs riêng của bạn
-  },
+          },
 
-  onchange: function (e) {
-    if (!this.workspace || this.isInFlyout) return;
+          onchange: function (e) {
+            if (!this.workspace || this.isInFlyout) return;
 
-    // 1) Đảm bảo luôn là top-level (không được gắn dưới block khác)
-    if (this.getParent()) {
+            // 1) Đảm bảo luôn là top-level (không được gắn dưới block khác)
+            if (this.getParent()) {
               this.unplug(false); // tự tách khỏi parent nếu lỡ gắn vào
               this.bumpNeighbours(); // đẩy ra nhẹ để tránh chồng lấn
-    }
+            }
 
-    // 2) Đảm bảo chỉ có 1 block "start" trong workspace
+            // 2) Đảm bảo chỉ có 1 block "start" trong workspace
             const allStarts = this.workspace
               .getAllBlocks(false)
               .filter((b) => b.type === "start");
-    if (allStarts.length > 1) {
-      // Giữ lại block được tạo trước; xóa block mới hơn
-      const oldest = allStarts.reduce((a, b) => (a.id < b.id ? a : b));
-      if (this !== oldest) this.dispose(false);
-    }
+            if (allStarts.length > 1) {
+              // Giữ lại block được tạo trước; xóa block mới hơn
+              const oldest = allStarts.reduce((a, b) => (a.id < b.id ? a : b));
+              if (this !== oldest) this.dispose(false);
+            }
           },
-};
+        };
 
         C.Blocks["forward"] = {
-  init: function () {
+          init: function () {
             this.appendDummyInput().appendField("move forward");
 
-    // Ô nhận số (ValueInput), cho phép Number
+            // Ô nhận số (ValueInput), cho phép Number
             this.appendValueInput("COUNT").setCheck("Number");
 
-    this.setInputsInline(true);
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#4b92e3"); // coral sáng
             this.setTooltip("Di chuyển tiến N bước");
             this.setHelpUrl("");
 
-    // ---- Gắn shadow math_number mặc định = 10 ----
+            // ---- Gắn shadow math_number mặc định = 10 ----
             const shadow = Blockly.utils.xml.createElement("shadow");
             shadow.setAttribute("type", "math_number");
 
@@ -246,12 +248,12 @@
             field.setAttribute("name", "NUM");
             field.textContent = "1"; // giá trị mặc định
 
-    shadow.appendChild(field);
+            shadow.appendChild(field);
 
             const input = this.getInput("COUNT");
-    input.connection.setShadowDom(shadow);
-    // Tạo lại shadow ngay khi block được khởi tạo
-    input.connection.respawnShadow_();
+            input.connection.setShadowDom(shadow);
+            // Tạo lại shadow ngay khi block được khởi tạo
+            input.connection.respawnShadow_();
           },
         };
 
@@ -267,8 +269,8 @@
                 ]),
                 "DIR"
               );
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#4b92e3"); // coral sáng
           },
         };
@@ -285,8 +287,8 @@
               ]),
               "COLOR"
             );
-        
-        // Gắn shadow math_number mặc định = 1
+
+            // Gắn shadow math_number mặc định = 1
             const shadow = Blockly.utils.xml.createElement("shadow");
             shadow.setAttribute("type", "math_number");
 
@@ -294,16 +296,16 @@
             field.setAttribute("name", "NUM");
             field.textContent = "1"; // giá trị mặc định
 
-        shadow.appendChild(field);
+            shadow.appendChild(field);
 
             const input = this.getInput("COUNT");
-        input.connection.setShadowDom(shadow);
-        // Tạo lại shadow ngay khi block được khởi tạo
-        input.connection.respawnShadow_();
-        
-        this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
+            input.connection.setShadowDom(shadow);
+            // Tạo lại shadow ngay khi block được khởi tạo
+            input.connection.respawnShadow_();
+
+            this.setInputsInline(true);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#4b92e3"); // coral sáng
             this.setTooltip("Collect N items of a chosen color");
             this.setHelpUrl("");
@@ -317,9 +319,9 @@
               .appendField("repeat");
             this.appendStatementInput("DO").appendField("do");
             this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-            this.setColour("#ff6b36"); // teal sáng
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour("#ffbe3b"); // teal sáng
             const shadow = Blockly.utils.xml.createElement("shadow");
             shadow.setAttribute("type", "math_number");
 
@@ -337,7 +339,7 @@
 
         C.Blocks["repeat_range"] = {
           init: function () {
-        this.appendDummyInput()
+            this.appendDummyInput()
               .appendField("repeat")
               .appendField(
                 new C.FieldDropdown([
@@ -359,9 +361,9 @@
             this.appendStatementInput("DO").appendField("do");
 
             this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
-            this.setColour("#ff6b36"); // teal sáng
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour("#ffbe3b"); // teal sáng
             this.setTooltip("for VAR in range(FROM, TO, STEP)");
 
             // ---- Gắn shadow mặc định cho FROM / TO / STEP ----
@@ -395,8 +397,8 @@
               .setCheck("Boolean")
               .appendField("if");
             this.appendStatementInput("THEN");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#8e44ad"); // teal sáng
           },
         };
@@ -407,8 +409,8 @@
               .setCheck("Boolean")
               .appendField("while");
             this.appendStatementInput("DO").appendField("do");
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#4ecdc4"); // teal sáng
           },
         };
@@ -447,8 +449,7 @@
               .setCheck("Boolean")
               .appendField("if");
 
-            const ctrl =
-              this.appendDummyInput("BRANCH_CONTROL");
+            const ctrl = this.appendDummyInput("BRANCH_CONTROL");
             if (!this.isInFlyout) {
               const dd = new C.FieldDropdown(this.branchOptions_.bind(this));
               dd.setValue(String(this.elseIfCount_));
@@ -564,8 +565,8 @@
             this.appendValueInput("COUNT").setCheck("Number");
 
             this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#ff6b6b"); // coral sáng
             this.setTooltip("Đặt N hộp");
 
@@ -590,8 +591,8 @@
             this.appendValueInput("COUNT").setCheck("Number");
 
             this.setInputsInline(true);
-        this.setPreviousStatement(true, null);
-        this.setNextStatement(true, null);
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
             this.setColour("#ff6b6b"); // coral sáng
             this.setTooltip("Lấy N hộp");
 
@@ -613,7 +614,7 @@
           init: function () {
             this.appendDummyInput().appendField("🔋 Number");
             this.setOutput(true, "Number");
-            this.setColour("#45b7d1"); // blue sáng
+            this.setColour("#8e44ad"); // blue sáng
           },
         };
         C.Blocks["getNumberBox"] = {
@@ -648,12 +649,11 @@
               );
             this.setOutput(true, "Number");
             this.setInputsInline(true);
-            this.setColour("#45b7d1"); // blue sáng
+            this.setColour("#48a84c"); // blue sáng
             this.setTooltip("Perform arithmetic operations on two numbers");
             this.setHelpUrl("");
           },
         };
-
 
         // Boolean literal block (true/false in one block)
         C.Blocks["boolean_value"] = {
@@ -666,7 +666,7 @@
               "VALUE"
             );
             this.setOutput(true, "Boolean");
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#8e44ad"); // mint sáng
             this.setTooltip("Boolean true/false value");
           },
         };
@@ -685,7 +685,7 @@
                 "COLOR"
               );
             this.setOutput(true, "Boolean");
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#8e44ad"); // mint sáng
             this.setTooltip("Check if pin is a specific color");
             this.setHelpUrl("");
           },
@@ -712,7 +712,7 @@
                 "COLOR"
               );
             this.setOutput(true, "Boolean");
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#8e44ad"); // mint sáng
             this.setTooltip("Compare pin color with a specific color");
             this.setHelpUrl("");
           },
@@ -733,7 +733,7 @@
               );
             this.setOutput(true, "Boolean");
             this.setInputsInline(true);
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#8e44ad"); // mint sáng
             this.setTooltip("Logical AND/OR operation");
           },
         };
@@ -750,7 +750,7 @@
               "VAR"
             );
             this.setOutput(true, "Number");
-            this.setColour("#9b27b0"); // blue sáng
+            this.setColour("#ff8c19"); // blue sáng
             this.setTooltip("Reference to loop variable");
             this.setHelpUrl("");
           },
@@ -758,24 +758,30 @@
           // Update variable options when repeat_range blocks change
           onchange: function (e) {
             if (!this.workspace || this.isInFlyout) return;
-            
+
             // Find all repeat_range blocks in the workspace
-            const repeatBlocks = this.workspace.getAllBlocks(false)
-              .filter(block => block.type === "repeat_range");
-            
+            const repeatBlocks = this.workspace
+              .getAllBlocks(false)
+              .filter((block) => block.type === "repeat_range");
+
             // Collect all variable names from repeat_range blocks
             const variableNames = new Set();
-            repeatBlocks.forEach(block => {
+            repeatBlocks.forEach((block) => {
               const varName = block.getFieldValue("VAR");
               if (varName) variableNames.add(varName);
             });
-            
+
             // If we found variables, update the dropdown
             if (variableNames.size > 0) {
-              const options = Array.from(variableNames).map(name => [name, name]);
+              const options = Array.from(variableNames).map((name) => [
+                name,
+                name,
+              ]);
               const field = this.getField("VAR");
               if (field) {
-                field.menuGenerator_ = function() { return options; };
+                field.menuGenerator_ = function () {
+                  return options;
+                };
                 // Update the field if current value is not in new options
                 const currentValue = field.getValue();
                 if (!variableNames.has(currentValue)) {
@@ -805,7 +811,7 @@
               );
             this.setOutput(true, "Boolean");
             this.setInputsInline(true);
-            this.setColour("#9b27b0"); // mint sáng
+            this.setColour("#ffbe3b"); // mint sáng
             this.setTooltip("Compare two values (numbers or strings)");
           },
         };
@@ -816,18 +822,21 @@
             this.appendDummyInput()
               .appendField("📝")
               .appendField("function")
-              .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
+              .appendField(
+                new C.FieldTextInput("myFunction1"),
+                "FUNCTION_NAME"
+              );
             this.appendStatementInput("BODY").appendField("do");
             this.setPreviousStatement(false); // Functions are top-level
             this.setNextStatement(false);
-            this.setColour("#ff9f43"); // orange sáng
+            this.setColour("#40e0d0"); // orange sáng
             this.setTooltip("Define a custom function");
             this.setHelpUrl("");
           },
 
           onchange: function () {
             if (!this.workspace || this.isInFlyout) return;
-            
+
             // Ensure function definitions are always top-level
             if (this.getParent()) {
               this.unplug(false);
@@ -842,25 +851,28 @@
             this.appendDummyInput()
               .appendField("🔧")
               .appendField("call")
-              .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
+              .appendField(
+                new C.FieldTextInput("myFunction1"),
+                "FUNCTION_NAME"
+              );
             this.setPreviousStatement(true, null);
             this.setNextStatement(true, null);
-            this.setColour("#ff9f43"); // orange sáng
+            this.setColour("#40e0d0"); // orange sáng
             this.setTooltip("Call a custom function");
             this.setHelpUrl("");
           },
-    };
-  })();
-  // END inlined custom_blocks.js
-  </script>
-  <script>
-  // BEGIN inlined generators.js
+        };
+      })();
+      // END inlined custom_blocks.js
+    </script>
+    <script>
+      // BEGIN inlined generators.js
       (function () {
-    const gens = {};
+        const gens = {};
 
         function numFrom(block, name) {
-      const target = block.getInputTargetBlock(name);
-      if (!target) return 0;
+          const target = block.getInputTargetBlock(name);
+          if (!target) return 0;
           if (target.type === "math_number")
             return Number(target.getFieldValue("NUM"));
           if (target.type === "batteryCount") return "batteryCount";
@@ -871,8 +883,8 @@
             // Serialize loop variable references as template tokens for Phaser
             return `{{${v}}}`;
           }
-      return 0;
-    }
+          return 0;
+        }
 
         // Helper function to convert condition nodes to Python expressions
         function condToPy(cond) {
@@ -890,17 +902,25 @@
               const op = cond.operator === "AND" ? " and " : " or ";
               return `(${leftPy}${op}${rightPy})`;
             case "compare":
-              const leftVal = typeof cond.left === "string" ? `"${cond.left}"` : JSON.stringify(cond.left);
-              const rightVal = typeof cond.right === "string" ? `"${cond.right}"` : JSON.stringify(cond.right);
+              const leftVal =
+                typeof cond.left === "string"
+                  ? `"${cond.left}"`
+                  : JSON.stringify(cond.left);
+              const rightVal =
+                typeof cond.right === "string"
+                  ? `"${cond.right}"`
+                  : JSON.stringify(cond.right);
               const operators = {
                 EQ: " == ",
                 NEQ: " != ",
                 LT: " < ",
                 GT: " > ",
                 LTE: " <= ",
-                GTE: " >= "
+                GTE: " >= ",
               };
-              return `(${leftVal}${operators[cond.operator] || " == "}${rightVal})`;
+              return `(${leftVal}${
+                operators[cond.operator] || " == "
+              }${rightVal})`;
             default:
               return "True";
           }
@@ -1040,14 +1060,14 @@
           return {
             type: "function_define",
             name: block.getFieldValue("FUNCTION_NAME") || "myFunction1",
-            body: statementToList(block, "BODY")
+            body: statementToList(block, "BODY"),
           };
         }
 
         function nodeFunctionCall(block) {
           return {
             type: "callFunction",
-            functionName: block.getFieldValue("FUNCTION_NAME") || "myFunction1"
+            functionName: block.getFieldValue("FUNCTION_NAME") || "myFunction1",
           };
         }
 
@@ -1080,23 +1100,26 @@
               return { type: "boolean", value: boolValue === "TRUE" };
             case "check_pin_boolean":
               const pinColor = block.getFieldValue("COLOR");
-              return { 
-                type: "condition", 
-                function: `is${pinColor.charAt(0).toUpperCase() + pinColor.slice(1)}`, 
-                check: true 
+              return {
+                type: "condition",
+                function: `is${
+                  pinColor.charAt(0).toUpperCase() + pinColor.slice(1)
+                }`,
+                check: true,
               };
             case "pin_color_compare":
               const pinColor2 = block.getFieldValue("COLOR");
               const pinOperator = block.getFieldValue("OP");
               // Convert color to function name: "green" -> "isGreen", "red" -> "isRed", "yellow" -> "isYellow"
-              const colorName = pinColor2.charAt(0).toUpperCase() + pinColor2.slice(1);
+              const colorName =
+                pinColor2.charAt(0).toUpperCase() + pinColor2.slice(1);
               const functionName = `is${colorName}`;
               // EQ means check is true, NEQ means check is false
               const checkValue = pinOperator === "EQ";
               return {
                 type: "condition",
                 function: functionName,
-                check: checkValue
+                check: checkValue,
               };
             case "logical_operation":
               const leftLogic = block.getInputTargetBlock("A");
@@ -1105,9 +1128,13 @@
               return {
                 type: logicOp === "AND" ? "and" : "or",
                 conditions: [
-                  leftLogic ? blockToNode(leftLogic) : { type: "boolean", value: false },
-                  rightLogic ? blockToNode(rightLogic) : { type: "boolean", value: false }
-                ]
+                  leftLogic
+                    ? blockToNode(leftLogic)
+                    : { type: "boolean", value: false },
+                  rightLogic
+                    ? blockToNode(rightLogic)
+                    : { type: "boolean", value: false },
+                ],
               };
             case "var_ref":
               return { type: "variable", name: block.getFieldValue("VAR") };
@@ -1115,43 +1142,81 @@
               const leftComp = numFrom(block, "A");
               const rightComp = numFrom(block, "B");
               const operator = block.getFieldValue("OP");
-              
+
+              // Map operator to Phaser format
+              const operatorMap = {
+                EQ: "==",
+                NEQ: "!=",
+                LT: "<",
+                GT: ">",
+                LTE: "<=",
+                GTE: ">=",
+              };
+              const mappedOperator = operatorMap[operator] || operator;
+
               // Check if comparing with battery count
               if (leftComp === "batteryCount" || rightComp === "batteryCount") {
+                const value =
+                  leftComp === "batteryCount" ? rightComp : leftComp;
+                const numValue =
+                  typeof value === "number"
+                    ? value
+                    : typeof value === "string"
+                    ? parseInt(value) || 0
+                    : 0;
                 return {
                   type: "variableComparison",
                   variable: "batteryCount",
-                  operator: operator,
-                  value: leftComp === "batteryCount" ? rightComp : leftComp
+                  operator: mappedOperator,
+                  value: numValue,
                 };
               }
-              
+
               // Check if comparing with warehouse count
-              if (leftComp === "warehouseCount" || rightComp === "warehouseCount") {
+              if (
+                leftComp === "warehouseCount" ||
+                rightComp === "warehouseCount"
+              ) {
+                const value =
+                  leftComp === "warehouseCount" ? rightComp : leftComp;
+                const numValue =
+                  typeof value === "number"
+                    ? value
+                    : typeof value === "string"
+                    ? parseInt(value) || 0
+                    : 0;
                 return {
                   type: "variableComparison",
                   variable: "warehouseCount",
-                  operator: operator,
-                  value: leftComp === "warehouseCount" ? rightComp : leftComp
+                  operator: mappedOperator,
+                  value: numValue,
                 };
               }
-              
+
               // Check if comparing with number box
               if (leftComp === "getNumberBox" || rightComp === "getNumberBox") {
+                const value =
+                  leftComp === "getNumberBox" ? rightComp : leftComp;
+                const numValue =
+                  typeof value === "number"
+                    ? value
+                    : typeof value === "string"
+                    ? parseInt(value) || 0
+                    : 0;
                 return {
                   type: "variableComparison",
                   variable: "getNumberBox",
-                  operator: operator,
-                  value: leftComp === "getNumberBox" ? rightComp : leftComp
+                  operator: mappedOperator,
+                  value: numValue,
                 };
               }
-              
+
               // Default comparison
               return {
                 type: "compare",
                 operator: operator,
                 left: leftComp,
-                right: rightComp
+                right: rightComp,
               };
             case "function_define":
               return nodeFunctionDefine(block);
@@ -1165,7 +1230,7 @@
                 type: "math_arithmetic",
                 operator: mathOp,
                 left: leftArith,
-                right: rightArith
+                right: rightArith,
               };
             default:
               return null;
@@ -1173,20 +1238,20 @@
         }
 
         function statementToList(block, name) {
-      const target = block.getInputTargetBlock(name);
-      const list = [];
-      let cur = target;
-      while (cur) {
-        const node = blockToNode(cur);
-        if (node) list.push(node);
-        cur = cur.getNextBlock();
-      }
-      return list;
-    }
+          const target = block.getInputTargetBlock(name);
+          const list = [];
+          let cur = target;
+          while (cur) {
+            const node = blockToNode(cur);
+            if (node) list.push(node);
+            cur = cur.getNextBlock();
+          }
+          return list;
+        }
 
         gens.toJSON = function (workspace) {
-      const topBlocks = workspace.getTopBlocks(true);
-      const actions = [];
+          const topBlocks = workspace.getTopBlocks(true);
+          const actions = [];
           const functions = [];
 
           // Tách function definitions và main program
@@ -1196,40 +1261,40 @@
               if (funcNode) {
                 functions.push({
                   name: funcNode.name,
-                  body: funcNode.body || []
+                  body: funcNode.body || [],
                 });
               }
             }
           }
-      
-      // Tìm block start và lấy tất cả blocks được kết nối dưới nó
+
+          // Tìm block start và lấy tất cả blocks được kết nối dưới nó
           const startBlock = topBlocks.find((b) => b.type === "start");
-      if (startBlock) {
-        // Lấy block đầu tiên được kết nối dưới start
-        const firstBlock = startBlock.getNextBlock();
-        if (firstBlock) {
-          // Lấy tất cả blocks trong chuỗi kết nối
-          let cur = firstBlock;
-          while (cur) {
-            const n = blockToNode(cur);
-            if (n) actions.push(n);
-            cur = cur.getNextBlock();
-          }
-        }
-      } else {
+          if (startBlock) {
+            // Lấy block đầu tiên được kết nối dưới start
+            const firstBlock = startBlock.getNextBlock();
+            if (firstBlock) {
+              // Lấy tất cả blocks trong chuỗi kết nối
+              let cur = firstBlock;
+              while (cur) {
+                const n = blockToNode(cur);
+                if (n) actions.push(n);
+                cur = cur.getNextBlock();
+              }
+            }
+          } else {
             // Fallback: nếu không có start block, lấy tất cả top blocks (trừ start và functions)
-        for (const b of topBlocks) {
+            for (const b of topBlocks) {
               if (b.type !== "function_define") {
-          const n = blockToNode(b);
+                const n = blockToNode(b);
                 if (n && n.type !== "start") actions.push(n);
               }
             }
           }
 
-          const result = { 
-            version: "1.0.0", 
-            programName: "user_program", 
-            actions 
+          const result = {
+            version: "1.0.0",
+            programName: "user_program",
+            actions,
           };
 
           // Chỉ thêm functions nếu có
@@ -1246,7 +1311,11 @@
               for (const n of nodes) {
                 if (!n || typeof n !== "object") continue;
                 // Biến lặp được khai báo tại repeatRange
-                if (n.type === "repeatRange" && typeof n.variable === "string" && n.variable) {
+                if (
+                  n.type === "repeatRange" &&
+                  typeof n.variable === "string" &&
+                  n.variable
+                ) {
                   declared.add(n.variable);
                 }
                 // Duyệt thân/lists con nếu có
@@ -1275,7 +1344,7 @@
         };
 
         gens.toPython = function (workspace) {
-      const program = gens.toJSON(workspace);
+          const program = gens.toJSON(workspace);
           function pyVal(v) {
             if (typeof v === "string") return v;
             if (typeof v === "object" && v !== null) {
@@ -1287,7 +1356,7 @@
                   ADD: " + ",
                   MINUS: " - ",
                   MULTIPLY: " * ",
-                  DIVIDE: " / "
+                  DIVIDE: " / ",
                 };
                 const op = operators[v.operator] || " + ";
                 return `(${leftVal}${op}${rightVal})`;
@@ -1296,12 +1365,12 @@
             }
             return JSON.stringify(v);
           }
-      const lines = [];
+          const lines = [];
           function emit(nodes, indent) {
             const ind = "  ".repeat(indent);
-        for (const n of nodes) {
+            for (const n of nodes) {
               switch (n.type) {
-            // Bỏ case 'start' vì đã lọc ở toJSON
+                // Bỏ case 'start' vì đã lọc ở toJSON
                 case "forward":
                   lines.push(ind + `forward(${pyVal(n.count)})`);
                   break;
@@ -1332,10 +1401,10 @@
                     lines.push(ind + `  while ${condToPy(n.condition)}:`);
                     emit(n.body || [], indent + 2);
                   } else {
-              lines.push(ind + `for count in range(${pyVal(n.count)}):`);
-              emit(n.body || [], indent + 1);
+                    lines.push(ind + `for count in range(${pyVal(n.count)}):`);
+                    emit(n.body || [], indent + 1);
                   }
-              break;
+                  break;
                 case "repeatRange":
                   const v = n.variable || "i";
                   lines.push(
@@ -1348,13 +1417,13 @@
                     lines.push(ind + `  while ${condToPy(n.condition)}:`);
                     emit(n.body || [], indent + 2);
                   } else {
-              emit(n.body || [], indent + 1);
+                    emit(n.body || [], indent + 1);
                   }
-              break;
+                  break;
                 case "if":
                   lines.push(ind + `if ${condToPy(n.cond)}:`);
-              emit(n.then || [], indent + 1);
-              break;
+                  emit(n.then || [], indent + 1);
+                  break;
                 case "if_else_if":
                   // Generate if condition
                   const firstCond = n.conditions[0];
@@ -1376,58 +1445,85 @@
                   break;
                 case "while":
                   lines.push(ind + `while ${condToPy(n.cond)}:`);
-              emit(n.body || [], indent + 1);
-              break;
+                  emit(n.body || [], indent + 1);
+                  break;
                 case "callFunction":
                   lines.push(ind + `${n.functionName}()`);
                   break;
+              }
+            }
           }
-        }
-      }
-      emit(program.actions, 0);
+          // Emit functions first if present
+          if (program.functions && Array.isArray(program.functions) && program.functions.length > 0) {
+            program.functions.forEach(function (fn) {
+              const name = fn.name || "myFunction1";
+              lines.push("def " + name + "():");
+              if (!fn.body || fn.body.length === 0) {
+                lines.push("    pass");
+              } else {
+                emit(fn.body || [], 1);
+              }
+              lines.push("");
+            });
+          }
+          // Emit main actions
+          emit(program.actions || [], 0);
           return lines.join("\n");
-    };
+        };
 
-    window.generators = gens;
-  })();
-  // END inlined generators.js
-  </script>
-  <script>
+        window.generators = gens;
+      })();
+      // END inlined generators.js
+    </script>
+    <script>
       const workspace = Blockly.inject("blocklyDiv", {
         toolbox: document.getElementById("toolbox"),
-      scrollbars: true,
-      trashcan: true,
+        scrollbars: true,
+        trashcan: true,
         renderer: "zelos",
         toolboxPosition: "start",
-    });
+      });
 
       window.importWorkspace = function (xmlText) {
-      try {
-        if (!workspace) throw new Error('workspace not initialized');
-        workspace.clear();
-        const XMLNS = (Blockly.Xml && Blockly.Xml.textToDom) ? Blockly.Xml : (Blockly.utils && Blockly.utils.xml ? Blockly.utils.xml : null);
-        if (!XMLNS || !XMLNS.textToDom) throw new Error('Blockly XML helper not found');
-        const dom = XMLNS.textToDom(xmlText);
-        if (Blockly.Xml && Blockly.Xml.domToWorkspace) {
-          Blockly.Xml.domToWorkspace(dom, workspace);
-        } else if (Blockly.utils && Blockly.utils.xml && Blockly.utils.xml.domToWorkspace) {
-          Blockly.utils.xml.domToWorkspace(dom, workspace);
-        } else {
-          // Fallback using API available: append dom blocks manually if needed
-          Blockly.Xml.domToWorkspace(dom, workspace); // will throw if missing
-        }
-        return JSON.stringify({ ok: true });
+        try {
+          if (!workspace) throw new Error("workspace not initialized");
+          workspace.clear();
+          const XMLNS =
+            Blockly.Xml && Blockly.Xml.textToDom
+              ? Blockly.Xml
+              : Blockly.utils && Blockly.utils.xml
+              ? Blockly.utils.xml
+              : null;
+          if (!XMLNS || !XMLNS.textToDom)
+            throw new Error("Blockly XML helper not found");
+          const dom = XMLNS.textToDom(xmlText);
+          if (Blockly.Xml && Blockly.Xml.domToWorkspace) {
+            Blockly.Xml.domToWorkspace(dom, workspace);
+          } else if (
+            Blockly.utils &&
+            Blockly.utils.xml &&
+            Blockly.utils.xml.domToWorkspace
+          ) {
+            Blockly.utils.xml.domToWorkspace(dom, workspace);
+          } else {
+            // Fallback using API available: append dom blocks manually if needed
+            Blockly.Xml.domToWorkspace(dom, workspace); // will throw if missing
+          }
+          return JSON.stringify({ ok: true });
         } catch (e) {
-          console.error('importWorkspace error:', e);
-          return JSON.stringify({ ok: false, error: String(e && e.message ? e.message : e) });
+          console.error("importWorkspace error:", e);
+          return JSON.stringify({
+            ok: false,
+            error: String(e && e.message ? e.message : e),
+          });
         }
-    };
+      };
       window.getWorkspaceXml = function () {
-      const dom = Blockly.Xml.workspaceToDom(workspace);
-      return Blockly.Xml.domToPrettyText(dom);
-    };
+        const dom = Blockly.Xml.workspaceToDom(workspace);
+        return Blockly.Xml.domToPrettyText(dom);
+      };
 
-    function postToFlutter(obj) {
+      function postToFlutter(obj) {
         try {
           FlutterFromBlockly.postMessage(JSON.stringify(obj));
         } catch (e) {
@@ -1442,94 +1538,101 @@
         const python =
           (window.generators && window.generators.toPython(workspace)) || "";
         postToFlutter({ type: "python_preview", python });
-    }
-    workspace.addChangeListener(onChange);
+      }
+      workspace.addChangeListener(onChange);
 
-    // Add a default block to verify visibility
-    try {
+      // Add a default block to verify visibility
+      try {
         const xmlText =
           '<xml xmlns="https://developers.google.com/blockly/xml"><block type="start" x="30" y="30"></block><block type="forward" x="30" y="80"><value name="COUNT"><block type="math_number"><field name="NUM">3</field></block></value></block><block type="if_color" x="30" y="130"><value name="CONDITION"><block type="check_pin_green"></block></value></block><block type="repeat_simple" x="30" y="200"><value name="COUNT"><block type="math_number"><field name="NUM">5</field></block></value><value name="CONDITION"><block type="check_pin_red"></block></value></block></xml>';
-      const dom = Blockly.Xml.textToDom(xmlText);
-      Blockly.Xml.domToWorkspace(dom, workspace);
+        const dom = Blockly.Xml.textToDom(xmlText);
+        Blockly.Xml.domToWorkspace(dom, workspace);
       } catch (e) {
         console.log(e);
       }
 
-    // Function to set challenge type and filter toolbox categories
-    window.setChallengeType = function(challengeType) {
-      if (!workspace || !workspace.toolbox_) return;
-      
-      const toolbox = workspace.toolbox_;
-      const toolboxXml = document.getElementById("toolbox");
-      if (!toolboxXml) return;
-      
-      // Clone the original toolbox XML to avoid modifying the original
-      const clonedXml = toolboxXml.cloneNode(true);
-      
-      // Find categories by name
-      const boxCategory = Array.from(clonedXml.children).find(
-        (cat) => cat.getAttribute && cat.getAttribute("name") === "📦"
-      );
-      const batteryCategory = Array.from(clonedXml.children).find(
-        (cat) => cat.getAttribute && cat.getAttribute("name") === "🔋"
-      );
-      
-      // Remove categories based on challenge type
-      if (challengeType === 0) {
-        // Battery mode: remove 📦, keep 🔋
-        if (boxCategory) {
-          clonedXml.removeChild(boxCategory);
-        }
-      } else if (challengeType === 1) {
-        // Box mode: remove 🔋, keep 📦
-        if (batteryCategory) {
-          clonedXml.removeChild(batteryCategory);
-        }
-      }
-      
-      // Update toolbox with filtered XML
-      try {
-        // Update the toolbox with the filtered XML
-        workspace.updateToolbox(clonedXml);
-      } catch (e) {
-        console.log("Error updating toolbox:", e);
-        // Fallback: try to hide/show using CSS
+      // Function to set challenge type and filter toolbox categories
+      window.setChallengeType = function (challengeType) {
+        if (!workspace || !workspace.toolbox_) return;
+
+        const toolbox = workspace.toolbox_;
+        const toolboxXml = document.getElementById("toolbox");
+        if (!toolboxXml) return;
+
+        // Clone the original toolbox XML to avoid modifying the original
+        const clonedXml = toolboxXml.cloneNode(true);
+
+        // Find categories by name
+        const boxCategory = Array.from(clonedXml.children).find(
+          (cat) => cat.getAttribute && cat.getAttribute("name") === "📦"
+        );
+        const batteryCategory = Array.from(clonedXml.children).find(
+          (cat) => cat.getAttribute && cat.getAttribute("name") === "🔋"
+        );
+
+        // Remove categories based on challenge type
         if (challengeType === 0) {
-          // Battery mode: hide 📦, show 🔋
+          // Battery mode: remove 📦, keep 🔋
           if (boxCategory) {
-            const boxNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="📦"]');
-            if (boxNode) boxNode.style.display = "none";
-          }
-          if (batteryCategory) {
-            const batteryNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="🔋"]');
-            if (batteryNode) batteryNode.style.display = "";
+            clonedXml.removeChild(boxCategory);
           }
         } else if (challengeType === 1) {
-          // Box mode: show 📦, hide 🔋
-          if (boxCategory) {
-            const boxNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="📦"]');
-            if (boxNode) boxNode.style.display = "";
-          }
+          // Box mode: remove 🔋, keep 📦
           if (batteryCategory) {
-            const batteryNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="🔋"]');
-            if (batteryNode) batteryNode.style.display = "none";
+            clonedXml.removeChild(batteryCategory);
           }
         }
-        if (toolbox && toolbox.refresh) {
-          toolbox.refresh();
-        }
-      }
-    };
 
-    // Notify Flutter that Blockly is ready
+        // Update toolbox with filtered XML
+        try {
+          // Update the toolbox with the filtered XML
+          workspace.updateToolbox(clonedXml);
+        } catch (e) {
+          console.log("Error updating toolbox:", e);
+          // Fallback: try to hide/show using CSS
+          if (challengeType === 0) {
+            // Battery mode: hide 📦, show 🔋
+            if (boxCategory) {
+              const boxNode =
+                toolbox.toolboxTree_ &&
+                toolbox.toolboxTree_.querySelector('[name="📦"]');
+              if (boxNode) boxNode.style.display = "none";
+            }
+            if (batteryCategory) {
+              const batteryNode =
+                toolbox.toolboxTree_ &&
+                toolbox.toolboxTree_.querySelector('[name="🔋"]');
+              if (batteryNode) batteryNode.style.display = "";
+            }
+          } else if (challengeType === 1) {
+            // Box mode: show 📦, hide 🔋
+            if (boxCategory) {
+              const boxNode =
+                toolbox.toolboxTree_ &&
+                toolbox.toolboxTree_.querySelector('[name="📦"]');
+              if (boxNode) boxNode.style.display = "";
+            }
+            if (batteryCategory) {
+              const batteryNode =
+                toolbox.toolboxTree_ &&
+                toolbox.toolboxTree_.querySelector('[name="🔋"]');
+              if (batteryNode) batteryNode.style.display = "none";
+            }
+          }
+          if (toolbox && toolbox.refresh) {
+            toolbox.refresh();
+          }
+        }
+      };
+
+      // Notify Flutter that Blockly is ready
       postToFlutter({ type: "ready" });
 
       window.compileNow = function () {
         const program =
           window.generators && window.generators.toJSON(workspace);
         postToFlutter({ type: "compiled_program", payload: program });
-    };
-  </script>
-</body>
+      };
+    </script>
+  </body>
 </html>
-

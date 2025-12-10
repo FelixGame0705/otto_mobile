@@ -617,20 +617,26 @@ while True:
     String? actionsRoomId,
     Map<String, dynamic>? challengeJson,
   }) {
-    final userRoute = generatePython(programJson);
-    // Extract only the def user_route block from generated code
-    final lines = userRoute.split('\n');
-    final start = lines.indexWhere((l) => l.trimLeft().startsWith('def user_route('));
-    if (start == -1) return _insertCodeTemplate; // fallback
-    // Collect body lines with indentation
-    final body = <String>[];
-    for (int i = start + 1; i < lines.length; i++) {
+    final userGenerated = generatePython(programJson);
+    final lines = userGenerated.split('\n');
+
+    // Find user_route definition
+    final userRouteIdx = lines.indexWhere((l) => l.trimLeft().startsWith('def user_route('));
+    if (userRouteIdx == -1) return _insertCodeTemplate; // fallback
+
+    // Collect user_route body with indentation (>=4 spaces) - includes nested functions
+    final List<String> userRouteBody = [];
+    for (int i = userRouteIdx + 1; i < lines.length; i++) {
       final l = lines[i];
-      if (l.isEmpty) continue;
+      if (l.isEmpty) {
+        userRouteBody.add(l);
+        continue;
+      }
       final leading = l.length - l.trimLeft().length;
       if (leading < 4) break; // deindent => end of function
-      body.add(l);
+      userRouteBody.add(l);
     }
+
     // Replace in template
     String template = _insertCodeTemplate;
     if (challengeJson != null && challengeJson.isNotEmpty) {
@@ -641,22 +647,31 @@ while True:
       final replacement = 'challengeJson = ' + pyStr + '\n\n';
       template = template.replaceFirst(challengePattern, replacement);
     }
+
     final tpl = template.split('\n');
-    final defIdx = tpl.indexWhere((l) => l.trimLeft().startsWith('def user_route('));
-    if (defIdx == -1) return _insertCodeTemplate + '\n\n' + userRoute;
+    final tplUserRouteIdx = tpl.indexWhere((l) => l.trimLeft().startsWith('def user_route('));
+    if (tplUserRouteIdx == -1) return _insertCodeTemplate + '\n\n' + userGenerated;
+
     final result = <String>[];
-    result.addAll(tpl.take(defIdx + 1));
-    // Insert new body
-    result.addAll(body);
-    // Skip old body until we hit a blank line followed by next top-level or class/def
-    int j = defIdx + 1;
+    // Part before def user_route in template
+    result.addAll(tpl.take(tplUserRouteIdx));
+
+    // Use template's def user_route signature
+    result.add(tpl[tplUserRouteIdx]);
+
+    // Inject generated user_route body (includes nested functions)
+    result.addAll(userRouteBody);
+
+    // Skip old body in template until next top-level def/class
+    int j = tplUserRouteIdx + 1;
     for (; j < tpl.length; j++) {
       final t = tpl[j];
       if (t.trimLeft().startsWith('class ') || t.trimLeft().startsWith('def ')) {
         break;
-    }
+      }
     }
     if (j < tpl.length) result.addAll(tpl.skip(j));
+
     final script = result.join('\n');
     return _applyOverrides(script, wifiSsid: wifiSsid, wifiPass: wifiPass, actionsRoomId: actionsRoomId);
   }
@@ -690,23 +705,24 @@ while True:
   static String generatePython(Map<String, dynamic> programJson) {
     final StringBuffer out = StringBuffer();
 
-    // Emit user-defined functions first
+    // Emit main user route
+    out.writeln('def user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound):');
+    
+    // Emit user-defined functions as nested functions inside user_route
     final List functions = (programJson['functions'] as List?) ?? const [];
     for (final f in functions.whereType<Map<String, dynamic>>()) {
       final name = (f['name'] as String?)?.trim();
       final body = (f['body'] as List?)?.whereType<Map<String, dynamic>>().toList() ?? const [];
       if (name == null || name.isEmpty) continue;
-      out.writeln('def ' + name + '():');
+      out.writeln('    def ' + name + '():');
       if (body.isEmpty) {
-        out.writeln('    pass');
+        out.writeln('        pass');
       } else {
-        _emitNodes(out, body, indent: 1);
+        _emitNodes(out, body, indent: 2);
       }
       out.writeln();
     }
-
-    // Emit main user route
-    out.writeln('def user_route(forward, turnLeft, turnRight, turnBack, collect, startSound, finishSound):');
+    
     out.writeln('    startSound()');
     final List actions = (programJson['actions'] as List?) ?? const [];
     if (actions.isEmpty) {
@@ -728,24 +744,24 @@ while True:
       final t = n['type'] as String?;
       switch (t) {
         case 'forward':
-          out.writeln(ind(indent) + 'forward(' + _pyVal(n['count']) + ');');
+          out.writeln(ind(indent) + 'forward(' + _pyVal(n['count']) + ')');
           break;
         case 'turnRight':
-          out.writeln(ind(indent) + 'turnRight();');
+          out.writeln(ind(indent) + 'turnRight()');
           break;
         case 'turnLeft':
-          out.writeln(ind(indent) + 'turnLeft();');
+          out.writeln(ind(indent) + 'turnLeft()');
           break;
         case 'turnBack':
-          out.writeln(ind(indent) + 'turnBack();');
+          out.writeln(ind(indent) + 'turnBack()');
           break;
         case 'collect':
           final color = jsonEncode(n['color']);
           final count = _pyVal(n['count']);
-          out.writeln(ind(indent) + 'collect(' + count +',' + color + ');');
+          out.writeln(ind(indent) + 'collect(' + count +',' + color + ')');
           break;
         case 'putBox':
-          out.writeln(ind(indent) + 'putBox(' + _pyVal(n['count']) + ');');
+          out.writeln(ind(indent) + 'putBox(' + _pyVal(n['count']) + ')');
           break;
         case 'takeBox':
           out.writeln(ind(indent) + 'takeBox(' + _pyVal(n['count']) + ')');

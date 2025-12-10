@@ -324,48 +324,12 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       if (connected) {
         debugPrint('Socket.IO connected successfully');
         
-        // Hiển thị Toast kết nối thành công
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('✅ Đã kết nối Socket.IO'),
-              duration: const Duration(seconds: 2),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-        
         // Join room với ID đã tạo
         final joined = await _socketService.joinRoom(_roomId!);
         if (joined) {
           debugPrint('Successfully joined room: $_roomId');
-          
-          // Hiển thị Toast join room thành công
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('🚪 Đã join room: $_roomId'),
-                duration: const Duration(seconds: 2),
-                backgroundColor: Colors.blue,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
         } else {
           debugPrint('Failed to join room: $_roomId');
-          
-          // Hiển thị Toast join room thất bại
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('❌ Không thể join room: $_roomId'),
-                duration: const Duration(seconds: 3),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
         }
         
         // Cập nhật UI
@@ -374,18 +338,6 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
         }
       } else {
         debugPrint('Failed to connect to Socket.IO server - auto-reconnection will be attempted');
-        
-        // Hiển thị Toast đang thử kết nối lại
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('🔄 Đang thử kết nối Socket.IO...'),
-              duration: const Duration(seconds: 3),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
       debugPrint('Error initializing Socket.IO connection: $e');
@@ -1092,31 +1044,20 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               const Text('Blockly Editor'),
               const SizedBox(width: 8),
               // Socket.IO connection indicator + room chỉ hiển thị ở upload mode
-              if (_isUploadMode) ...[
+              if (_isUploadMode)
                 Tooltip(
                   message: _socketService.isConnected 
                       ? 'Socket.IO Connected' 
                       : 'Socket.IO Disconnected',
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: _socketService.isConnected ? Colors.green : Colors.red,
                     ),
                   ),
                 ),
-                if (_roomId != null) ...[
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: 'Room ID: $_roomId',
-                    child: Text(
-                      'Room: ${_roomId!.toString().substring(0, 12)}...',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ],
             ],
           ),
           actions: [

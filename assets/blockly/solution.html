@@ -482,6 +482,7 @@
                 new C.FieldDropdown([
                   ["green", "green"],
                   ["yellow", "yellow"],
+                  ["red", "red"],
                 ]),
                 "COLOR"
               );
@@ -501,7 +502,7 @@
               this.setInputsInline(true);
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
-              this.setColour("#ff6b36");
+              this.setColour("#ffbe3b");
             },
           };
         if (!C.Blocks["repeat_range"])
@@ -524,7 +525,7 @@
               this.setInputsInline(true);
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
-              this.setColour("#ff6b36");
+              this.setColour("#ffbe3b");
             },
           };
         if (!C.Blocks["var_ref"])
@@ -535,7 +536,7 @@
                 "VAR"
               );
               this.setOutput(true, "Number");
-              this.setColour("#9b27b0");
+              this.setColour("#ff8c19");
             },
           };
         if (!C.Blocks["if_color"])
@@ -602,7 +603,7 @@
         if (!C.Blocks["batteryCount"])
           C.Blocks["batteryCount"] = {
             init: function () {
-              this.appendDummyInput().appendField("batteryCount");
+              this.appendDummyInput().appendField("🔋 Number");
               this.setOutput(true, "Number");
               this.setColour("#45b7d1");
             },
@@ -618,7 +619,7 @@
         if (!C.Blocks["warehouseCount"])
           C.Blocks["warehouseCount"] = {
             init: function () {
-              this.appendDummyInput().appendField("warehouseCount");
+              this.appendDummyInput().appendField("📦 Number");
               this.setOutput(true, "Number");
               this.setColour("#45b7d1");
             },
@@ -634,7 +635,7 @@
                 "VALUE"
               );
               this.setOutput(true, "Boolean");
-              this.setColour("#9b27b0");
+              this.setColour("#8e44ad");
             },
           };
         if (!C.Blocks["check_pin_boolean"])
@@ -651,7 +652,7 @@
                   "COLOR"
                 );
               this.setOutput(true, "Boolean");
-              this.setColour("#9b27b0");
+              this.setColour("#8e44ad");
             },
           };
         if (!C.Blocks["pin_color_compare"])
@@ -708,7 +709,7 @@
                 "VAR"
               );
               this.setOutput(true, "Number");
-              this.setColour("#9b27b0");
+              this.setColour("#ff8c19");
             },
           };
         if (!C.Blocks["compare"])
@@ -730,7 +731,7 @@
                 );
               this.setOutput(true, "Boolean");
               this.setInputsInline(true);
-              this.setColour("#9b27b0");
+              this.setColour("#ffbe3b");
             },
           };
         if (!C.Blocks["function_define"])
@@ -746,7 +747,7 @@
               this.appendStatementInput("BODY").appendField("do");
               this.setPreviousStatement(false);
               this.setNextStatement(false);
-              this.setColour("#ff9f43");
+              this.setColour("#40e0d0");
             },
           };
         if (!C.Blocks["function_call"])
@@ -761,7 +762,7 @@
                 );
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
-              this.setColour("#ff9f43");
+              this.setColour("#40e0d0");
             },
           };
 

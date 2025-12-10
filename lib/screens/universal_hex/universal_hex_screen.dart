@@ -388,7 +388,15 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
             
             // Build Button
             ElevatedButton.icon(
-              onPressed: _isBuilding ? null : _buildUniversalHex,
+              onPressed: _isBuilding ? null : () async {
+                // Try to build from Blockly first, fallback to manual build
+                try {
+                  await buildAndFlashFromBlockly();
+                } catch (e) {
+                  // If Blockly build fails, try manual build
+                  await _buildUniversalHex();
+                }
+              },
               icon: _isBuilding 
                 ? const SizedBox(
                     width: 16,

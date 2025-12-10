@@ -264,6 +264,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                                   'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
                                                       ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
                                                       : 0),
+                                                  // Prefer top-level API field; fallback to embedded JSON
+                                                  'challengeType': detail.challengeType ?? (detail.challengeJson != null
+                                                      ? detail.challengeJson!['challengeType']
+                                                      : null),
                                                 },
                                               ),
                                             ),

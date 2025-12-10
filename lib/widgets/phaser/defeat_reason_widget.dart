@@ -84,7 +84,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                     child: Text(
                       _isExpanded 
                         ? 'Lý do thua' 
-                        : 'Lý do thua: ${widget.data['reason'] ?? widget.data['message'] ?? 'Game Over'}',
+                        : 'Lý do thua: ${widget.data['message'] ?? 'Game Over'}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -206,7 +206,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  '${widget.data['reason'] ?? widget.data['message'] ?? 'Game Over'}',
+                  '${widget.data['message'] ?? 'Game Over'}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: ResponsiveHelpers.getResponsiveFontSize(
@@ -293,7 +293,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${widget.data['reason'] ?? widget.data['message'] ?? 'Game Over'}',
+                '${widget.data['message'] ?? 'Game Over'}',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: ResponsiveHelpers.getResponsiveFontSize(
