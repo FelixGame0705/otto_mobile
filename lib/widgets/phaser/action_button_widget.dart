@@ -27,20 +27,58 @@ class ActionButtonWidget extends StatelessWidget {
     
     final iconData = icon ?? null;
 
+    // Responsive icon size
+    double iconSize;
+    if (screenWidth > 1200) {
+      iconSize = isLandscape ? 18 : 20;
+    } else if (screenWidth > 600) {
+      iconSize = isLandscape ? 16 : 18;
+    } else if (screenWidth > 400) {
+      iconSize = isLandscape ? 14 : 15;
+    } else {
+      iconSize = isLandscape ? 12 : 14;
+    }
+
+    // Responsive font size
+    double fontSize;
+    if (screenWidth > 1200) {
+      fontSize = isLandscape ? 13 : 14;
+    } else if (screenWidth > 600) {
+      fontSize = isLandscape ? 12 : 13;
+    } else if (screenWidth > 400) {
+      fontSize = isLandscape ? 11 : 12;
+    } else {
+      fontSize = isLandscape ? 10 : 11;
+    }
+
+    // Responsive border radius
+    double borderRadius;
+    if (screenWidth > 1200) {
+      borderRadius = 24;
+    } else if (screenWidth > 600) {
+      borderRadius = 22;
+    } else if (screenWidth > 400) {
+      borderRadius = 18;
+    } else {
+      borderRadius = 16;
+    }
+
     return ElevatedButton.icon(
       onPressed: onPressed,
       icon: iconData != null ? Icon(
         iconData,
         color: textColor,
-        size: isTablet ? 16 : (isLandscape ? 14 : 15),
+        size: iconSize,
       ) : null,
       label: Text(
         text,
         style: TextStyle(
           color: textColor,
           fontWeight: FontWeight.w600,
-          fontSize: isTablet ? 11 : (isLandscape ? 11 : 12),
+          fontSize: fontSize,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor,
@@ -51,7 +89,7 @@ class ActionButtonWidget extends StatelessWidget {
           vertical: ResponsiveHelpers.getButtonPadding(screenWidth, isTablet, 'vertical'),
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(isTablet ? 22 : 18),
+          borderRadius: BorderRadius.circular(borderRadius),
           side: BorderSide(color: Colors.white.withOpacity(0.3)),
         ),
       ),

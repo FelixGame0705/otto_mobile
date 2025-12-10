@@ -136,10 +136,24 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
           elevation: 16,
           backgroundColor: Colors.transparent,
           insetPadding: EdgeInsets.symmetric(
-            horizontal: screenWidth > 600 ? 40 : 24, 
-            vertical: screenHeight > 800 
-              ? (isGameOver ? 20 : 24) 
-              : (isGameOver ? 16 : 20),
+            horizontal: screenWidth > 1200 
+              ? 60 
+              : screenWidth > 900 
+                ? 50 
+                : screenWidth > 600 
+                  ? 40 
+                  : screenWidth > 500 
+                    ? 32  // Samsung A23 (720px) - tăng padding để dialog nhỏ hơn
+                    : screenWidth > 400 
+                      ? 24 
+                      : 16,
+            vertical: screenHeight > 1200 
+              ? (isGameOver ? 40 : 50)
+              : screenHeight > 900 
+                ? (isGameOver ? 30 : 40)
+                : screenHeight > 800 
+                  ? (isGameOver ? 20 : 24) 
+                  : (isGameOver ? 16 : 20),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -224,23 +238,67 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
               );
             },
           ),
-          SizedBox(height: isTablet ? 20 : (isLandscape ? 12 : 16)),
+          SizedBox(
+            height: screenWidth > 1200 
+              ? (isLandscape ? 16 : 24)
+              : screenWidth > 600 
+                ? (isLandscape ? 12 : 20)
+                : screenWidth > 500
+                  ? (isLandscape ? 8 : 12)  // Giảm spacing cho Samsung A23
+                  : (isLandscape ? 10 : 16),
+          ),
           // Title
           Text(
-            widget.title,
+            widget.status == 'LOSE' ? 'Game Over!' : widget.title,
             style: TextStyle(
-              fontSize: ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'title', widget.status),
+              fontSize: widget.status == 'VICTORY' 
+                ? ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'title', widget.status) * (screenWidth > 500 && screenWidth <= 800 ? 0.90 : 0.85)
+                : ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'title', widget.status),
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: isTablet ? 12 : 8),
+          SizedBox(
+            height: widget.status == 'VICTORY'
+              ? (screenWidth > 1200 
+                ? 24
+                : screenWidth > 600 
+                  ? 20
+                  : screenWidth > 500
+                    ? 12  // Giảm spacing cho Samsung A23
+                    : screenWidth > 400
+                      ? 16
+                      : 12)
+              : (screenWidth > 1200 
+                ? 16
+                : screenWidth > 600 
+                  ? 12
+                  : 8),
+          ),
           // Status badge
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: isTablet ? 20 : 16, 
-              vertical: isTablet ? 8 : 6,
+              horizontal: screenWidth > 1200 
+                ? 24
+                : screenWidth > 600 
+                  ? 20 
+                  : screenWidth > 500
+                    ? 14  // Giảm padding cho Samsung A23
+                    : screenWidth > 400 
+                      ? 16 
+                      : 12,
+              vertical: screenWidth > 1200 
+                ? 10
+                : screenWidth > 600 
+                  ? 8 
+                  : screenWidth > 500
+                    ? 5  // Giảm padding cho Samsung A23
+                    : screenWidth > 400 
+                      ? 6 
+                      : 4,
             ),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
@@ -263,15 +321,93 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
 
   Widget _buildContent(double screenWidth, double screenHeight, bool isTablet, bool isLandscape, bool isGameOver, BuildContext context) {
     if (widget.status == 'VICTORY') {
-      // For VICTORY, use a fixed height container without scroll
+      // For VICTORY, use a responsive height container without scroll
+      // Tính toán height dựa trên star size và padding để tránh overflow
+      double starSize;
+      if (screenWidth > 1200) {
+        starSize = isLandscape ? 32.0 : 42.0;
+      } else if (screenWidth > 900) {
+        starSize = isLandscape ? 28.0 : 38.0;
+      } else if (screenWidth > 600) {
+        starSize = isLandscape ? 24.0 : 36.0;
+      } else if (screenWidth > 500) {
+        // Samsung A23 (720px) và các màn hình tương tự - tăng sao lên để dễ nhìn hơn
+        starSize = isLandscape ? 24.0 : 36.0;
+      } else if (screenWidth > 400) {
+        starSize = isLandscape ? 20.0 : 30.0;
+      } else {
+        starSize = isLandscape ? 18.0 : 26.0;
+      }
+      
+      // Tính height dựa trên star size + padding (star size + glow effect + padding)
+      // Giảm padding để tránh overflow trên Samsung A23
+      double topPadding = screenWidth > 1200 
+        ? 24 
+        : screenWidth > 600 
+          ? 20 
+          : screenWidth > 500
+            ? 12  // Giảm từ 18 xuống 12
+            : screenWidth > 400 
+              ? 16 
+              : 12;
+      double bottomPadding = screenWidth > 1200
+        ? (isLandscape ? 8 : 12)
+        : screenWidth > 600
+          ? (isLandscape ? 6 : 10)
+          : screenWidth > 500
+            ? (isLandscape ? 3 : 6)  // Giảm từ 5/9 xuống 3/6
+            : screenWidth > 400
+              ? (isLandscape ? 4 : 8)
+              : (isLandscape ? 2 : 6);
+      
+      // Height = star size + glow effect (8px) + top padding + bottom padding + extra space
+      // Giảm extra space để tránh overflow trên màn hình nhỏ
+      double extraSpace = isLandscape ? 1 : 2;  // Giảm từ 2/4 xuống 1/2
+      double calculatedHeight = starSize + 8 + topPadding + bottomPadding + extraSpace;
+      
+      // Giới hạn height tối đa để tránh overflow - giảm mạnh cho Samsung A23
+      double maxHeight;
+      if (screenWidth > 1200) {
+        maxHeight = isLandscape ? 50 : 80;
+      } else if (screenWidth > 900) {
+        maxHeight = isLandscape ? 45 : 75;
+      } else if (screenWidth > 600) {
+        maxHeight = isLandscape ? 40 : 70;
+      } else if (screenWidth > 500) {
+        // Samsung A23 (720px) - giảm height để tránh overflow (36 + 8 + 12 + 6 + 2 = 64)
+        maxHeight = isLandscape ? 32 : 64;
+      } else if (screenWidth > 400) {
+        maxHeight = isLandscape ? 32 : 55;
+      } else {
+        maxHeight = isLandscape ? 28 : 48;
+      }
+      
+      // Sử dụng giá trị nhỏ hơn để tránh overflow
+      double height = calculatedHeight < maxHeight ? calculatedHeight : maxHeight;
+      
       return Container(
         width: double.infinity,
-        height: isTablet ? 70 : (isLandscape ? 40 : 60),
-        padding: EdgeInsets.symmetric(
-          horizontal: isTablet ? 24 : 16,
-          vertical: isTablet ? 12 : 8,
+        constraints: BoxConstraints(
+          minHeight: height,
+          maxHeight: height,
         ),
-        child: _buildStarsSection(isTablet, isLandscape),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth > 1200 
+            ? 32 
+            : screenWidth > 600 
+              ? 24 
+              : screenWidth > 400 
+                ? 16 
+                : 12,
+          vertical: 0, // Sử dụng top và bottom riêng
+        ),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: topPadding,
+            bottom: bottomPadding,
+          ),
+          child: _buildStarsSection(isTablet, isLandscape, screenWidth),
+        ),
       );
     }
     
@@ -343,7 +479,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
     );
   }
 
-  Widget _buildStarsSection(bool isTablet, bool isLandscape) {
+  Widget _buildStarsSection(bool isTablet, bool isLandscape, double screenWidth) {
     final dynamicCardScore = widget.data['cardScore'] ?? (widget.data['details'] is Map<String, dynamic> ? widget.data['details']['cardScore'] : null);
     double normalizedScore;
     if (dynamicCardScore is num) {
@@ -361,21 +497,56 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
     if (stars < 1) stars = 1;
     if (stars > 3) stars = 3;
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Star rating with animation
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 1200),
-          curve: Curves.elasticOut,
-          builder: (context, value, child) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) {
+    // Responsive star size
+    double starSize;
+    if (screenWidth > 1200) {
+      starSize = isLandscape ? 32.0 : 42.0;
+    } else if (screenWidth > 900) {
+      starSize = isLandscape ? 28.0 : 38.0;
+    } else if (screenWidth > 600) {
+      starSize = isLandscape ? 24.0 : 36.0;
+    } else if (screenWidth > 500) {
+      // Samsung A23 (720px) và các màn hình tương tự - tăng kích thước sao
+      starSize = isLandscape ? 24.0 : 36.0;
+    } else if (screenWidth > 400) {
+      starSize = isLandscape ? 20.0 : 30.0;
+    } else {
+      starSize = isLandscape ? 18.0 : 26.0;
+    }
+
+    // Responsive spacing between stars
+    double starSpacing;
+    if (screenWidth > 1200) {
+      starSpacing = 16.0;
+    } else if (screenWidth > 600) {
+      starSpacing = 12.0;
+    } else if (screenWidth > 500) {
+      // Samsung A23 (720px) - tăng spacing một chút cho sao lớn hơn
+      starSpacing = 10.0;
+    } else if (screenWidth > 400) {
+      starSpacing = 8.0;
+    } else {
+      starSpacing = 6.0;
+    }
+
+    return SizedBox(
+      height: double.infinity,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Star rating with animation
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (index) {
                 final filled = index < stars;
-                final starSize = isTablet ? 36.0 : (isLandscape ? 24.0 : 30.0);
                 
                 return TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
@@ -385,7 +556,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                     return Transform.scale(
                       scale: filled ? starValue : 0.8,
                       child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
+                        margin: EdgeInsets.symmetric(horizontal: starSpacing / 2),
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
@@ -438,21 +609,46 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   },
                 );
               }),
-            );
-          },
-        ),
-      ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildActions(double screenWidth, double screenHeight, bool isTablet, bool isLandscape, bool isGameOver) {
     if (widget.status == 'VICTORY' || widget.status == 'LOSE') {
       final basePad = ResponsiveHelpers.getResponsivePadding(screenWidth, screenHeight, isTablet, isGameOver, 'actions');
+      
+      // Responsive top padding (khoảng cách giữa stars và buttons)
+      double topPadding;
+      if (widget.status == 'VICTORY') {
+        // Khoảng cách cho Victory dialog (giữa stars và buttons) - giảm cho Samsung A23
+        if (screenWidth > 1200) {
+          topPadding = isLandscape ? 28 : 44;
+        } else if (screenWidth > 900) {
+          topPadding = isLandscape ? 24 : 38;
+        } else if (screenWidth > 600) {
+          topPadding = isLandscape ? 20 : 32;
+        } else if (screenWidth > 500) {
+          // Samsung A23 (720px) - giảm padding để tránh overflow
+          topPadding = isLandscape ? 16 : 24;
+        } else if (screenWidth > 400) {
+          topPadding = isLandscape ? 18 : 28;
+        } else {
+          topPadding = isLandscape ? 16 : 24;
+        }
+      } else {
+        // Khoảng cách cho Defeat dialog
+        topPadding = 0;
+      }
+      
       final tightTopPad = EdgeInsets.only(
         left: basePad.left,
         right: basePad.right,
         bottom: basePad.bottom,
-        top: 0,
+        top: topPadding,
       );
       return Container(
         padding: tightTopPad,
@@ -487,7 +683,15 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                         }),
               ),
             ),
-            SizedBox(width: 12),
+            SizedBox(
+              width: screenWidth > 1200 
+                ? 16
+                : screenWidth > 600 
+                  ? 12 
+                  : screenWidth > 400 
+                    ? 10 
+                    : 8,
+            ),
             if (widget.onSimulation != null && widget.status == 'VICTORY') ...[
               Expanded(
                 child: ActionButtonWidget(
@@ -506,7 +710,15 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   },
                 ),
               ),
-              SizedBox(width: 12),
+              SizedBox(
+                width: screenWidth > 1200 
+                  ? 16
+                  : screenWidth > 600 
+                    ? 12 
+                    : screenWidth > 400 
+                      ? 10 
+                      : 8,
+              ),
             ],
             Expanded(
               child: ActionButtonWidget(
