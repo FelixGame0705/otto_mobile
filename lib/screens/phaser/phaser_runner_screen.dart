@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/program_storage_service.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/widgets/phaser/status_dialog_widget.dart';
@@ -116,7 +117,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('🎉 onVictory callback called with data: $data');
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final message = data['message'] as String? ?? 'Congratulations! You won!';
+          final message = data['message'] as String? ?? 'phaser.victoryDefault'.tr();
           _showStatusDialog(
             'VICTORY',
             message,
@@ -131,7 +132,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       debugPrint('💀 onDefeat callback called with data: $data');
       if (mounted) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          final message = data['message'] as String? ?? 'Game Over!';
+          final message = data['message'] as String? ?? 'phaser.defeatDefault'.tr();
           _showStatusDialog('LOSE', message, Colors.red, data);
         });
       }
@@ -147,7 +148,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showStatusDialog(
             'ERROR',
-            'Game Error Occurred',
+            'phaser.errorDefault'.tr(),
             Colors.orange,
             data,
           );
@@ -369,16 +370,6 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     }
   }
 
-  Future<void> _resetWebViewZoom() async {
-    const defaultZoom = 0.8; // Zoom mặc định
-    if (_webViewZoom != defaultZoom) {
-      setState(() {
-        _webViewZoom = defaultZoom;
-      });
-      await _applyWebViewZoom(defaultZoom);
-    }
-  }
-
   Future<void> _applyWebViewZoom(double zoom) async {
     try {
       final zoomStr = zoom.toStringAsFixed(2);
@@ -415,13 +406,13 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       children: [
         WebViewWidget(controller: _controller),
         if (_isLoading)
-          const Center(
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Loading game...'),
+                Text('phaser.loading'.tr()),
               ],
             ),
           ),
@@ -436,25 +427,25 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
                 FloatingActionButton(
                   mini: true,
                   heroTag: 'zoom_in',
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF4B5563), // match CSS color
+                  elevation: 3,
+                  shape: const CircleBorder(),
                   onPressed: _zoomInWebView,
-                  tooltip: 'Zoom In',
-                  child: const Icon(Icons.zoom_in),
+                  tooltip: 'phaser.zoomIn'.tr(),
+                  child: const Icon(Icons.zoom_in, color: Color(0xFF4B5563)),
                 ),
                 const SizedBox(height: 8),
                 FloatingActionButton(
                   mini: true,
                   heroTag: 'zoom_out',
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF4B5563), // match CSS color
+                  elevation: 3,
+                  shape: const CircleBorder(),
                   onPressed: _zoomOutWebView,
-                  tooltip: 'Zoom Out',
-                  child: const Icon(Icons.zoom_out),
-                ),
-                const SizedBox(height: 8),
-                FloatingActionButton(
-                  mini: true,
-                  heroTag: 'zoom_reset',
-                  onPressed: _resetWebViewZoom,
-                  tooltip: 'Reset Zoom',
-                  child: const Icon(Icons.fit_screen),
+                  tooltip: 'phaser.zoomOut'.tr(),
+                  child: const Icon(Icons.zoom_out, color: Color(0xFF4B5563)),
                 ),
               ],
             ),
@@ -470,7 +461,7 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Phaser Robot Game'),
+        title: Text('phaser.title'.tr()),
         actions: [
           if (_isGameReady &&
               widget.initialMapJson != null &&
@@ -478,48 +469,43 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _reloadMapAndChallenge,
-              tooltip: 'Reload Map & Challenge',
+              tooltip: 'phaser.reloadMap'.tr(),
             ),
           if (_isGameReady) ...[
             IconButton(
               icon: const Icon(Icons.zoom_in),
               onPressed: _zoomInWebView,
-              tooltip: 'Zoom In',
+              tooltip: 'phaser.zoomIn'.tr(),
             ),
             IconButton(
               icon: const Icon(Icons.zoom_out),
               onPressed: _zoomOutWebView,
-              tooltip: 'Zoom Out',
-            ),
-            IconButton(
-              icon: const Icon(Icons.fit_screen),
-              onPressed: _resetWebViewZoom,
-              tooltip: 'Reset Zoom',
+              tooltip: 'phaser.zoomOut'.tr(),
             ),
             IconButton(
               icon: const Icon(Icons.play_circle),
               onPressed: _runProgram,
-              tooltip: 'Run Program',
+              tooltip: 'phaser.runProgram'.tr(),
             ),
             IconButton(
               icon: const Icon(Icons.play_arrow),
               onPressed: _resumeGame,
-              tooltip: 'Resume',
+              tooltip: 'phaser.resume'.tr(),
             ),
             IconButton(
               icon: const Icon(Icons.pause),
               onPressed: _pauseGame,
-              tooltip: 'Pause',
+              tooltip: 'phaser.pause'.tr(),
             ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _resetGame,
-              tooltip: 'Reset',
+              tooltip: 'phaser.reset'.tr(),
             ),
             IconButton(
               icon: const Icon(Icons.info),
               onPressed: _getGameStatus,
-              tooltip: 'Status',
+              tooltip: 'phaser.status'.tr(),
             ),
           ],
         ],

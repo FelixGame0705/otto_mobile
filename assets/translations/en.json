@@ -601,6 +601,36 @@
       "error": "Failed to submit rating: {0}",
       "selectStars": "Please select a rating"
     }
+  },
+  "phaser": {
+    "title": "Phaser Robot Game",
+    "loading": "Loading game...",
+    "reloadMap": "Reload Map & Challenge",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "runProgram": "Run Program",
+    "resume": "Resume",
+    "pause": "Pause",
+    "reset": "Reset",
+    "status": "Status",
+    "victoryDefault": "Congratulations! You won!",
+    "defeatDefault": "Game Over!",
+    "errorDefault": "Game Error Occurred",
+    "missingChallengeId": "Missing challenge ID. Cannot submit without a valid challenge.",
+    "missingCodeData": "Missing code data. Please create some blocks first.",
+    "submissionFailed": "Submission failed: {0}",
+    "details": "Details",
+    "playAgain": "Play Again",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "simulation": "Simulation",
+    "close": "Close",
+    "gameOverTitle": "Game Over!",
+    "defeatReasonTitle": "Defeat reason",
+    "defeatReasonPrefix": "Defeat reason:",
+    "errorDetails": "Error details",
+    "expand": "See more",
+    "collapse": "Collapse"
   }
 }
 

@@ -602,6 +602,36 @@
       "error": "Không thể gửi đánh giá: {0}",
       "selectStars": "Vui lòng chọn số sao"
     }
+  },
+  "phaser": {
+    "title": "Trò chơi robot Phaser",
+    "loading": "Đang tải trò chơi...",
+    "reloadMap": "Tải lại bản đồ & thử thách",
+    "zoomIn": "Phóng to",
+    "zoomOut": "Thu nhỏ",
+    "runProgram": "Chạy chương trình",
+    "resume": "Tiếp tục",
+    "pause": "Tạm dừng",
+    "reset": "Đặt lại",
+    "status": "Trạng thái",
+    "victoryDefault": "Chúc mừng! Bạn đã thắng!",
+    "defeatDefault": "Thua cuộc!",
+    "errorDefault": "Có lỗi trò chơi",
+    "missingChallengeId": "Thiếu mã thử thách. Không thể nộp khi chưa có thử thách hợp lệ.",
+    "missingCodeData": "Thiếu mã chương trình. Hãy tạo block trước.",
+    "submissionFailed": "Nộp bài thất bại: {0}",
+    "details": "Chi tiết",
+    "playAgain": "Chơi lại",
+    "submit": "Nộp bài",
+    "submitting": "Đang nộp...",
+    "simulation": "Giả lập",
+    "close": "Đóng",
+    "gameOverTitle": "Thua cuộc!",
+    "defeatReasonTitle": "Lý do thua",
+    "defeatReasonPrefix": "Lý do thua:",
+    "errorDetails": "Chi tiết lỗi",
+    "expand": "Xem thêm",
+    "collapse": "Thu gọn"
   }
 }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/services/submission_service.dart';
 import 'responsive_helpers.dart';
@@ -45,8 +46,8 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
     
     if (widget.challengeId == null || widget.challengeId!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Missing challenge ID. Cannot submit without a valid challenge.'),
+        SnackBar(
+          content: Text('phaser.missingChallengeId'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -55,8 +56,8 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
     
     if (widget.codeJson == null || widget.codeJson!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Missing code data. Please create some blocks first.'),
+        SnackBar(
+          content: Text('phaser.missingCodeData'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -112,12 +113,10 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
           _isSubmitting = false;
         });
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Submission failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('phaser.submissionFailed'.tr(args: [e.toString()])),
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
@@ -249,7 +248,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
           ),
           // Title
           Text(
-            widget.status == 'LOSE' ? 'Game Over!' : widget.title,
+            widget.status == 'LOSE' ? 'phaser.gameOverTitle'.tr() : widget.title,
             style: TextStyle(
               fontSize: widget.status == 'VICTORY' 
                 ? ResponsiveHelpers.getResponsiveFontSize(screenWidth, screenHeight, isGameOver, isTablet, 'title', widget.status) * (screenWidth > 500 && screenWidth <= 800 ? 0.90 : 0.85)
@@ -440,7 +439,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                   child: ExpansionTile(
                     title: Text(
-                      'Details',
+                      'phaser.details'.tr(),
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -665,8 +664,8 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             Expanded(
               child: ActionButtonWidget(
                 text: widget.status == 'VICTORY' 
-                  ? (_isSubmitting ? 'Submitting...' : 'Submit')
-                  : 'Play Again',
+                  ? (_isSubmitting ? 'phaser.submitting'.tr() : 'phaser.submit'.tr())
+                  : 'phaser.playAgain'.tr(),
                 icon: widget.status == 'VICTORY' 
                   ? (_isSubmitting ? Icons.hourglass_empty : Icons.upload)
                   : Icons.refresh,
@@ -695,7 +694,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             if (widget.onSimulation != null && widget.status == 'VICTORY') ...[
               Expanded(
                 child: ActionButtonWidget(
-                  text: 'Simulation',
+                  text: 'phaser.simulation'.tr(),
                   icon: null,
                   textColor: Colors.white,
                   backgroundColor: Colors.white.withOpacity(0.1),
@@ -722,7 +721,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             ],
             Expanded(
               child: ActionButtonWidget(
-                text: 'Close',
+                text: 'phaser.close'.tr(),
                 icon: Icons.close,
                 textColor: Colors.white70,
                 backgroundColor: Colors.white.withOpacity(0.1),
@@ -742,7 +741,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ActionButtonWidget(
-              text: 'Close',
+              text: 'phaser.close'.tr(),
               icon: Icons.close,
               textColor: Colors.white70,
               backgroundColor: Colors.white.withOpacity(0.1),
