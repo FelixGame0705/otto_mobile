@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CourseSearchBar extends StatelessWidget {
   final String searchTerm;
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onSearchPressed;
   final VoidCallback onClearPressed;
+  final TextEditingController? controller;
+  final EdgeInsetsGeometry margin;
 
   const CourseSearchBar({
     super.key,
@@ -12,15 +15,17 @@ class CourseSearchBar extends StatelessWidget {
     required this.onSearchChanged,
     required this.onSearchPressed,
     required this.onClearPressed,
+    this.controller,
+    this.margin = const EdgeInsets.all(16),
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: margin,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -30,17 +35,14 @@ class CourseSearchBar extends StatelessWidget {
         ],
       ),
       child: TextField(
+        controller: controller,
         onChanged: onSearchChanged,
         onSubmitted: (_) => onSearchPressed(),
         decoration: InputDecoration(
-          hintText: 'Tìm kiếm khóa học...',
+          hintText: 'courses.searchHint'.tr(),
           hintStyle: const TextStyle(
             color: Color(0xFFA0AEC0),
             fontSize: 16,
-          ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: Color(0xFF4299E1),
           ),
           suffixIcon: searchTerm.isNotEmpty
               ? IconButton(
@@ -58,7 +60,7 @@ class CourseSearchBar extends StatelessWidget {
                   onPressed: onSearchPressed,
                 ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(32),
             borderSide: BorderSide.none,
           ),
           filled: true,

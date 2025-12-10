@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/course_model.dart';
-import 'package:ottobit/routes/app_routes.dart';
+import 'package:intl/intl.dart';
 import 'package:ottobit/services/course_service.dart';
 import 'package:ottobit/widgets/courses/course_search_bar.dart';
-
+import 'package:ottobit/widgets/courses/course_card.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 class ExploreCoursesTab extends StatefulWidget {
   const ExploreCoursesTab({super.key});
 
@@ -12,9 +14,16 @@ class ExploreCoursesTab extends StatefulWidget {
 }
 
 class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
+  static const int _defaultSortBy = 1; // CreatedAt
+  static const int _defaultSortDirection = 1; // Descending
+
   final CourseService _courseService = CourseService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  static const double _priceSliderMin = 0;
+  static const double _priceSliderMax = 10000000;
+  static const int _priceSliderDivisions = 100;
 
   List<Course> _courses = [];
   bool _isLoading = true;
@@ -24,6 +33,16 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   int _currentPage = 1;
   int _totalPages = 1;
   bool _hasMoreData = true;
+  int? _minPrice;
+  int? _maxPrice;
+  int? _selectedType;
+  int _sortBy = _defaultSortBy;
+  int _sortDirection = _defaultSortDirection;
+  int? _draftType;
+  int _draftSortBy = _defaultSortBy;
+  int _draftSortDirection = _defaultSortDirection;
+  RangeValues _draftPriceRange =
+      const RangeValues(_priceSliderMin, _priceSliderMax);
 
   @override
   void initState() {
@@ -39,9 +58,18 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
     super.dispose();
   }
 
+  bool get _filtersActive =>
+      _minPrice != null ||
+      _maxPrice != null ||
+      _selectedType != null ||
+      _sortBy != _defaultSortBy ||
+      _sortDirection != _defaultSortDirection;
+
   Future<void> _loadCourses({bool isRefresh = false}) async {
+    final bool isLoadMore = !isRefresh && _currentPage > 1;
     setState(() {
-      _isLoading = true;
+      // Only show the full-screen loader on initial load or explicit refresh
+      _isLoading = !isLoadMore;
       _errorMessage = '';
       if (isRefresh) {
         _currentPage = 1;
@@ -55,6 +83,11 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
         searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
         pageNumber: _currentPage,
         pageSize: 10,
+        minPrice: _minPrice,
+        maxPrice: _maxPrice,
+        type: _selectedType,
+        sortBy: _sortBy,
+        sortDirection: _sortDirection,
       );
 
       if (!mounted) return;
@@ -71,8 +104,9 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
       });
     } catch (e) {
       if (!mounted) return;
+      final isEnglish = context.locale.languageCode == 'en';
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         _isLoading = false;
       });
     }
@@ -94,7 +128,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   }
 
   void _handleSearch() {
-    _searchTerm = _searchController.text.trim();
+    // Use the tracked search term from onChanged to trigger the search
     _loadCourses(isRefresh: true);
   }
 
@@ -110,6 +144,24 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
     _loadCourses(isRefresh: true);
   }
 
+  void _openFilterSheet() {
+    _draftType = _selectedType;
+    _draftSortBy = _sortBy;
+    _draftSortDirection = _sortDirection;
+    final double start =
+        (_minPrice ?? _priceSliderMin.toInt()).toDouble().clamp(
+              _priceSliderMin,
+              _priceSliderMax,
+            );
+    final double end =
+        (_maxPrice ?? _priceSliderMax.toInt()).toDouble().clamp(
+              _priceSliderMin,
+              _priceSliderMax,
+            );
+    _draftPriceRange = RangeValues(start, end);
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
   int _calculateCrossAxisCount(double width, Orientation orientation) {
     if (width >= 1200) return 5;
     if (width >= 900) return 4;
@@ -118,25 +170,68 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   }
 
   double _calculateChildAspectRatio(double width, Orientation orientation) {
-    if (width >= 1200) return 0.8;
-    if (width >= 900) return 0.72;
-    if (width >= 600) return 0.78;
-    return orientation == Orientation.landscape ? 0.7 : 0.54;
+    if (width >= 1200) return 0.75;
+    if (width >= 900) return 0.67;
+    if (width >= 600) return 0.73;
+    return orientation == Orientation.landscape ? 0.65 : 0.49;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CourseSearchBar(
-          searchTerm: _searchTerm,
-          onSearchChanged: _handleSearchChanged,
-          onSearchPressed: _handleSearch,
-          onClearPressed: _handleClearSearch,
-        ),
-        const SizedBox(height: 16),
-        Expanded(child: _buildMainContent()),
-      ],
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Colors.transparent,
+      drawer: _buildFilterDrawer(),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: _openFilterSheet,
+                    icon: Icon(
+                      Icons.tune,
+                      color:
+                          _filtersActive ? Colors.white : const Color(0xFF17a64b),
+                    ),
+                    label: const SizedBox.shrink(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          _filtersActive ? const Color(0xFF17a64b) : Colors.white,
+                      elevation: _filtersActive ? 2 : 0,
+                      side: BorderSide(
+                        color: _filtersActive
+                            ? const Color(0xFF17a64b)
+                            : const Color(0xFFE2E8F0),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CourseSearchBar(
+                    searchTerm: _searchTerm,
+                    controller: _searchController,
+                    onSearchChanged: _handleSearchChanged,
+                    onSearchPressed: _handleSearch,
+                    onClearPressed: _handleClearSearch,
+                    margin: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(child: _buildMainContent()),
+        ],
+      ),
     );
   }
 
@@ -151,24 +246,24 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
           children: [
             const Icon(Icons.error, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Lỗi: $_errorMessage'),
+            Text('${'common.error'.tr()}: $_errorMessage'),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _loadCourses(isRefresh: true),
-              child: const Text('Thử lại'),
+              child: Text('common.retry'.tr()),
             ),
           ],
         ),
       );
     }
     if (_courses.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('Không có khóa học nào', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
+            const Icon(Icons.school, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text('common.notFound'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
           ],
         ),
       );
@@ -201,110 +296,244 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Đã hiển thị tất cả khóa học', style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center),
+              child: Text('courses.allShown'.tr(), style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center),
             ),
           );
         }
         if (index < _courses.length) {
           final course = _courses[index];
-          return _CourseCard(course: course);
+          return CourseGridCard(course: course);
         }
         return const SizedBox.shrink();
       },
     );
   }
-}
 
-class _CourseCard extends StatelessWidget {
-  final Course course;
-  const _CourseCard({required this.course});
+  String _formatCurrency(double value) {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    final intValue = value.round();
+    final formatted = formatter.format(intValue);
+    return '$formatted ₫';
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: SizedBox(
-              height: 120,
-              width: double.infinity,
-              child: course.imageUrl.isNotEmpty
-                  ? Image.network(
-                      course.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _placeholder(),
-                    )
-                  : _placeholder(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(course.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2D3748)), maxLines: 2, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 6),
-                Text(course.description, style: const TextStyle(fontSize: 12, color: Color(0xFF718096), height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(child: _buildStatChip(Icons.play_lesson, '${course.lessonsCount}', const Color(0xFF48BB78))),
-                    const SizedBox(width: 4),
-                    Expanded(child: _buildStatChip(Icons.people, '${course.enrollmentsCount}', const Color(0xFFED8936))),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, AppRoutes.courseDetail, arguments: course.id),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4299E1),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      elevation: 1,
+  Widget _buildFilterDrawer() {
+    return Drawer(
+      child: SafeArea(
+        child: StatefulBuilder(
+          builder: (context, setDrawerState) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF17a64b).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text('Xem chi tiết', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.tune, color: Color(0xFF17a64b)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'courses.filter.title'.tr(),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF166534),
+                              ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Widget _placeholder() {
-    return Container(
-      color: Colors.grey[300],
-      child: const Center(child: Icon(Icons.image_not_supported)),
-    );
-  }
-
-  Widget _buildStatChip(IconData icon, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 3),
-          Text(text, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w500)),
-        ],
+                  const SizedBox(height: 24),
+                  Text(
+                    'courses.filter.priceRange'.tr(),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatCurrency(_draftPriceRange.start),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                        Text(
+                          _formatCurrency(_draftPriceRange.end),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2D3748),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      sliderTheme: SliderTheme.of(context).copyWith(
+                        activeTrackColor: const Color(0xFF17a64b),
+                        inactiveTrackColor: const Color(0xFF17a64b).withOpacity(0.2),
+                        thumbColor: const Color(0xFF17a64b),
+                        overlayColor: const Color(0x3317a64b),
+                        valueIndicatorColor: const Color(0xFF17a64b),
+                      ),
+                    ),
+                    child: RangeSlider(
+                      values: _draftPriceRange,
+                      min: _priceSliderMin,
+                      max: _priceSliderMax,
+                      divisions: _priceSliderDivisions,
+                      labels: RangeLabels(
+                        _formatCurrency(_draftPriceRange.start),
+                        _formatCurrency(_draftPriceRange.end),
+                      ),
+                      onChanged: (values) => setDrawerState(() {
+                        _draftPriceRange = values;
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'courses.filter.courseType'.tr(),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ChoiceChip(
+                        label: Text('courses.filter.all'.tr()),
+                        selected: _draftType == null,
+                        onSelected: (_) => setDrawerState(() => _draftType = null),
+                      ),
+                      ChoiceChip(
+                        label: Text('courses.filter.free'.tr()),
+                        selected: _draftType == 1,
+                        onSelected: (_) => setDrawerState(() => _draftType = 1),
+                      ),
+                      ChoiceChip(
+                        label: Text('courses.filter.paid'.tr()),
+                        selected: _draftType == 2,
+                        onSelected: (_) => setDrawerState(() => _draftType = 2),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'courses.filter.sortBy'.tr(),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    value: _draftSortBy,
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text('courses.filter.sortByTitle'.tr())),
+                      DropdownMenuItem(value: 1, child: Text('courses.filter.sortByCreated'.tr())),
+                    ],
+                    onChanged: (value) =>
+                        setDrawerState(() => _draftSortBy = value ?? _defaultSortBy),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'courses.filter.sortOrder'.tr(),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    value: _draftSortDirection,
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text('courses.filter.ascending'.tr())),
+                      DropdownMenuItem(value: 1, child: Text('courses.filter.descending'.tr())),
+                    ],
+                    onChanged: (value) => setDrawerState(
+                        () => _draftSortDirection = value ?? _defaultSortDirection),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            setDrawerState(() {
+                              _draftPriceRange = const RangeValues(
+                                _priceSliderMin,
+                                _priceSliderMax,
+                              );
+                              _draftType = null;
+                              _draftSortBy = _defaultSortBy;
+                              _draftSortDirection = _defaultSortDirection;
+                            });
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: Text('courses.filter.reset'.tr()),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF17a64b),
+                            side: const BorderSide(color: Color(0xFF17a64b)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            final int startValue =
+                                _draftPriceRange.start.round();
+                            final int endValue = _draftPriceRange.end.round();
+                            setState(() {
+                              _minPrice = startValue > 0 ? startValue : null;
+                              _maxPrice = endValue < _priceSliderMax
+                                  ? endValue
+                                  : null;
+                              _selectedType = _draftType;
+                              _sortBy = _draftSortBy;
+                              _sortDirection = _draftSortDirection;
+                            });
+                            Navigator.of(context).pop();
+                            _loadCourses(isRefresh: true);
+                          },
+                          icon: const Icon(Icons.check),
+                          label: Text('courses.filter.apply'.tr()),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF17a64b),
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 }
-
 

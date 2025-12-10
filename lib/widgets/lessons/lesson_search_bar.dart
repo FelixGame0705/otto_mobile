@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LessonSearchBar extends StatelessWidget {
   final String searchTerm;
@@ -35,7 +36,7 @@ class LessonSearchBar extends StatelessWidget {
             child: TextField(
               onChanged: onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Tìm kiếm bài học...',
+                hintText: 'lessons.searchHint'.tr(),
                 hintStyle: TextStyle(
                   color: Colors.grey[600],
                   fontSize: 14,
@@ -62,7 +63,7 @@ class LessonSearchBar extends StatelessWidget {
                 color: Colors.grey[600],
                 size: 20,
               ),
-              tooltip: 'Xóa tìm kiếm',
+              tooltip: 'common.clearSearch'.tr(),
             ),
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -77,9 +78,9 @@ class LessonSearchBar extends StatelessWidget {
                 ),
                 elevation: 2,
               ),
-              child: const Text(
-                'Tìm',
-                style: TextStyle(
+            child: Text(
+              'common.search'.tr(),
+              style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),

@@ -3,15 +3,17 @@ import 'package:flutter/material.dart';
 class ResponsiveHelpers {
   static double getResponsiveMaxWidth(double screenWidth, bool isGameOver, bool isTablet) {
     if (screenWidth > 1200) { // Large desktop
-      return isGameOver ? 400 : 480;
+      return isGameOver ? 450 : 520;
     } else if (screenWidth > 900) { // Desktop
-      return isGameOver ? 360 : 440;
+      return isGameOver ? 400 : 480;
     } else if (screenWidth > 600) { // Tablet
-      return isGameOver ? 320 : 380;
+      return isGameOver ? 360 : 420;
+    } else if (screenWidth > 500) { // Samsung A23 và các màn hình tương tự (720px)
+      return screenWidth * (isGameOver ? 0.78 : 0.82); // Giảm từ 0.88 xuống 0.82 để dialog nhỏ hơn
     } else if (screenWidth > 400) { // Large phone
-      return screenWidth * (isGameOver ? 0.75 : 0.85);
+      return screenWidth * (isGameOver ? 0.80 : 0.88);
     } else { // Small phone
-      return screenWidth * (isGameOver ? 0.85 : 0.90);
+      return screenWidth * (isGameOver ? 0.88 : 0.92);
     }
   }
 
@@ -22,6 +24,9 @@ class ResponsiveHelpers {
     
     if (screenHeight < 600) { // Small screen
       return screenHeight * (baseRatio + 0.05);
+    } else if (screenHeight > 1400 && screenHeight < 1700) {
+      // Samsung A23 và các màn hình tương tự (1600px) - giảm ratio để dialog nhỏ hơn
+      return screenHeight * (baseRatio - 0.10);
     } else if (screenHeight > 900) { // Large screen
       return screenHeight * (baseRatio - 0.05);
     }
@@ -36,15 +41,47 @@ class ResponsiveHelpers {
   }
 
   static EdgeInsets getResponsivePadding(double screenWidth, double screenHeight, bool isTablet, bool isGameOver, String section) {
-    final scale = screenWidth < 400 ? 0.8 : (screenWidth > 800 ? 1.2 : 1.0);
+    double scale;
+    if (screenWidth > 1200) {
+      scale = 1.3;
+    } else if (screenWidth > 900) {
+      scale = 1.2;
+    } else if (screenWidth > 600) {
+      scale = 1.0;
+    } else if (screenWidth > 500) {
+      // Samsung A23 (720px) - scale nhỏ hơn một chút
+      scale = 0.85;
+    } else if (screenWidth > 400) {
+      scale = 0.9;
+    } else {
+      scale = 0.8;
+    }
     
     switch (section) {
       case 'header':
-        return EdgeInsets.all((isTablet ? 16 : 12) * scale);
+        if (screenWidth > 1200) {
+          return EdgeInsets.all(20 * scale);
+        } else if (screenWidth > 600) {
+          return EdgeInsets.all(16 * scale);
+        } else {
+          return EdgeInsets.all(12 * scale);
+        }
       case 'content':
-        return EdgeInsets.all((isTablet ? 16 : (isGameOver ? 10 : 12)) * scale);
+        if (screenWidth > 1200) {
+          return EdgeInsets.all(20 * scale);
+        } else if (screenWidth > 600) {
+          return EdgeInsets.all(16 * scale);
+        } else {
+          return EdgeInsets.all(isGameOver ? 10 * scale : 12 * scale);
+        }
       case 'actions':
-        return EdgeInsets.all((isTablet ? 14 : (isGameOver ? 10 : 12)) * scale);
+        if (screenWidth > 1200) {
+          return EdgeInsets.all(18 * scale);
+        } else if (screenWidth > 600) {
+          return EdgeInsets.all(14 * scale);
+        } else {
+          return EdgeInsets.all(isGameOver ? 10 * scale : 12 * scale);
+        }
       default:
         return EdgeInsets.all(12 * scale);
     }
@@ -57,6 +94,8 @@ class ResponsiveHelpers {
       baseSize = isLandscape ? 80.0 : 90.0;
     } else if (screenWidth > 600) { // Tablet
       baseSize = isLandscape ? 70.0 : 80.0;
+    } else if (screenWidth > 500) { // Samsung A23 (720px) và các màn hình tương tự
+      baseSize = isLandscape ? 65.0 : 75.0;
     } else if (screenWidth > 400) { // Large phone
       baseSize = isLandscape ? 60.0 : 70.0;
     } else { // Small phone
@@ -71,10 +110,15 @@ class ResponsiveHelpers {
     
     switch (type) {
       case 'title':
-        if (screenWidth > 800) {
+        if (screenWidth > 1200) {
+          baseSize = 32.0;
+        } else if (screenWidth > 900) {
           baseSize = 28.0;
         } else if (screenWidth > 600) {
           baseSize = 24.0;
+        } else if (screenWidth > 500) {
+          // Samsung A23 (720px) - giảm font size một chút
+          baseSize = 19.0;
         } else if (screenWidth > 400) {
           baseSize = 20.0;
         } else {
@@ -87,10 +131,17 @@ class ResponsiveHelpers {
         }
         return baseSize;
       case 'status':
-        if (screenWidth > 800) {
+        if (screenWidth > 1200) {
+          baseSize = 18.0;
+        } else if (screenWidth > 900) {
           baseSize = 16.0;
         } else if (screenWidth > 600) {
           baseSize = 14.0;
+        } else if (screenWidth > 500) {
+          // Samsung A23 (720px)
+          baseSize = 12.5;
+        } else if (screenWidth > 400) {
+          baseSize = 13.0;
         } else {
           baseSize = 12.0;
         }
@@ -101,7 +152,9 @@ class ResponsiveHelpers {
         }
         return baseSize;
       case 'reason':
-        if (screenWidth > 800) {
+        if (screenWidth > 1200) {
+          baseSize = 16.0;
+        } else if (screenWidth > 900) {
           baseSize = 15.0;
         } else if (screenWidth > 600) {
           baseSize = 14.0;

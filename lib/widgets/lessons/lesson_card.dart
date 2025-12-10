@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_model.dart';
 
 class LessonCard extends StatelessWidget {
@@ -38,7 +39,7 @@ class LessonCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Bài ${lesson.order + 1}',
+                      'lessons.order'.tr(namedArgs: {'n': '${lesson.order + 1}'}),
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -115,9 +116,9 @@ class LessonCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-                      child: const Text(
-                        'Xem bài học',
-                        style: TextStyle(
+                      child: Text(
+                        'common.viewDetails'.tr(),
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),

@@ -102,6 +102,46 @@
           if (typeof v === "string") return v;
           return JSON.stringify(v);
         }
+        function getVariableName(variable) {
+          if (!variable) return null;
+          if (typeof variable === "string") return variable;
+          if (typeof variable === "object") {
+            if (variable.type === "function" && variable.name) {
+              return String(variable.name);
+            }
+            if (variable.name) {
+              return String(variable.name);
+            }
+          }
+          return null;
+        }
+        function normalizeCompareOperator(op) {
+          if (!op) return "EQ";
+          switch (op) {
+            case "EQ":
+            case "=":
+            case "==":
+              return "EQ";
+            case "NEQ":
+            case "!=":
+            case "<>":
+              return "NEQ";
+            case "LT":
+            case "<":
+              return "LT";
+            case "GT":
+            case ">":
+              return "GT";
+            case "LTE":
+            case "<=":
+              return "LTE";
+            case "GTE":
+            case ">=":
+              return "GTE";
+            default:
+              return "EQ";
+          }
+        }
         function condToPy(cond) {
           if (!cond) return "True";
           switch (cond.type) {
@@ -138,11 +178,11 @@
                 LTE: " <= ",
                 GTE: " >= ",
               };
-              var op = opMap[cond.operator] || " == ";
+              var canonOp = normalizeCompareOperator(cond.operator);
+              var op = opMap[canonOp] || " == ";
               if (cond.type === "variableComparison") {
-                return (
-                  "(" + (cond.variable || "x") + op + pyVal(cond.value) + ")"
-                );
+                var vName = getVariableName(cond.variable) || "x";
+                return "(" + vName + op + pyVal(cond.value) + ")";
               } else {
                 return "(" + pyVal(cond.left) + op + pyVal(cond.right) + ")";
               }
@@ -290,6 +330,109 @@
     <script>
       (function () {
         const C = Blockly;
+        let variableOptions = [
+          ["i", "i"],
+          ["a", "a"],
+          ["b", "b"],
+        ];
+
+        function getVariableDropdownOptions() {
+          return variableOptions.length ? variableOptions : [["i", "i"]];
+        }
+
+        function ensureVariableOption(name) {
+          if (!name) return;
+          if (
+            !variableOptions.some(function (entry) {
+              return entry[1] === name;
+            })
+          ) {
+            variableOptions = variableOptions.concat([[name, name]]);
+          }
+        }
+
+        function collectVariablesFromNodes(nodes, set) {
+          if (!Array.isArray(nodes)) return;
+          nodes.forEach(function (node) {
+            if (!node || typeof node !== "object") return;
+            if (node.type === "repeatRange") {
+              const variable = node.variable;
+              if (typeof variable === "string" && variable.trim().length) {
+                set.add(variable);
+              }
+            }
+            ["body", "then", "else"].forEach(function (key) {
+              if (Array.isArray(node[key])) {
+                collectVariablesFromNodes(node[key], set);
+              }
+            });
+            if (Array.isArray(node.thens)) {
+              node.thens.forEach(function (branch) {
+                collectVariablesFromNodes(branch, set);
+              });
+            }
+          });
+        }
+
+        function updateVariableOptions(program) {
+          const defaults = ["i", "a", "b"];
+          const names = new Set(defaults);
+          if (program && Array.isArray(program.variables)) {
+            program.variables.forEach(function (v) {
+              if (typeof v === "string" && v.trim().length) {
+                names.add(v);
+              }
+            });
+          }
+          if (program) {
+            collectVariablesFromNodes(program.actions, names);
+            if (Array.isArray(program.functions)) {
+              program.functions.forEach(function (fn) {
+                if (fn && Array.isArray(fn.body)) {
+                  collectVariablesFromNodes(fn.body, names);
+                }
+              });
+            }
+          }
+          variableOptions = Array.from(names).map(function (name) {
+            return [name, name];
+          });
+        }
+
+        function extractTemplateVariable(value) {
+          if (typeof value !== "string") return null;
+          var trimmed = value.trim();
+          if (!trimmed.startsWith("{{") || !trimmed.endsWith("}}")) return null;
+          var name = trimmed.substring(2, trimmed.length - 2).trim();
+          return name ? name : null;
+        }
+        function normalizeCompareOperator(op) {
+          if (!op) return "EQ";
+          switch (op) {
+            case "EQ":
+            case "=":
+            case "==":
+              return "EQ";
+            case "NEQ":
+            case "!=":
+            case "<>":
+              return "NEQ";
+            case "LT":
+            case "<":
+              return "LT";
+            case "GT":
+            case ">":
+              return "GT";
+            case "LTE":
+            case "<=":
+              return "LTE";
+            case "GTE":
+            case ">=":
+              return "GTE";
+            default:
+              return "EQ";
+          }
+        }
         // Minimal custom blocks subset to visualize program
         if (!C.Blocks["start"])
           C.Blocks["start"] = {
@@ -339,6 +482,7 @@
                 new C.FieldDropdown([
                   ["green", "green"],
                   ["yellow", "yellow"],
+                  ["red", "red"],
                 ]),
                 "COLOR"
               );
@@ -358,7 +502,7 @@
               this.setInputsInline(true);
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
-              this.setColour("#ff6b36");
+              this.setColour("#ffbe3b");
             },
           };
         if (!C.Blocks["repeat_range"])
@@ -367,11 +511,7 @@
               this.appendDummyInput()
                 .appendField("repeat")
                 .appendField(
-                  new C.FieldDropdown([
-                    ["i", "i"],
-                    ["a", "a"],
-                    ["b", "b"],
-                  ]),
+                  new C.FieldDropdown(getVariableDropdownOptions),
                   "VAR"
                 )
                 .appendField(" from(");
@@ -385,7 +525,18 @@
               this.setInputsInline(true);
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
-              this.setColour("#ff6b36");
+              this.setColour("#ffbe3b");
+            },
+          };
+        if (!C.Blocks["var_ref"])
+          C.Blocks["var_ref"] = {
+            init: function () {
+              this.appendDummyInput().appendField(
+                new C.FieldDropdown(getVariableDropdownOptions),
+                "VAR"
+              );
+              this.setOutput(true, "Number");
+              this.setColour("#ff8c19");
             },
           };
         if (!C.Blocks["if_color"])
@@ -452,7 +603,7 @@
         if (!C.Blocks["batteryCount"])
           C.Blocks["batteryCount"] = {
             init: function () {
-              this.appendDummyInput().appendField("batteryCount");
+              this.appendDummyInput().appendField("🔋 Number");
               this.setOutput(true, "Number");
               this.setColour("#45b7d1");
             },
@@ -468,7 +619,7 @@
         if (!C.Blocks["warehouseCount"])
           C.Blocks["warehouseCount"] = {
             init: function () {
-              this.appendDummyInput().appendField("warehouseCount");
+              this.appendDummyInput().appendField("📦 Number");
               this.setOutput(true, "Number");
               this.setColour("#45b7d1");
             },
@@ -484,7 +635,7 @@
                 "VALUE"
               );
               this.setOutput(true, "Boolean");
-              this.setColour("#9b27b0");
+              this.setColour("#8e44ad");
             },
           };
         if (!C.Blocks["check_pin_boolean"])
@@ -501,7 +652,7 @@
                   "COLOR"
                 );
               this.setOutput(true, "Boolean");
-              this.setColour("#9b27b0");
+              this.setColour("#8e44ad");
             },
           };
         if (!C.Blocks["pin_color_compare"])
@@ -558,7 +709,7 @@
                 "VAR"
               );
               this.setOutput(true, "Number");
-              this.setColour("#9b27b0");
+              this.setColour("#ff8c19");
             },
           };
         if (!C.Blocks["compare"])
@@ -596,7 +747,7 @@
               this.appendStatementInput("BODY").appendField("do");
               this.setPreviousStatement(false);
               this.setNextStatement(false);
-              this.setColour("#ff9f43");
+              this.setColour("#40e0d0");
             },
           };
         if (!C.Blocks["function_call"])
@@ -611,7 +762,7 @@
                 );
               this.setPreviousStatement(true, null);
               this.setNextStatement(true, null);
-              this.setColour("#ff9f43");
+              this.setColour("#40e0d0");
             },
           };
 
@@ -621,6 +772,16 @@
           trashcan: false,
           renderer: "zelos",
         });
+
+        function makeVarRefBlock(name) {
+          if (!name) return null;
+          ensureVariableOption(name);
+          const block = workspace.newBlock("var_ref");
+          block.setFieldValue(name, "VAR");
+          block.initSvg();
+          block.render();
+          return block;
+        }
 
         // Notify flutter webview is ready (after Blockly is initialized)
         try {
@@ -634,12 +795,26 @@
           b.render();
           return b;
         }
+
+        function connectValue(connection, value) {
+          if (!connection) return;
+          const templateVar = extractTemplateVariable(value);
+          if (templateVar) {
+            const varBlock = makeVarRefBlock(templateVar);
+            if (varBlock && varBlock.outputConnection) {
+              connection.connect(varBlock.outputConnection);
+            }
+            return;
+          }
+          if (value === undefined || value === null) return;
+          const nb = makeNumberBlock(value);
+          connection.connect(nb.outputConnection);
+        }
+
         function attachNumber(parent, name, val) {
-          if (val === undefined || val === null) return;
-          const nb = makeNumberBlock(val);
           const inp = parent.getInput(name);
-          if (inp && inp.connection)
-            inp.connection.connect(nb.outputConnection);
+          if (!inp || !inp.connection) return;
+          connectValue(inp.connection, val);
         }
 
         function buildCond(cond) {
@@ -665,30 +840,42 @@
             return b;
           }
           if (cond.type === "variableComparison") {
-            if (cond.variable === "pinColor") {
+            const rawVar = cond.variable;
+            const varName =
+              typeof rawVar === "string"
+                ? rawVar
+                : rawVar && typeof rawVar === "object"
+                ? rawVar.name || null
+                : null;
+            const canonOp = normalizeCompareOperator(cond.operator);
+            if (varName === "pinColor") {
               const b = workspace.newBlock("pin_color_compare");
-              b.setFieldValue(cond.operator || "EQ", "OP");
+              b.setFieldValue(canonOp || "EQ", "OP");
               b.setFieldValue(cond.value || "green", "COLOR");
               b.initSvg();
               b.render();
               return b;
             }
             const cmp = workspace.newBlock("compare");
-            cmp.setFieldValue(cond.operator || "EQ", "OP");
+            cmp.setFieldValue(canonOp || "EQ", "OP");
             let left = null;
-            if (cond.variable === "batteryCount")
+            if (varName === "batteryCount")
               left = workspace.newBlock("batteryCount");
-            else if (cond.variable === "warehouseCount")
+            else if (varName === "warehouseCount")
               left = workspace.newBlock("warehouseCount");
-            else if (cond.variable === "getNumberBox")
+            else if (varName === "getNumberBox")
               left = workspace.newBlock("getNumberBox");
+            else if (typeof varName === "string") {
+              ensureVariableOption(varName);
+              left = workspace.newBlock("var_ref");
+              left.setFieldValue(varName, "VAR");
+            }
             if (left) {
               left.initSvg();
               left.render();
               cmp.getInput("A").connection.connect(left.outputConnection);
             }
-            const rb = makeNumberBlock(cond.value ?? 0);
-            cmp.getInput("B").connection.connect(rb.outputConnection);
+            connectValue(cmp.getInput("B").connection, cond.value ?? 0);
             cmp.initSvg();
             cmp.render();
             return cmp;
@@ -706,11 +893,10 @@
           }
           if (cond.type === "compare") {
             const b = workspace.newBlock("compare");
-            b.setFieldValue(cond.operator || "EQ", "OP");
-            const la = makeNumberBlock(cond.left ?? 0);
-            const rb = makeNumberBlock(cond.right ?? 0);
-            b.getInput("A").connection.connect(la.outputConnection);
-            b.getInput("B").connection.connect(rb.outputConnection);
+            const canonOp2 = normalizeCompareOperator(cond.operator);
+            b.setFieldValue(canonOp2 || "EQ", "OP");
+            connectValue(b.getInput("A").connection, cond.left ?? 0);
+            connectValue(b.getInput("B").connection, cond.right ?? 0);
             b.initSvg();
             b.render();
             return b;
@@ -783,7 +969,9 @@
             }
             case "repeatRange": {
               const b = workspace.newBlock("repeat_range");
-              b.setFieldValue(n.variable || "i", "VAR");
+              const variableName = n.variable || "i";
+              ensureVariableOption(variableName);
+              b.setFieldValue(variableName, "VAR");
               attachNumber(b, "FROM", n.from ?? 0);
               attachNumber(b, "TO", n.to ?? 10);
               attachNumber(b, "STEP", n.step ?? 1);
@@ -872,6 +1060,7 @@
           } catch (_) {}
         }
         function renderProgram(p) {
+          updateVariableOptions(p || {});
           workspace.clear();
           let fy = 20;
           if (Array.isArray(p.functions)) {

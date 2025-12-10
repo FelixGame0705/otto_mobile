@@ -7,11 +7,27 @@ import 'package:ottobit/screens/profile/profile_screen.dart';
 import 'package:ottobit/screens/courses/course_detail_screen.dart';
 import 'package:ottobit/screens/lessons/lessons_screen.dart';
 import 'package:ottobit/screens/lessons/lesson_detail_screen.dart';
-import 'package:ottobit/features/phaser/phaser_runner_screen.dart';
+import 'package:ottobit/screens/lessons/lesson_resources_screen.dart';
+import 'package:ottobit/screens/lessons/lesson_resource_detail_screen.dart';
+import 'package:ottobit/screens/phaser/phaser_runner_screen.dart';
 import 'package:ottobit/screens/challenges/challenges_screen.dart';
-import 'package:ottobit/features/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/screens/blockly/blockly_editor_screen.dart';
+import 'package:ottobit/screens/detect/detect_capture_screen.dart';
 import 'package:ottobit/screens/auth/change_password_screen.dart';
-import 'package:ottobit/screens/microbit/microbit_connection_screen.dart';
+import 'package:ottobit/screens/products/product_detail_screen.dart';
+import 'package:ottobit/screens/universal_hex/universal_hex_screen.dart';
+import 'package:ottobit/screens/cart/cart_screen.dart';
+import 'package:ottobit/screens/order/checkout_screen.dart';
+import 'package:ottobit/screens/order/orders_screen.dart';
+import 'package:ottobit/screens/order/order_detail_screen.dart';
+import 'package:ottobit/models/cart_model.dart';
+import 'package:ottobit/screens/order/payment_webview_screen.dart';
+import 'package:ottobit/screens/onboarding/onboarding_screen.dart';
+import 'package:ottobit/screens/splash/splash_screen.dart';
+import 'package:ottobit/screens/news/blog_detail_screen.dart';
+import 'package:ottobit/screens/certificates/certificates_screen.dart';
+import 'package:ottobit/screens/certificates/certificate_detail_screen.dart';
+import 'package:ottobit/models/certificate_model.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -24,16 +40,39 @@ class AppRoutes {
   static const String lessons = '/lessons';
   static const String lessonDetail = '/lesson-detail';
   static const String challenges = '/challenges';
+  static const String lessonResources = '/lesson-resources';
+  static const String lessonResourceDetail = '/lesson-resource-detail';
+  static const String productDetail = '/product-detail';
   static const String changePassword = '/change-password';
   static const String phaser = '/phaser';
   static const String blockly = '/blockly';
-  static const String microbitConnection = '/microbit-connection';
+  static const String detectCapture = '/detect-capture';
+  static const String universalHex = '/universal-hex';
+  static const String cart = '/cart';
+  static const String checkout = '/checkout';
+  static const String orders = '/orders';
+  static const String orderDetail = '/order-detail';
+  static const String paymentWebview = '/payment-webview';
+  static const String onboarding = '/onboarding';
+  static const String splash = '/splash';
+  static const String blogDetail = '/blog-detail';
+  static const String certificates = '/certificates';
+  static const String certificateDetail = '/certificate-detail';
 
   static Map<String, WidgetBuilder> get routes => {
+    splash: (context) => const SplashScreen(),
+    onboarding: (context) => const OnboardingScreen(),
     login: (context) => const LoginScreen(),
     register: (context) => const RegisterScreen(),
     forgotPassword: (context) => const ForgotPasswordScreen(),
-    home: (context) => const HomeScreen(),
+    home: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      int initialIndex = 0;
+      if (args is Map<String, dynamic>) {
+        initialIndex = (args['initialIndex'] as int?) ?? 0;
+      }
+      return HomeScreen(initialIndex: initialIndex);
+    },
     profile: (context) => const ProfileScreen(),
     courseDetail: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
@@ -81,11 +120,13 @@ class AppRoutes {
         final lessonId = args['lessonId'] as String?;
         final courseId = args['courseId'] as String?;
         final lessonTitle = args['lessonTitle'] as String?;
+        final showBestStars = args['showBestStars'] as bool? ?? false;
         if (lessonId != null) {
           return ChallengesScreen(
             lessonId: lessonId,
             courseId: courseId,
             lessonTitle: lessonTitle,
+            showBestStars: showBestStars,
           );
         }
       }
@@ -95,9 +136,134 @@ class AppRoutes {
         ),
       );
     },
+    lessonResources: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final lessonId = args['lessonId'] as String?;
+        final lessonTitle = args['lessonTitle'] as String?;
+        if (lessonId != null) {
+          return LessonResourcesScreen(lessonId: lessonId, lessonTitle: lessonTitle);
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin tài nguyên bài học'),
+        ),
+      );
+    },
+    lessonResourceDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        return LessonResourceDetailScreen(resourceId: args);
+      }
+      if (args is Map<String, dynamic>) {
+        final id = args['resourceId'] as String?;
+        if (id != null) {
+          return LessonResourceDetailScreen(resourceId: id);
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin tài nguyên'),
+        ),
+      );
+    },
     changePassword: (context) => const ChangePasswordScreen(),
     phaser: (context) => const PhaserRunnerScreen(),
     blockly: (context) => const BlocklyEditorScreen(),
-    microbitConnection: (context) => const MicrobitConnectionScreen(),
+    detectCapture: (context) => const DetectCaptureScreen(),
+    universalHex: (context) => const UniversalHexScreen(),
+    productDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final productId = args['productId'] as String?;
+        final productType = args['productType'] as String? ?? 'robot';
+        if (productId != null) {
+          return ProductDetailScreen(
+            productId: productId,
+            productType: productType,
+          );
+        }
+      } else if (args is String) {
+        // Backward compatibility for old String argument
+        return ProductDetailScreen(productId: args);
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin sản phẩm'),
+        ),
+      );
+    },
+    cart: (context) => const CartScreen(),
+    checkout: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final cartItems = args['cartItems'] as List<CartItem>?;
+        final cartSummary = args['cartSummary'] as CartSummary?;
+        if (cartItems != null) {
+          return CheckoutScreen(
+            cartItems: cartItems,
+            cartSummary: cartSummary,
+          );
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin giỏ hàng'),
+        ),
+      );
+    },
+    orders: (context) => const OrdersScreen(),
+    orderDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) return OrderDetailScreen(orderId: args);
+      return const Scaffold(body: Center(child: Text('Thiếu mã đơn hàng')));
+    },
+    paymentWebview: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is Map<String, dynamic>) {
+        final paymentUrl = args['paymentUrl'] as String?;
+        final returnUrl = args['returnUrl'] as String?;
+        final cancelUrl = args['cancelUrl'] as String?;
+        final amount = args['amount'] as int?;
+        final description = args['description'] as String?;
+        if (paymentUrl != null && returnUrl != null && cancelUrl != null) {
+          return PaymentWebViewScreen(paymentUrl: paymentUrl, returnUrl: returnUrl, cancelUrl: cancelUrl, amount: amount, description: description);
+        }
+      }
+      return const Scaffold(body: Center(child: Text('Thiếu tham số thanh toán')));
+    },
+    blogDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        return BlogDetailScreen(slug: args);
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Thiếu thông tin bài viết'),
+        ),
+      );
+    },
+    certificates: (context) => const CertificatesScreen(),
+    certificateDetail: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is String) {
+        return CertificateDetailScreen(certificateId: args);
+      } else if (args is Map<String, dynamic>) {
+        final certificateId = args['certificateId'] as String?;
+        final certificate = args['certificate'] as Certificate?;
+        if (certificateId != null) {
+          return CertificateDetailScreen(
+            certificateId: certificateId,
+            certificate: certificate,
+          );
+        }
+      }
+      return const Scaffold(
+        body: Center(
+          child: Text('Missing certificate ID'),
+        ),
+      );
+    },
   };
 }

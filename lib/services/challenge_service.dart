@@ -71,7 +71,8 @@ class ChallengeService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('ChallengeService: Exception: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('ChallengeService error: $friendly');
       rethrow;
     }
   }

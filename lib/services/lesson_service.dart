@@ -70,8 +70,9 @@ class LessonService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('LessonService: Exception: $e');
-      throw Exception('Error fetching lessons: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('LessonService error (getLessons): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -102,8 +103,9 @@ class LessonService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('LessonService: Exception: $e');
-      rethrow;
+      final friendly = ApiErrorMapper.fromException(e);
+      print('LessonService error (getLessonById): $friendly');
+      throw Exception(friendly);
     }
   }
 }

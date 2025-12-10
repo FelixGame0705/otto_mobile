@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blockly Editor</title>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+      }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      background: #f7f9fc;
+      color: #111827;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+      #root {
+        display: flex;
+      }
+      #blocklyDiv {
+        height: 100%;
+        flex: 1;
+      }
+
+    /* Toolbox panel */
+    .blocklyToolboxDiv {
+      background: #ffffff !important;
+      border-right: 1px solid #e5e7eb;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 2px 4px rgba(0, 0, 0, 0.06);
+    }
+    .blocklyTreeRow {
+      height: 32px;
+      border-radius: 6px;
+      margin: 2px 6px;
+      padding: 4px 8px;
+    }
+      .blocklyTreeLabel {
+        color: #111827;
+        font-size: 13px;
+      }
+      .blocklyTreeRow:hover {
+        background: #f3f4f6;
+      }
+      .blocklyTreeSelected {
+        background: #e5f3ff !important;
+      }
+
+    /* Flyout (category contents) */
+      .blocklyFlyoutBackground {
+        fill: #ffffff !important;
+        fill-opacity: 1 !important;
+      }
+      .blocklyFlyoutLabelText {
+        fill: #6b7280;
+        font-size: 12px;
+      }
+
+    /* Workspace grid/background */
+      .blocklyMainBackground {
+        stroke: #e5e7eb;
+        stroke-width: 1;
+      }
+
+    /* Scrollbars */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #d1d5db;
+        border-radius: 8px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      /* Enhanced styling for if-else-if blocks */
+      .blocklyBlockCanvas .blocklyDraggable[data-id*="if_else_if"] {
+        border-left: 3px solid #3b82f6;
+        border-radius: 8px;
+      }
+
+      .blocklyBlockCanvas
+        .blocklyDraggable[data-id*="if_else_if"]
+        .blocklyText {
+        font-weight: 500;
+      }
+
+      /* Style for the number input field */
+      .blocklyBlockCanvas
+        .blocklyDraggable[data-id*="if_else_if"]
+        .blocklyFieldNumber {
+        background: #f0f9ff;
+        border: 1px solid #3b82f6;
+        border-radius: 4px;
+        padding: 2px 4px;
+        font-weight: bold;
+        color: #1e40af;
+      }
+
+      /* Style for else-if branches */
+      .blocklyBlockCanvas
+        .blocklyDraggable[data-id*="if_else_if"]
+        .blocklyDummyInput {
+        margin: 4px 0;
+      }
+
+      .blocklyBlockCanvas
+        .blocklyDraggable[data-id*="if_else_if"]
+        .blocklyDummyInput
+        .blocklyText {
+        color: #059669;
+        font-weight: 600;
+      }
+
+      /* Style for branch count label */
+      .blocklyBlockCanvas
+        .blocklyDraggable[data-id*="if_else_if"]
+        .blocklyFieldLabel {
+        background: #10b981;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-weight: bold;
+        font-size: 11px;
+      }
+
+      /* Style for the input section */
+      .blocklyBlockCanvas
+        .blocklyDraggable[data-id*="if_else_if"]
+        .blocklyDummyInput:has(.blocklyFieldNumber) {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 4px 8px;
+        margin: 6px 0;
+      }
+
+      /* Zoom controls - đồng bộ với style Blockly trashcan */
+      .zoom-controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 1000;
+      }
+
+      .zoom-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        color: #6b7280;
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+
+      .zoom-btn svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+      }
+
+      .zoom-btn:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #4b5563;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      }
+
+      .zoom-btn:active {
+        background: #f3f4f6;
+        transform: scale(0.95);
+      }
+
+      .zoom-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+        background: #f9fafb;
+      }
+
+      .zoom-btn:disabled:hover {
+        border-color: #d1d5db;
+        color: #6b7280;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div id="blocklyDiv"></div>
+    <!-- Zoom controls -->
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomIn" title="Zoom in">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/>
+        </svg>
+      </button>
+      <button class="zoom-btn" id="zoomOut" title="Zoom out">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+          <path d="M7 9h5v1H7z"/>
+        </svg>
+      </button>
+    </div>
+      <xml id="toolbox" style="display: none">
+        <category name="🤖" colour="#ff6b6b">
+        <block type="start"></block>
+        <block type="forward"></block>
+        <block type="turn"></block>
+      </category>
+      <category name="🔄" colour="#4ecdc4">
+        <block type="repeat_simple"></block>
+        <block type="repeat_range"></block>
+      </category>
+      <category name="🎮" colour="#4ecdc4">
+        <block type="if_color"></block>
+        <block type="if_else_if"></block>
+        <block type="while_color"></block>
+      </category>
+      <category name="📦" colour="#4ecdc4">
+        <block type="put_box"></block>
+        <block type="take_box"></block>
+        <block type="warehouseCount"></block>
+        <!-- <block type="getNumberBox"></block> -->
+      </category>
+        <category name="📊" colour="#45b7d1">
+        <block type="math_number"></block>
+        <block type="math_arithmetic"></block>
+        <block type="var_ref"></block>
+        </category>
+        <category name="🧠" colour="#a8e6cf">
+          <block type="boolean_value"></block>
+          <block type="logical_operation"></block>
+          <block type="compare"></block>
+        </category>
+        <category name="⚡" colour="#ff9f43">
+          <block type="function_define"></block>
+          <block type="function_call"></block>
+      </category>
+    </xml>
+  </div>
+  <script>
+  // BEGIN inlined custom_blocks.js
+      (function () {
+    const C = Blockly;
+    // Khai báo block "start" (màu vàng, gọn gàng, có tooltip, top-level only, single instance)
+        C.Blocks["start"] = {
+  init: function () {
+            this.appendDummyInput().appendField("▶︎ Start"); // nhấn mạnh bắt đầu
+            this.setPreviousStatement(false); // không cho nối phía trên
+            this.setNextStatement(true, null); // cho phép nối phía dưới
+            this.setInputsInline(true); // bố cục gọn
+            this.setColour("#f5c431"); // coral sáng
+            this.setTooltip(
+              "Điểm bắt đầu của chương trình. Kết nối các khối ở phía dưới để chạy."
+            );
+            this.setHelpUrl("https://developers.google.com/blockly"); // có thể thay link docs riêng của bạn
+  },
+
+  onchange: function (e) {
+    if (!this.workspace || this.isInFlyout) return;
+
+    // 1) Đảm bảo luôn là top-level (không được gắn dưới block khác)
+    if (this.getParent()) {
+              this.unplug(false); // tự tách khỏi parent nếu lỡ gắn vào
+              this.bumpNeighbours(); // đẩy ra nhẹ để tránh chồng lấn
+    }
+
+    // 2) Đảm bảo chỉ có 1 block "start" trong workspace
+            const allStarts = this.workspace
+              .getAllBlocks(false)
+              .filter((b) => b.type === "start");
+    if (allStarts.length > 1) {
+      // Giữ lại block được tạo trước; xóa block mới hơn
+      const oldest = allStarts.reduce((a, b) => (a.id < b.id ? a : b));
+      if (this !== oldest) this.dispose(false);
+    }
+          },
+};
+
+        C.Blocks["forward"] = {
+  init: function () {
+            this.appendDummyInput().appendField("move forward");
+
+    // Ô nhận số (ValueInput), cho phép Number
+            this.appendValueInput("COUNT").setCheck("Number");
+
+    this.setInputsInline(true);
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+            this.setColour("#4b92e3"); // coral sáng
+            this.setTooltip("Di chuyển tiến N bước");
+            this.setHelpUrl("");
+
+    // ---- Gắn shadow math_number mặc định = 10 ----
+            const shadow = Blockly.utils.xml.createElement("shadow");
+            shadow.setAttribute("type", "math_number");
+
+            const field = Blockly.utils.xml.createElement("field");
+            field.setAttribute("name", "NUM");
+            field.textContent = "1"; // giá trị mặc định
+
+    shadow.appendChild(field);
+
+            const input = this.getInput("COUNT");
+    input.connection.setShadowDom(shadow);
+    // Tạo lại shadow ngay khi block được khởi tạo
+    input.connection.respawnShadow_();
+          },
+        };
+
+        C.Blocks["turn"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("turn")
+              .appendField(
+                new C.FieldDropdown([
+                  ["right", "turnRight"],
+                  ["left", "turnLeft"],
+                  ["back", "turnBack"],
+                ]),
+                "DIR"
+              );
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#4b92e3"); // coral sáng
+          },
+        };
+
+        C.Blocks["collect"] = {
+          init: function () {
+            this.appendDummyInput().appendField("collect");
+            this.appendValueInput("COUNT").setCheck("Number");
+            this.appendDummyInput().appendField(
+              new C.FieldDropdown([
+                ["green", "green"],
+                ["yellow", "yellow"],
+                ["red", "red"],
+              ]),
+              "COLOR"
+            );
+        
+        // Gắn shadow math_number mặc định = 1
+            const shadow = Blockly.utils.xml.createElement("shadow");
+            shadow.setAttribute("type", "math_number");
+
+            const field = Blockly.utils.xml.createElement("field");
+            field.setAttribute("name", "NUM");
+            field.textContent = "1"; // giá trị mặc định
+
+        shadow.appendChild(field);
+
+            const input = this.getInput("COUNT");
+        input.connection.setShadowDom(shadow);
+        // Tạo lại shadow ngay khi block được khởi tạo
+        input.connection.respawnShadow_();
+        
+        this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#4b92e3"); // coral sáng
+            this.setTooltip("Collect N items of a chosen color");
+            this.setHelpUrl("");
+          },
+        };
+
+        C.Blocks["repeat_simple"] = {
+          init: function () {
+            this.appendValueInput("COUNT")
+              .setCheck("Number")
+              .appendField("repeat");
+            this.appendStatementInput("DO").appendField("do");
+            this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#ffbe3b"); // teal sáng
+            const shadow = Blockly.utils.xml.createElement("shadow");
+            shadow.setAttribute("type", "math_number");
+
+            const field = Blockly.utils.xml.createElement("field");
+            field.setAttribute("name", "NUM");
+            field.textContent = "3"; // giá trị mặc định
+
+            shadow.appendChild(field);
+
+            const input = this.getInput("COUNT");
+            input.connection.setShadowDom(shadow);
+            input.connection.respawnShadow_();
+          },
+        };
+
+        C.Blocks["repeat_range"] = {
+          init: function () {
+        this.appendDummyInput()
+              .appendField("repeat")
+              .appendField(
+                new C.FieldDropdown([
+                  ["i", "i"],
+                  ["a", "a"],
+                  ["b", "b"],
+                ]),
+                "VAR"
+              )
+              .appendField(" from(");
+
+            this.appendValueInput("FROM").setCheck("Number");
+            this.appendDummyInput().appendField(" to ");
+            this.appendValueInput("TO").setCheck("Number");
+            this.appendDummyInput().appendField(" by ");
+            this.appendValueInput("STEP").setCheck("Number");
+            this.appendDummyInput().appendField(")");
+
+            this.appendStatementInput("DO").appendField("do");
+
+            this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#ffbe3b"); // teal sáng
+            this.setTooltip("for VAR in range(FROM, TO, STEP)");
+
+            // ---- Gắn shadow mặc định cho FROM / TO / STEP ----
+            function makeShadow(num) {
+              const shadow = Blockly.utils.xml.createElement("shadow");
+              shadow.setAttribute("type", "math_number");
+              const field = Blockly.utils.xml.createElement("field");
+              field.setAttribute("name", "NUM");
+              field.textContent = String(num);
+              shadow.appendChild(field);
+              return shadow;
+            }
+
+            const from = this.getInput("FROM");
+            from.connection.setShadowDom(makeShadow(0));
+            from.connection.respawnShadow_();
+
+            const to = this.getInput("TO");
+            to.connection.setShadowDom(makeShadow(10));
+            to.connection.respawnShadow_();
+
+            const step = this.getInput("STEP");
+            step.connection.setShadowDom(makeShadow(1));
+            step.connection.respawnShadow_();
+          },
+        };
+
+        C.Blocks["if_color"] = {
+          init: function () {
+            this.appendValueInput("CONDITION")
+              .setCheck("Boolean")
+              .appendField("if");
+            this.appendStatementInput("THEN");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#8e44ad"); // teal sáng
+          },
+        };
+
+        C.Blocks["while_color"] = {
+          init: function () {
+            this.appendValueInput("CONDITION")
+              .setCheck("Boolean")
+              .appendField("while");
+            this.appendStatementInput("DO").appendField("do");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#4ecdc4"); // teal sáng
+          },
+        };
+
+        // Enhanced if-else-if block with multiple else-if conditions
+        // Block if/else-if với nút +/-
+        // If/Else-If với nút + / - để thêm bớt nhánh; không dùng onchange để tránh xung đột khi kéo
+        // If/Else-If đơn giản: 1 nút dropdown để chọn số nhánh else-if
+        // If/Else-If đơn giản, dropdown chọn số nhánh, an toàn khi kéo từ flyout
+        C.Blocks["if_else_if"] = {
+          init: function () {
+            this.elseIfCount_ = 0;
+            this.maxElseIfs_ = 10;
+            this._didEnterWorkspace_ = !this.isInFlyout;
+
+            this.buildHeader_(); // tạo "if <CONDITION>" + control chọn nhánh
+            this.appendStatementInput("THEN");
+            this.ensureElse_(); // luôn có else
+            this.ensureOrder_(); // ghim header trên cùng, else ở cuối
+
+            this.setPreviousStatement(true);
+            this.setNextStatement(true);
+            this.setColour("#8e44ad"); // teal sáng
+            this.setTooltip(
+              "Chọn số nhánh else-if (0–10). Mỗi nhánh là một điều kiện Boolean + then."
+            );
+          },
+
+          // Header: if <Boolean socket>  +  (branches: dropdown hoặc label khi ở flyout)
+          buildHeader_: function () {
+            if (this.getInput("CONDITION")) this.removeInput("CONDITION");
+            if (this.getInput("BRANCH_CONTROL"))
+              this.removeInput("BRANCH_CONTROL");
+
+            this.appendValueInput("CONDITION")
+              .setCheck("Boolean")
+              .appendField("if");
+
+            const ctrl =
+              this.appendDummyInput("BRANCH_CONTROL");
+            if (!this.isInFlyout) {
+              const dd = new C.FieldDropdown(this.branchOptions_.bind(this));
+              dd.setValue(String(this.elseIfCount_));
+              dd.setValidator((val) => {
+                const n = Math.max(
+                  0,
+                  Math.min(this.maxElseIfs_, parseInt(val || "0", 10) || 0)
+                );
+                this.setBranchCount_(n);
+                return String(n);
+              });
+              ctrl.appendField(dd, "BRANCHES");
+            } else {
+              ctrl.appendField(
+                new C.FieldLabel(String(this.elseIfCount_), "COUNT_LABEL")
+              );
+            }
+          },
+
+          branchOptions_: function () {
+            const arr = [];
+            for (let i = 0; i <= this.maxElseIfs_; i++)
+              arr.push([String(i), String(i)]);
+            return arr;
+          },
+
+          // Luôn giữ header ở đầu, else ở cuối
+          ensureOrder_: function () {
+            if (this.getInput("CONDITION") && this.getInput("THEN")) {
+              this.moveInputBefore("CONDITION", "THEN");
+            }
+            if (this.getInput("BRANCH_CONTROL") && this.getInput("THEN")) {
+              this.moveInputBefore("BRANCH_CONTROL", "THEN");
+            }
+            this.ensureElse_();
+          },
+
+          ensureElse_: function () {
+            if (!this.getInput("ELSE"))
+              this.appendStatementInput("ELSE").appendField("else");
+            this.moveInputBefore("ELSE", null); // ELSE luôn cuối
+          },
+
+          // Thêm/bớt nhánh else-if theo số đã chọn
+          setBranchCount_: function (n) {
+            n = Math.max(0, Math.min(this.maxElseIfs_, n));
+            if (n === this.elseIfCount_) {
+              const lab = this.getField("COUNT_LABEL");
+              if (lab) lab.setText(String(n));
+              return;
+            }
+
+            // Thêm các nhánh còn thiếu
+            for (let i = this.elseIfCount_ + 1; i <= n; i++) {
+              this.appendValueInput("COND" + i)
+                .setCheck("Boolean")
+                .appendField("else if");
+              this.appendStatementInput("THEN" + i);
+            }
+            // Xoá nhánh dư (từ cuối về)
+            for (let i = this.elseIfCount_; i > n; i--) {
+              if (this.getInput("COND" + i)) this.removeInput("COND" + i);
+              if (this.getInput("THEN" + i)) this.removeInput("THEN" + i);
+            }
+
+            this.elseIfCount_ = n;
+
+            const lab = this.getField("COUNT_LABEL");
+            if (lab) lab.setText(String(n));
+            const dd = this.getField("BRANCHES");
+            if (dd && dd.getValue() !== String(n)) dd.setValue(String(n));
+
+            this.ensureOrder_();
+          },
+
+          // Khi được kéo từ flyout sang workspace: rebuild header để hiện dropdown, rồi ghim lại thứ tự
+          onchange: function () {
+            if (!this.workspace) return;
+            if (!this._didEnterWorkspace_ && !this.isInFlyout) {
+              this._didEnterWorkspace_ = true;
+              this.buildHeader_();
+              this.ensureOrder_();
+              const dd = this.getField("BRANCHES");
+              if (dd && dd.getValue() !== String(this.elseIfCount_))
+                dd.setValue(String(this.elseIfCount_));
+            }
+          },
+
+          // Lưu/khôi phục số nhánh
+          mutationToDom: function () {
+            const m = C.utils.xml.createElement("mutation");
+            m.setAttribute("elseif", String(this.elseIfCount_));
+            return m;
+          },
+          domToMutation: function (xml) {
+            const n = Math.max(
+              0,
+              Math.min(
+                this.maxElseIfs_,
+                parseInt(xml.getAttribute("elseif") || "0", 10) || 0
+              )
+            );
+            this.buildHeader_(); // đảm bảo dropdown hiện ở workspace
+            this.setBranchCount_(n); // tạo lại các COND/THEN
+            this.ensureOrder_();
+          },
+        };
+
+        C; // put_box với shadow số mặc định = 1
+        C.Blocks["put_box"] = {
+          init: function () {
+            this.appendDummyInput().appendField("put box");
+            this.appendValueInput("COUNT").setCheck("Number");
+
+            this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#ff6b6b"); // coral sáng
+            this.setTooltip("Đặt N hộp");
+
+            // Shadow mặc định: math_number = 1
+            const shadow = Blockly.utils.xml.createElement("shadow");
+            shadow.setAttribute("type", "math_number");
+            const field = Blockly.utils.xml.createElement("field");
+            field.setAttribute("name", "NUM");
+            field.textContent = "1";
+            shadow.appendChild(field);
+
+            const input = this.getInput("COUNT");
+            input.connection.setShadowDom(shadow);
+            input.connection.respawnShadow_();
+          },
+        };
+
+        // take_box với shadow số mặc định = 1
+        C.Blocks["take_box"] = {
+          init: function () {
+            this.appendDummyInput().appendField("take box");
+            this.appendValueInput("COUNT").setCheck("Number");
+
+            this.setInputsInline(true);
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+            this.setColour("#ff6b6b"); // coral sáng
+            this.setTooltip("Lấy N hộp");
+
+            // Shadow mặc định: math_number = 1
+            const shadow = Blockly.utils.xml.createElement("shadow");
+            shadow.setAttribute("type", "math_number");
+            const field = Blockly.utils.xml.createElement("field");
+            field.setAttribute("name", "NUM");
+            field.textContent = "1";
+            shadow.appendChild(field);
+
+            const input = this.getInput("COUNT");
+            input.connection.setShadowDom(shadow);
+            input.connection.respawnShadow_();
+          },
+        };
+
+        C.Blocks["batteryCount"] = {
+          init: function () {
+            this.appendDummyInput().appendField("🔋 Number");
+            this.setOutput(true, "Number");
+            this.setColour("#45b7d1"); // blue sáng
+          },
+        };
+        C.Blocks["getNumberBox"] = {
+          init: function () {
+            this.appendDummyInput().appendField("getNumberBox");
+            this.setOutput(true, "Number");
+            this.setColour("#45b7d1"); // blue sáng
+          },
+        };
+        C.Blocks["warehouseCount"] = {
+          init: function () {
+            this.appendDummyInput().appendField("📦 Number");
+            this.setOutput(true, "Number");
+            this.setColour("#45b7d1"); // blue sáng
+          },
+        };
+
+        // Math arithmetic operations block
+        C.Blocks["math_arithmetic"] = {
+          init: function () {
+            this.appendValueInput("A").setCheck("Number");
+            this.appendValueInput("B")
+              .setCheck("Number")
+              .appendField(
+                new C.FieldDropdown([
+                  ["+", "ADD"],
+                  ["-", "MINUS"],
+                  ["×", "MULTIPLY"],
+                  ["÷", "DIVIDE"],
+                ]),
+                "OP"
+              );
+            this.setOutput(true, "Number");
+            this.setInputsInline(true);
+            this.setColour("#48a84c"); // blue sáng
+            this.setTooltip("Perform arithmetic operations on two numbers");
+            this.setHelpUrl("");
+          },
+        };
+
+
+        // Boolean literal block (true/false in one block)
+        C.Blocks["boolean_value"] = {
+          init: function () {
+            this.appendDummyInput().appendField(
+              new C.FieldDropdown([
+                ["true", "TRUE"],
+                ["false", "FALSE"],
+              ]),
+              "VALUE"
+            );
+            this.setOutput(true, "Boolean");
+            this.setColour("#8e44ad"); // mint sáng
+            this.setTooltip("Boolean true/false value");
+          },
+        };
+
+        // Pin color check block for boolean conditions
+        C.Blocks["check_pin_boolean"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("pin is")
+              .appendField(
+                new C.FieldDropdown([
+                  ["🟢 green", "green"],
+                  ["🔴 red", "red"],
+                  ["🟡 yellow", "yellow"],
+                ]),
+                "COLOR"
+              );
+            this.setOutput(true, "Boolean");
+            this.setColour("#8e44ad"); // mint sáng
+            this.setTooltip("Check if pin is a specific color");
+            this.setHelpUrl("");
+          },
+        };
+
+        // Pin color comparison block
+        C.Blocks["pin_color_compare"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("pin color")
+              .appendField(
+                new C.FieldDropdown([
+                  ["=", "EQ"],
+                  ["≠", "NEQ"],
+                ]),
+                "OP"
+              )
+              .appendField(
+                new C.FieldDropdown([
+                  ["🟢 green", "green"],
+                  ["🔴 red", "red"],
+                  ["🟡 yellow", "yellow"],
+                ]),
+                "COLOR"
+              );
+            this.setOutput(true, "Boolean");
+            this.setColour("#9b27b0"); // mint sáng
+            this.setTooltip("Compare pin color with a specific color");
+            this.setHelpUrl("");
+          },
+        };
+
+        // Logical operators (AND/OR in one block)
+        C.Blocks["logical_operation"] = {
+          init: function () {
+            this.appendValueInput("A").setCheck("Boolean");
+            this.appendValueInput("B")
+              .setCheck("Boolean")
+              .appendField(
+                new C.FieldDropdown([
+                  ["and", "AND"],
+                  ["or", "OR"],
+                ]),
+                "OP"
+              );
+            this.setOutput(true, "Boolean");
+            this.setInputsInline(true);
+            this.setColour("#9b27b0"); // mint sáng
+            this.setTooltip("Logical AND/OR operation");
+          },
+        };
+
+        // Variable reference block for comparison - dynamically syncs with repeat_range
+        C.Blocks["var_ref"] = {
+          init: function () {
+            this.appendDummyInput().appendField(
+              new C.FieldDropdown([
+                ["i", "i"],
+                ["a", "a"],
+                ["b", "b"],
+              ]),
+              "VAR"
+            );
+            this.setOutput(true, "Number");
+            this.setColour("#ff8c19"); // blue sáng
+            this.setTooltip("Reference to loop variable");
+            this.setHelpUrl("");
+          },
+
+          // Update variable options when repeat_range blocks change
+          onchange: function (e) {
+            if (!this.workspace || this.isInFlyout) return;
+            
+            // Find all repeat_range blocks in the workspace
+            const repeatBlocks = this.workspace.getAllBlocks(false)
+              .filter(block => block.type === "repeat_range");
+            
+            // Collect all variable names from repeat_range blocks
+            const variableNames = new Set();
+            repeatBlocks.forEach(block => {
+              const varName = block.getFieldValue("VAR");
+              if (varName) variableNames.add(varName);
+            });
+            
+            // If we found variables, update the dropdown
+            if (variableNames.size > 0) {
+              const options = Array.from(variableNames).map(name => [name, name]);
+              const field = this.getField("VAR");
+              if (field) {
+                field.menuGenerator_ = function() { return options; };
+                // Update the field if current value is not in new options
+                const currentValue = field.getValue();
+                if (!variableNames.has(currentValue)) {
+                  field.setValue(Array.from(variableNames)[0]);
+                }
+              }
+            }
+          },
+        };
+
+        // Comparison operators
+        C.Blocks["compare"] = {
+          init: function () {
+            this.appendValueInput("A").setCheck(null); // Accept any type
+            this.appendValueInput("B")
+              .setCheck(null) // Accept any type
+              .appendField(
+                new C.FieldDropdown([
+                  ["=", "EQ"],
+                  ["≠", "NEQ"],
+                  ["<", "LT"],
+                  [">", "GT"],
+                  ["≤", "LTE"],
+                  ["≥", "GTE"],
+                ]),
+                "OP"
+              );
+            this.setOutput(true, "Boolean");
+            this.setInputsInline(true);
+            this.setColour("#9b27b0"); // mint sáng
+            this.setTooltip("Compare two values (numbers or strings)");
+          },
+        };
+
+        // Function definition block
+        C.Blocks["function_define"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("📝")
+              .appendField("function")
+              .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
+            this.appendStatementInput("BODY").appendField("do");
+            this.setPreviousStatement(false); // Functions are top-level
+            this.setNextStatement(false);
+            this.setColour("#40e0d0"); // orange sáng
+            this.setTooltip("Define a custom function");
+            this.setHelpUrl("");
+          },
+
+          onchange: function () {
+            if (!this.workspace || this.isInFlyout) return;
+            
+            // Ensure function definitions are always top-level
+            if (this.getParent()) {
+              this.unplug(false);
+              this.bumpNeighbours();
+            }
+          },
+        };
+
+        // Function call block
+        C.Blocks["function_call"] = {
+          init: function () {
+            this.appendDummyInput()
+              .appendField("🔧")
+              .appendField("call")
+              .appendField(new C.FieldTextInput("myFunction1"), "FUNCTION_NAME");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour("#40e0d0"); // orange sáng
+            this.setTooltip("Call a custom function");
+            this.setHelpUrl("");
+          },
+    };
+  })();
+  // END inlined custom_blocks.js
+  </script>
+  <script>
+  // BEGIN inlined generators.js
+      (function () {
+    const gens = {};
+
+        function numFrom(block, name) {
+      const target = block.getInputTargetBlock(name);
+      if (!target) return 0;
+          if (target.type === "math_number")
+            return Number(target.getFieldValue("NUM"));
+          if (target.type === "batteryCount") return "batteryCount";
+          if (target.type === "getNumberBox") return "getNumberBox";
+          // warehouseCount: return string for actions, function object will be handled in comparison
+          if (target.type === "warehouseCount") return "warehouseCount";
+          if (target.type === "var_ref") {
+            const v = target.getFieldValue("VAR");
+            // Serialize loop variable references as template tokens for Phaser
+            return `{{${v}}}`;
+          }
+      return 0;
+    }
+        
+        // Helper function to get value for comparison (returns function object for warehouseCount)
+        function numFromForComparison(block, name) {
+      const target = block.getInputTargetBlock(name);
+      if (!target) return 0;
+          if (target.type === "math_number")
+            return Number(target.getFieldValue("NUM"));
+          if (target.type === "batteryCount") return "batteryCount";
+          if (target.type === "getNumberBox") return "getNumberBox";
+          // When warehouseCount is used in comparison, return function object for Phaser
+          if (target.type === "warehouseCount") return { type: "function", name: "warehouseCount" };
+          if (target.type === "var_ref") {
+            const v = target.getFieldValue("VAR");
+            // Serialize loop variable references as template tokens for Phaser
+            return `{{${v}}}`;
+          }
+      return 0;
+    }
+
+        // Helper function to convert condition nodes to Python expressions
+        function condToPy(cond) {
+          if (!cond) return "True";
+          switch (cond.type) {
+            case "condition":
+              return `${cond.function}()`;
+            case "value":
+              return `"${cond.value}"`;
+            case "boolean":
+              return cond.value ? "True" : "False";
+            case "logical":
+              const leftPy = condToPy(cond.left);
+              const rightPy = condToPy(cond.right);
+              const op = cond.operator === "AND" ? " and " : " or ";
+              return `(${leftPy}${op}${rightPy})`;
+            case "compare":
+              const leftVal = typeof cond.left === "string" ? `"${cond.left}"` : JSON.stringify(cond.left);
+              const rightVal = typeof cond.right === "string" ? `"${cond.right}"` : JSON.stringify(cond.right);
+              const operators = {
+                EQ: " == ",
+                NEQ: " != ",
+                LT: " < ",
+                GT: " > ",
+                LTE: " <= ",
+                GTE: " >= "
+              };
+              return `(${leftVal}${operators[cond.operator] || " == "}${rightVal})`;
+            default:
+              return "True";
+          }
+        }
+
+        function nodeStart(block) {
+          return { type: "start" };
+        }
+        function nodeForward(block) {
+          return { type: "forward", count: numFrom(block, "COUNT") };
+        }
+        function nodeTurn(block) {
+          return { type: block.getFieldValue("DIR") };
+        }
+        function nodeCollect(block) {
+          return {
+            type: "collect",
+            color: block.getFieldValue("COLOR"),
+            count: numFrom(block, "COUNT"),
+          };
+        }
+        function nodePut(block) {
+          return { type: "putBox", count: numFrom(block, "COUNT") };
+        }
+        function nodeTake(block) {
+          return { type: "takeBox", count: numFrom(block, "COUNT") };
+        }
+        function nodeRepeat(block) {
+          const condition = block.getInputTargetBlock("CONDITION");
+          return {
+            type: "repeat",
+            count: numFrom(block, "COUNT"),
+            condition: condition ? blockToNode(condition) : null,
+            body: statementToList(block, "DO"),
+          };
+        }
+        function nodeRepeatRange(block) {
+          const variable = block.getFieldValue("VAR");
+          const condition = block.getInputTargetBlock("CONDITION");
+          return {
+            type: "repeatRange",
+            variable,
+            from: numFrom(block, "FROM"),
+            to: numFrom(block, "TO"),
+            step: numFrom(block, "STEP"),
+            condition: condition ? blockToNode(condition) : null,
+            body: statementToList(block, "DO"),
+          };
+        }
+        function nodeIfColor(block) {
+          const condition = block.getInputTargetBlock("CONDITION");
+          return {
+            type: "if",
+            cond: condition
+              ? blockToNode(condition)
+              : { type: "condition", function: "isGreen", check: true },
+            then: statementToList(block, "THEN"),
+          };
+        }
+        function nodeWhileColor(block) {
+          const condition = block.getInputTargetBlock("CONDITION");
+          return {
+            type: "while",
+            cond: condition
+              ? blockToNode(condition)
+              : { type: "condition", function: "isGreen", check: true },
+            body: statementToList(block, "DO"),
+          };
+        }
+        function nodeIfElseIf(block) {
+          // helpers
+          const toList = (name) => {
+            const v = statementToList(block, name);
+            if (!v) return [];
+            return Array.isArray(v) ? v.filter(Boolean) : [v];
+          };
+          const defaultCond = {
+            type: "condition",
+            function: "isGreen",
+            check: true,
+          };
+          const toNode = (b) => (b ? blockToNode(b) : defaultCond);
+          const isRealBlock = (b) =>
+            !!(b && !b.isShadow?.() && !b.isInsertionMarker_); // lọc shadow / marker
+
+          const result = { type: "if_else_if", conditions: [], thens: [] };
+
+          // 1) IF đầu
+          result.conditions.push(
+            toNode(block.getInputTargetBlock("CONDITION"))
+          );
+          result.thens.push(toList("THEN"));
+
+          // 2) ELSE-IF: duyệt theo input thực tế
+          let i = 1;
+          while (block.getInput && block.getInput("CONDITION" + i)) {
+            const c = block.getInputTargetBlock("CONDITION" + i);
+            if (c) {
+              result.conditions.push(blockToNode(c));
+              result.thens.push(toList("THEN" + i));
+            }
+            i++;
+          }
+
+          // 3) ELSE: CHỈ thêm khi có cờ else + có block thật + list không rỗng
+          const hasElseFlag =
+            !!block.elseCount_ ||
+            (typeof block.getFieldValue === "function" &&
+              block.getFieldValue("HAS_ELSE") === "TRUE");
+
+          const elseInput = block.getInput && block.getInput("ELSE");
+          const elseTarget =
+            elseInput &&
+            (elseInput.connection?.targetBlock?.() ||
+              block.getInputTargetBlock?.("ELSE"));
+
+          if (hasElseFlag && isRealBlock(elseTarget)) {
+            const elseList = toList("ELSE");
+            if (elseList.length > 0) {
+              result.else = elseList;
+            }
+          }
+
+          // 4) Phòng hờ: nếu vì lý do nào đó vẫn có 'else' mà rỗng -> xoá
+          if (
+            "else" in result &&
+            (!result.else ||
+              (Array.isArray(result.else) && result.else.length === 0))
+          ) {
+            delete result.else;
+          }
+
+          return result;
+        }
+
+        function nodeFunctionDefine(block) {
+          return {
+            type: "function_define",
+            name: block.getFieldValue("FUNCTION_NAME") || "myFunction1",
+            body: statementToList(block, "BODY")
+          };
+        }
+
+        function nodeFunctionCall(block) {
+          return {
+            type: "callFunction",
+            functionName: block.getFieldValue("FUNCTION_NAME") || "myFunction1"
+          };
+        }
+
+        function blockToNode(block) {
+          switch (block.type) {
+            case "start":
+              return nodeStart(block);
+            case "forward":
+              return nodeForward(block);
+            case "turn":
+              return nodeTurn(block);
+            case "collect":
+              return nodeCollect(block);
+            case "put_box":
+              return nodePut(block);
+            case "take_box":
+              return nodeTake(block);
+            case "repeat_simple":
+              return nodeRepeat(block);
+            case "repeat_range":
+              return nodeRepeatRange(block);
+            case "if_color":
+              return nodeIfColor(block);
+            case "if_else_if":
+              return nodeIfElseIf(block);
+            case "while_color":
+              return nodeWhileColor(block);
+            case "boolean_value":
+              const boolValue = block.getFieldValue("VALUE");
+              return { type: "boolean", value: boolValue === "TRUE" };
+            case "check_pin_boolean":
+              const pinColor = block.getFieldValue("COLOR");
+              return { 
+                type: "condition", 
+                function: `is${pinColor.charAt(0).toUpperCase() + pinColor.slice(1)}`, 
+                check: true 
+              };
+            case "pin_color_compare":
+              const pinColor2 = block.getFieldValue("COLOR");
+              const pinOperator = block.getFieldValue("OP");
+              // Convert color to function name: "green" -> "isGreen", "red" -> "isRed", "yellow" -> "isYellow"
+              const colorName = pinColor2.charAt(0).toUpperCase() + pinColor2.slice(1);
+              const functionName = `is${colorName}`;
+              // EQ means check is true, NEQ means check is false
+              const checkValue = pinOperator === "EQ";
+              return {
+                type: "condition",
+                function: functionName,
+                check: checkValue
+              };
+            case "logical_operation":
+              const leftLogic = block.getInputTargetBlock("A");
+              const rightLogic = block.getInputTargetBlock("B");
+              const logicOp = block.getFieldValue("OP");
+              return {
+                type: logicOp === "AND" ? "and" : "or",
+                conditions: [
+                  leftLogic ? blockToNode(leftLogic) : { type: "boolean", value: false },
+                  rightLogic ? blockToNode(rightLogic) : { type: "boolean", value: false }
+                ]
+              };
+            case "var_ref":
+              return { type: "variable", name: block.getFieldValue("VAR") };
+            case "warehouseCount":
+              // When warehouseCount is used directly as condition
+              // Note: warehouseCount is a Number block, so it should be used in comparison
+              // But if used directly, treat it as checking if warehouseCount > 0
+              return {
+                type: "condition",
+                function: "warehouseCount",  // For compatibility with Phaser
+                functionName: "warehouseCount",  // New format
+                operator: ">",
+                value: 0,
+                check: true
+              };
+            case "compare":
+              // Use numFromForComparison to get function objects for warehouseCount
+              const leftComp = numFromForComparison(block, "A");
+              const rightComp = numFromForComparison(block, "B");
+              const operator = block.getFieldValue("OP");
+              
+              // Map operator to Phaser format
+              const operatorMap = {
+                "EQ": "==",
+                "NEQ": "!=",
+                "LT": "<",
+                "GT": ">",
+                "LTE": "<=",
+                "GTE": ">="
+              };
+              
+              // Check if left value is a function call (like warehouseCount)
+              if (typeof leftComp === "object" && leftComp && leftComp.type === "function") {
+                const rightValue = typeof rightComp === "number" ? rightComp : (typeof rightComp === "string" ? parseInt(rightComp) || 0 : 0);
+                // Use variableComparison format with nested function object for Phaser
+                return {
+                  type: "variableComparison",
+                  variable: {
+                    type: "function",
+                    name: leftComp.name
+                  },
+                  operator: operatorMap[operator] || "==",
+                  value: rightValue
+                };
+              }
+              
+              // Check if right value is a function call (like warehouseCount)
+              if (typeof rightComp === "object" && rightComp && rightComp.type === "function") {
+                const leftValue = typeof leftComp === "number" ? leftComp : (typeof leftComp === "string" ? parseInt(leftComp) || 0 : 0);
+                // Reverse operator for right-side function
+                const reverseOpMap = {
+                  "EQ": "==",
+                  "NEQ": "!=",
+                  "LT": ">",
+                  "GT": "<",
+                  "LTE": ">=",
+                  "GTE": "<="
+                };
+                // Use variableComparison format with nested function object for Phaser
+                return {
+                  type: "variableComparison",
+                  variable: {
+                    type: "function",
+                    name: rightComp.name
+                  },
+                  operator: reverseOpMap[operator] || "==",
+                  value: leftValue
+                };
+              }
+              
+              // Check if comparing with battery count (legacy string format)
+              if (leftComp === "batteryCount" || rightComp === "batteryCount") {
+                return {
+                  type: "variableComparison",
+                  variable: "batteryCount",
+                  operator: operator,
+                  value: leftComp === "batteryCount" ? rightComp : leftComp
+                };
+              }
+              
+              // Check if comparing with number box (legacy string format)
+              if (leftComp === "getNumberBox" || rightComp === "getNumberBox") {
+                return {
+                  type: "variableComparison",
+                  variable: "getNumberBox",
+                  operator: operator,
+                  value: leftComp === "getNumberBox" ? rightComp : leftComp
+                };
+              }
+              
+              // Default comparison
+              return {
+                type: "compare",
+                operator: operator,
+                left: leftComp,
+                right: rightComp
+              };
+            case "function_define":
+              return nodeFunctionDefine(block);
+            case "function_call":
+              return nodeFunctionCall(block);
+            case "math_arithmetic":
+              const leftArith = numFrom(block, "A");
+              const rightArith = numFrom(block, "B");
+              const mathOp = block.getFieldValue("OP");
+              return {
+                type: "math_arithmetic",
+                operator: mathOp,
+                left: leftArith,
+                right: rightArith
+              };
+            default:
+              return null;
+          }
+        }
+
+        function statementToList(block, name) {
+      const target = block.getInputTargetBlock(name);
+      const list = [];
+      let cur = target;
+      while (cur) {
+        const node = blockToNode(cur);
+        if (node) list.push(node);
+        cur = cur.getNextBlock();
+      }
+      return list;
+    }
+
+        gens.toJSON = function (workspace) {
+      const topBlocks = workspace.getTopBlocks(true);
+      const actions = [];
+          const functions = [];
+
+          // Tách function definitions và main program
+          for (const block of topBlocks) {
+            if (block.type === "function_define") {
+              const funcNode = blockToNode(block);
+              if (funcNode) {
+                functions.push({
+                  name: funcNode.name,
+                  body: funcNode.body || []
+                });
+              }
+            }
+          }
+      
+      // Tìm block start và lấy tất cả blocks được kết nối dưới nó
+          const startBlock = topBlocks.find((b) => b.type === "start");
+      if (startBlock) {
+        // Lấy block đầu tiên được kết nối dưới start
+        const firstBlock = startBlock.getNextBlock();
+        if (firstBlock) {
+          // Lấy tất cả blocks trong chuỗi kết nối
+          let cur = firstBlock;
+          while (cur) {
+            const n = blockToNode(cur);
+            if (n) actions.push(n);
+            cur = cur.getNextBlock();
+          }
+        }
+      } else {
+            // Fallback: nếu không có start block, lấy tất cả top blocks (trừ start và functions)
+        for (const b of topBlocks) {
+              if (b.type !== "function_define") {
+          const n = blockToNode(b);
+                if (n && n.type !== "start") actions.push(n);
+              }
+            }
+          }
+
+          const result = { 
+            version: "1.0.0", 
+            programName: "user_program", 
+            actions 
+          };
+
+          // Chỉ thêm functions nếu có
+          if (functions.length > 0) {
+            result.functions = functions;
+          }
+
+          // Thu thập các biến được khai báo bởi repeatRange để gửi sang Phaser
+          (function collectDeclaredVariables() {
+            const declared = new Set();
+
+            function walkNodes(nodes) {
+              if (!Array.isArray(nodes)) return;
+              for (const n of nodes) {
+                if (!n || typeof n !== "object") continue;
+                // Biến lặp được khai báo tại repeatRange
+                if (n.type === "repeatRange" && typeof n.variable === "string" && n.variable) {
+                  declared.add(n.variable);
+                }
+                // Duyệt thân/lists con nếu có
+                if (Array.isArray(n.body)) walkNodes(n.body);
+                if (Array.isArray(n.then)) walkNodes(n.then);
+                if (Array.isArray(n.thens)) walkNodes(n.thens.flat());
+                if (Array.isArray(n.else)) walkNodes(n.else);
+              }
+            }
+
+            // Duyệt actions chính
+            walkNodes(actions);
+            // Duyệt functions (nếu có)
+            if (Array.isArray(result.functions)) {
+              for (const f of result.functions) {
+                walkNodes(f.body);
+              }
+            }
+
+            if (declared.size > 0) {
+              result.variables = Array.from(declared);
+            }
+          })();
+
+          return result;
+        };
+
+        gens.toPython = function (workspace) {
+      const program = gens.toJSON(workspace);
+          function pyVal(v) {
+            if (typeof v === "string") return v;
+            if (typeof v === "object" && v !== null) {
+              // Handle math_arithmetic and other complex expressions
+              if (v.type === "math_arithmetic") {
+                const leftVal = pyVal(v.left);
+                const rightVal = pyVal(v.right);
+                const operators = {
+                  ADD: " + ",
+                  MINUS: " - ",
+                  MULTIPLY: " * ",
+                  DIVIDE: " / "
+                };
+                const op = operators[v.operator] || " + ";
+                return `(${leftVal}${op}${rightVal})`;
+              }
+              return JSON.stringify(v);
+            }
+            return JSON.stringify(v);
+          }
+      const lines = [];
+          function emit(nodes, indent) {
+            const ind = "  ".repeat(indent);
+        for (const n of nodes) {
+              switch (n.type) {
+            // Bỏ case 'start' vì đã lọc ở toJSON
+                case "forward":
+                  lines.push(ind + `forward(${pyVal(n.count)})`);
+                  break;
+                case "turnRight":
+                  lines.push(ind + "turnRight()");
+                  break;
+                case "turnLeft":
+                  lines.push(ind + "turnLeft()");
+                  break;
+                case "turnBack":
+                  lines.push(ind + "turnBack()");
+                  break;
+                case "collect":
+                  lines.push(
+                    ind +
+                      `collect(${pyVal(n.count)}, ${JSON.stringify(n.color)})`
+                  );
+                  break;
+                case "putBox":
+                  lines.push(ind + `putBox(${pyVal(n.count)})`);
+                  break;
+                case "takeBox":
+                  lines.push(ind + `takeBox(${pyVal(n.count)})`);
+                  break;
+                case "repeat":
+                  if (n.condition) {
+                    lines.push(ind + `for count in range(${pyVal(n.count)}):`);
+                    lines.push(ind + `  while ${condToPy(n.condition)}:`);
+                    emit(n.body || [], indent + 2);
+                  } else {
+              lines.push(ind + `for count in range(${pyVal(n.count)}):`);
+              emit(n.body || [], indent + 1);
+                  }
+              break;
+                case "repeatRange":
+                  const v = n.variable || "i";
+                  lines.push(
+                    ind +
+                      `for ${v} in range(${pyVal(n.from)}, ${pyVal(
+                        n.to
+                      )}, ${pyVal(n.step)}):`
+                  );
+                  if (n.condition) {
+                    lines.push(ind + `  while ${condToPy(n.condition)}:`);
+                    emit(n.body || [], indent + 2);
+                  } else {
+              emit(n.body || [], indent + 1);
+                  }
+              break;
+                case "if":
+                  lines.push(ind + `if ${condToPy(n.cond)}:`);
+              emit(n.then || [], indent + 1);
+              break;
+                case "if_else_if":
+                  // Generate if condition
+                  const firstCond = n.conditions[0];
+                  lines.push(ind + `if ${condToPy(firstCond)}:`);
+                  emit(n.thens[0] || [], indent + 1);
+
+                  // Generate else-if conditions
+                  for (let i = 1; i < n.conditions.length; i++) {
+                    const cond = n.conditions[i];
+                    lines.push(ind + `elif ${condToPy(cond)}:`);
+                    emit(n.thens[i] || [], indent + 1);
+                  }
+
+                  // Generate else clause
+                  if (n.else && n.else.length > 0) {
+                    lines.push(ind + "else:");
+                    emit(n.else || [], indent + 1);
+                  }
+                  break;
+                case "while":
+                  lines.push(ind + `while ${condToPy(n.cond)}:`);
+              emit(n.body || [], indent + 1);
+              break;
+                case "callFunction":
+                  lines.push(ind + `${n.functionName}()`);
+                  break;
+          }
+        }
+      }
+      // Emit functions first if present
+      if (program.functions && Array.isArray(program.functions) && program.functions.length > 0) {
+        program.functions.forEach(function (fn) {
+          const name = fn.name || "myFunction1";
+          lines.push("def " + name + "():");
+          if (!fn.body || fn.body.length === 0) {
+            lines.push("    pass");
+          } else {
+            emit(fn.body || [], 1);
+          }
+          lines.push("");
+        });
+      }
+      // Emit main actions
+      emit(program.actions || [], 0);
+          return lines.join("\n");
+    };
+
+    window.generators = gens;
+  })();
+  // END inlined generators.js
+  </script>
+  <script>
+      const workspace = Blockly.inject("blocklyDiv", {
+        toolbox: document.getElementById("toolbox"),
+      scrollbars: true,
+      trashcan: true,
+        renderer: "zelos",
+        toolboxPosition: "start",
+    });
+
+      window.importWorkspace = function (xmlText) {
+      try {
+        if (!workspace) throw new Error('workspace not initialized');
+        workspace.clear();
+        const XMLNS = (Blockly.Xml && Blockly.Xml.textToDom) ? Blockly.Xml : (Blockly.utils && Blockly.utils.xml ? Blockly.utils.xml : null);
+        if (!XMLNS || !XMLNS.textToDom) throw new Error('Blockly XML helper not found');
+        const dom = XMLNS.textToDom(xmlText);
+        if (Blockly.Xml && Blockly.Xml.domToWorkspace) {
+          Blockly.Xml.domToWorkspace(dom, workspace);
+        } else if (Blockly.utils && Blockly.utils.xml && Blockly.utils.xml.domToWorkspace) {
+          Blockly.utils.xml.domToWorkspace(dom, workspace);
+        } else {
+          // Fallback using API available: append dom blocks manually if needed
+          Blockly.Xml.domToWorkspace(dom, workspace); // will throw if missing
+        }
+        return JSON.stringify({ ok: true });
+        } catch (e) {
+          console.error('importWorkspace error:', e);
+          return JSON.stringify({ ok: false, error: String(e && e.message ? e.message : e) });
+        }
+    };
+      window.getWorkspaceXml = function () {
+      const dom = Blockly.Xml.workspaceToDom(workspace);
+      return Blockly.Xml.domToPrettyText(dom);
+    };
+
+    function postToFlutter(obj) {
+        try {
+          FlutterFromBlockly.postMessage(JSON.stringify(obj));
+        } catch (e) {
+          console.log("no channel");
+        }
+      }
+      function onChange() {
+        postToFlutter({
+          type: "workspace_change",
+          xml: window.getWorkspaceXml(),
+        });
+        const python =
+          (window.generators && window.generators.toPython(workspace)) || "";
+        postToFlutter({ type: "python_preview", python });
+    }
+    workspace.addChangeListener(onChange);
+
+    // Add a default block to verify visibility
+    try {
+        const xmlText =
+          '<xml xmlns="https://developers.google.com/blockly/xml"><block type="start" x="30" y="30"></block><block type="forward" x="30" y="80"><value name="COUNT"><block type="math_number"><field name="NUM">3</field></block></value></block><block type="if_color" x="30" y="130"><value name="CONDITION"><block type="check_pin_green"></block></value></block><block type="repeat_simple" x="30" y="200"><value name="COUNT"><block type="math_number"><field name="NUM">5</field></block></value><value name="CONDITION"><block type="check_pin_red"></block></value></block></xml>';
+      const dom = Blockly.Xml.textToDom(xmlText);
+      Blockly.Xml.domToWorkspace(dom, workspace);
+      } catch (e) {
+        console.log(e);
+      }
+
+    // Function to set challenge type and filter toolbox categories
+    window.setChallengeType = function(challengeType) {
+      if (!workspace || !workspace.toolbox_) return;
+      
+      const toolbox = workspace.toolbox_;
+      const toolboxXml = document.getElementById("toolbox");
+      if (!toolboxXml) return;
+      
+      // Clone the original toolbox XML to avoid modifying the original
+      const clonedXml = toolboxXml.cloneNode(true);
+      
+      // Find categories by name
+      const boxCategory = Array.from(clonedXml.children).find(
+        (cat) => cat.getAttribute && cat.getAttribute("name") === "📦"
+      );
+      const batteryCategory = Array.from(clonedXml.children).find(
+        (cat) => cat.getAttribute && cat.getAttribute("name") === "🔋"
+      );
+      
+      // Remove categories based on challenge type
+      if (challengeType === 0) {
+        // Battery mode: remove 📦, keep 🔋
+        if (boxCategory) {
+          clonedXml.removeChild(boxCategory);
+        }
+      } else if (challengeType === 1) {
+        // Box mode: remove 🔋, keep 📦
+        if (batteryCategory) {
+          clonedXml.removeChild(batteryCategory);
+        }
+      }
+      
+      // Update toolbox with filtered XML
+      try {
+        // Update the toolbox with the filtered XML
+        workspace.updateToolbox(clonedXml);
+      } catch (e) {
+        console.log("Error updating toolbox:", e);
+        // Fallback: try to hide/show using CSS
+        if (challengeType === 0) {
+          // Battery mode: hide 📦, show 🔋
+          if (boxCategory) {
+            const boxNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="📦"]');
+            if (boxNode) boxNode.style.display = "none";
+          }
+          if (batteryCategory) {
+            const batteryNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="🔋"]');
+            if (batteryNode) batteryNode.style.display = "";
+          }
+        } else if (challengeType === 1) {
+          // Box mode: show 📦, hide 🔋
+          if (boxCategory) {
+            const boxNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="📦"]');
+            if (boxNode) boxNode.style.display = "";
+          }
+          if (batteryCategory) {
+            const batteryNode = toolbox.toolboxTree_ && toolbox.toolboxTree_.querySelector('[name="🔋"]');
+            if (batteryNode) batteryNode.style.display = "none";
+          }
+        }
+        if (toolbox && toolbox.refresh) {
+          toolbox.refresh();
+        }
+      }
+    };
+
+    // Notify Flutter that Blockly is ready
+      postToFlutter({ type: "ready" });
+
+      window.compileNow = function () {
+        const program =
+          window.generators && window.generators.toJSON(workspace);
+        postToFlutter({ type: "compiled_program", payload: program });
+    };
+
+    // Zoom controls
+    const zoomInBtn = document.getElementById('zoomIn');
+    const zoomOutBtn = document.getElementById('zoomOut');
+
+    function getCurrentScale() {
+      if (workspace.getScale) {
+        return workspace.getScale();
+      }
+      // Fallback: try to get scale from workspace metrics
+      if (workspace.getMetrics) {
+        const metrics = workspace.getMetrics();
+        return metrics.viewScale || 1.0;
+      }
+      return 1.0;
+    }
+
+    function setWorkspaceScale(scale) {
+      if (workspace.setScale) {
+        workspace.setScale(scale);
+      } else if (workspace.zoom) {
+        // Use zoom method if setScale is not available
+        const currentScale = getCurrentScale();
+        const delta = scale - currentScale;
+        workspace.zoom(delta);
+      } else if (workspace.getMetrics) {
+        // Fallback: try to set via metrics
+        const metrics = workspace.getMetrics();
+        if (metrics.viewScale !== undefined) {
+          workspace.setScale(scale);
+        }
+      }
+    }
+
+    function updateZoomButtons() {
+      const scale = getCurrentScale();
+      const minScale = 0.3;
+      const maxScale = 3.0;
+      
+      if (zoomInBtn) zoomInBtn.disabled = scale >= maxScale;
+      if (zoomOutBtn) zoomOutBtn.disabled = scale <= minScale;
+    }
+
+    if (zoomInBtn) {
+      zoomInBtn.addEventListener('click', function() {
+        const currentScale = getCurrentScale();
+        const maxScale = 3.0;
+        const newScale = Math.min(currentScale + 0.2, maxScale);
+        setWorkspaceScale(newScale);
+        updateZoomButtons();
+      });
+    }
+
+    if (zoomOutBtn) {
+      zoomOutBtn.addEventListener('click', function() {
+        const currentScale = getCurrentScale();
+        const minScale = 0.3;
+        const newScale = Math.max(currentScale - 0.2, minScale);
+        setWorkspaceScale(newScale);
+        updateZoomButtons();
+      });
+    }
+
+    // Update button states periodically
+    setInterval(updateZoomButtons, 500);
+
+    // Initial button state
+    setTimeout(updateZoomButtons, 100);
+  </script>
+</body>
+</html>
+

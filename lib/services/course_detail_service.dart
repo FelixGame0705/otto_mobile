@@ -37,8 +37,9 @@ class CourseDetailService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseDetailService: Exception: $e');
-      throw Exception('Error fetching course detail: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseDetailService error (getCourseDetail): $friendly');
+      throw Exception(friendly);
     }
   }
 }

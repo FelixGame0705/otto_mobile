@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_detail_model.dart';
 
 class LessonDetailHeader extends StatelessWidget {
@@ -37,8 +38,8 @@ class LessonDetailHeader extends StatelessWidget {
                     icon: const Icon(Icons.share, color: Colors.white),
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Chia sẻ bài học'),
+                        SnackBar(
+                          content: Text('common.shareLesson'.tr()),
                           backgroundColor: Colors.blue,
                         ),
                       );
@@ -112,7 +113,7 @@ class LessonDetailHeader extends StatelessWidget {
                       const SizedBox(width: 24),
                       _buildStatItem(
                         Icons.flag_outlined,
-                        '${lesson.challengesCount} thử thách',
+                        '${lesson.challengesCount} ${'common.challenges'.tr()}',
                       ),
                     ],
                   ),

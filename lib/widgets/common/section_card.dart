@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SectionCard extends StatelessWidget {
   final String? title;
@@ -24,7 +25,7 @@ class SectionCard extends StatelessWidget {
           children: [
             if (title != null) ...[
               Text(
-                title!,
+                title!.tr(),
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),

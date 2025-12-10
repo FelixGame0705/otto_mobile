@@ -7,6 +7,8 @@ class Challenge {
   final String description;
   final int order;
   final int difficulty;
+  final int? challengeMode; // 0 = simulation, 1 = upload (from top-level API field)
+  final int? challengeType; // 0 = Battery, 1 = Box
   final DateTime createdAt;
   final DateTime updatedAt;
   final int submissionsCount;
@@ -23,6 +25,8 @@ class Challenge {
     required this.description,
     required this.order,
     required this.difficulty,
+    this.challengeMode,
+    this.challengeType,
     required this.createdAt,
     required this.updatedAt,
     required this.submissionsCount,
@@ -48,6 +52,19 @@ class Challenge {
 
     final dynamic rawMapJson = json['mapJson'] ?? json['messageJson'];
     final dynamic rawChallengeJson = json['challengeJson'];
+    int? parseMode(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
+
+    int? parseType(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      if (v is String) return int.tryParse(v);
+      return null;
+    }
 
     DateTime _parseDate(dynamic v) {
       if (v is String && v.isNotEmpty) {
@@ -65,6 +82,8 @@ class Challenge {
       description: json['description'] ?? '',
       order: json['order'] ?? 0,
       difficulty: json['difficulty'] ?? 0,
+      challengeMode: parseMode(json['challengeMode']),
+      challengeType: parseType(json['challengeType']),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
       submissionsCount: json['submissionsCount'] ?? 0,

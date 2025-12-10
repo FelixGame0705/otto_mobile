@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
@@ -15,7 +16,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -26,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -43,7 +42,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         final result = await AuthService.register(
-          fullName: _fullNameController.text.trim(),
           email: _emailController.text.trim(),
           phone: _phoneController.text.trim(),
           password: _passwordController.text,
@@ -55,10 +53,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
         if (mounted) {
           if (result.isSuccess) {
-            showSuccessToast(context, 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.');
+            showSuccessToast(context, 'auth.register.success'.tr());
             Navigator.pushReplacementNamed(context, AppRoutes.login);
           } else {
-            showErrorToast(context, result.message ?? 'Đăng ký thất bại');
+            showErrorToast(context, result.message ?? 'auth.register.failed'.tr());
           }
         }
       } catch (e) {
@@ -66,7 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _isLoading = false;
         });
 
-        if (mounted) showErrorToast(context, 'Lỗi kết nối: $e');
+        if (mounted) showErrorToast(context, 'auth.networkError'.tr(args: [e.toString()]));
       }
     } 
     else if (!_agreeToTerms) {
@@ -80,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Đăng ký',
+      title: 'auth.register.title'.tr(),
       gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
       child: SectionCard(
         child: Form(
@@ -102,40 +100,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Tạo tài khoản mới',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2D3748)),
-              ),
+              Text('auth.register.heading'.tr(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
               const SizedBox(height: 8),
-              const Text(
-                'Điền thông tin để đăng ký',
-                style: TextStyle(fontSize: 16, color: Color(0xFF718096)),
-              ),
+              Text('auth.register.subheading'.tr(), style: const TextStyle(fontSize: 16, color: Color(0xFF718096))),
               const SizedBox(height: 24),
 
-              AppTextField(
-                controller: _fullNameController,
-                label: 'Họ và tên',
-                hint: 'Nhập họ và tên đầy đủ',
-                prefixIcon: Icons.person_outlined,
-                keyboardType: TextInputType.name,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập họ và tên';
-                  if (value.length < 2) return 'Họ và tên phải có ít nhất 2 ký tự';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
 
               AppTextField(
                 controller: _emailController,
-                label: 'Email',
-                hint: 'Nhập email của bạn',
+                label: 'auth.email',
+                hint: 'auth.enterEmail',
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập email';
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}').hasMatch(value)) return 'Email không hợp lệ';
+                  if (value == null || value.isEmpty) return 'auth.enterEmail'.tr();
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}').hasMatch(value)) return 'auth.emailInvalid'.tr();
                   return null;
                 },
               ),
@@ -143,13 +122,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               AppTextField(
                 controller: _passwordController,
-                label: 'Mật khẩu',
-                hint: 'Nhập mật khẩu của bạn',
+                label: 'auth.password',
+                hint: 'auth.enterPassword',
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu';
-                  if (value.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  if (value == null || value.isEmpty) return 'auth.enterPassword'.tr();
+                  if (value.length < 6) return 'auth.min6'.tr();
                   return null;
                 },
               ),
@@ -157,13 +136,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               AppTextField(
                 controller: _confirmPasswordController,
-                label: 'Xác nhận mật khẩu',
-                hint: 'Nhập lại mật khẩu',
+                label: 'auth.confirmPassword',
+                hint: 'auth.confirmPassword.hint',
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng xác nhận mật khẩu';
-                  if (value != _passwordController.text) return 'Mật khẩu không khớp';
+                  if (value == null || value.isEmpty) return 'auth.confirmPassword.hint'.tr();
+                  if (value != _passwordController.text) return 'auth.passwordNotMatch'.tr();
                   return null;
                 },
               ),
@@ -179,9 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }),
                     activeColor: const Color(0xFF00ba4a),
                   ),
-                  const Expanded(
-                    child: Text('Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật', style: TextStyle(color: Color(0xFF718096))),
-                  ),
+                  Expanded(child: Text('auth.agreeTerms'.tr(), style: const TextStyle(color: Color(0xFF718096)))),
                   
                 ],
               ),
@@ -204,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.black54)))
-                      : const Text('Đăng ký', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                      : Text('auth.register.title'.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -212,10 +189,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Đã có tài khoản? ', style: TextStyle(color: Color(0xFF718096))),
+                  Text('auth.haveAccount'.tr() + ' ', style: const TextStyle(color: Color(0xFF718096))),
                   TextButton(
                     onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
-                    child: const Text('Đăng nhập', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
+                    child: Text('auth.login'.tr(), style: const TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),

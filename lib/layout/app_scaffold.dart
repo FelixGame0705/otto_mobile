@@ -17,7 +17,7 @@ class AppScaffold extends StatelessWidget {
     this.centerTitle = false,
     this.showAppBar = true,
     this.gradientColors,
-    this.alignment = Alignment.center,
+    this.alignment = Alignment.topCenter,
   });
 
   @override
@@ -42,7 +42,7 @@ class AppScaffold extends StatelessWidget {
         ),
         child: SafeArea(
           child: Align(
-            alignment: alignment ?? Alignment.center,
+            alignment: alignment ?? Alignment.topCenter,
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: child,

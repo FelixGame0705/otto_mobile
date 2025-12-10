@@ -40,10 +40,22 @@ class AppConstants {
   // API
   static const String baseUrl = 'https://ottobit-be.felixtien.dev/api'; // Thay đổi thành URL thực tế của backend
   static const Duration apiTimeout = Duration(seconds: 30);
+  static const String assistanceHubUrl = 'https://ottobit-be.felixtien.dev/assistance-message-hub';
   
   // Storage Keys
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
   static const String themeKey = 'app_theme';
   static const String languageKey = 'app_language';
+  static const String onboardingSeenKey = 'onboarding_seen';
+
+  // Cloudinary
+  static const String cloudinaryCloudName = 'dno1kjdkk';
+  static const String cloudinaryUploadPreset = 'yc5t1mwl';
+
+  // VietQR (for deep link auto-fill)
+  // Example: 'LOCCASS000330828@acb'
+  static const String vietqrBankAccount = 'LOCCASS000330828@acb';
+  // Example: 'TRAN DUY QUANG'
+  static const String vietqrBankName = 'TRAN DUY QUANG';
 }

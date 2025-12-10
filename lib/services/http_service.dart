@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:ottobit/utils/constants.dart';
 import 'package:ottobit/services/storage_service.dart';
+import 'package:ottobit/services/navigation_service.dart';
+import 'package:ottobit/services/auth_service.dart';
 
 class HttpService {
   static final HttpService _instance = HttpService._internal();
@@ -27,6 +29,9 @@ class HttpService {
       'Accept': 'application/json',
     };
 
+    // Chỉ thêm Authorization header khi includeAuth = true
+    // Quan trọng: Khi gọi refresh token endpoint, phải set includeAuth = false
+    // để không gửi accessToken cũ trong header, nếu không backend sẽ không trả về accessToken mới
     if (includeAuth) {
       final token = await StorageService.getToken();
       if (token != null && token.isNotEmpty) {
@@ -54,7 +59,7 @@ class HttpService {
       final response = await _client.get(uri, headers: headers);
       print('HttpService: Response status: ${response.statusCode}');
       print('HttpService: Response body: ${response.body}');
-      return _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       print('HttpService: GET request failed: $e');
       throw HttpException('GET request failed: $e');
@@ -77,7 +82,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('POST request failed: $e');
     }
@@ -99,7 +104,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('PUT request failed: $e');
     }
@@ -116,7 +121,7 @@ class HttpService {
     
     try {
       final response = await _client.delete(uri, headers: headers);
-      return _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('DELETE request failed: $e');
     }
@@ -138,22 +143,22 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError);
     } catch (e) {
       throw HttpException('PATCH request failed: $e');
     }
   }
 
   // Xử lý response
-  http.Response _handleResponse(
+  Future<http.Response> _handleResponse(
     http.Response response, {
     bool throwOnError = true,
-  }) {
+  }) async {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     } else if (response.statusCode == 401) {
       // Token hết hạn hoặc không hợp lệ
-      _handleUnauthorized();
+      await _handleUnauthorized();
       if (throwOnError) {
         throw HttpException('Unauthorized: Token expired or invalid');
       }
@@ -182,10 +187,20 @@ class HttpService {
   }
 
   // Xử lý khi token hết hạn
-  void _handleUnauthorized() {
-    // Clear token và redirect về login
-    StorageService.clearToken();
-    // Có thể emit event để app biết cần logout
+  Future<void> _handleUnauthorized() async {
+    // Thử refresh token trước
+    try {
+      final refreshResult = await AuthService.refreshToken();
+      if (refreshResult.isSuccess) {
+        // Refresh thành công, không cần navigate
+        return;
+      }
+    } catch (e) {
+      // Refresh thất bại, tiếp tục logout
+    }
+    
+    // Nếu refresh thất bại hoặc không có refresh token, navigate đến login
+    await NavigationService().navigateToLogin(clearAuth: true);
   }
 
   // Upload file
@@ -222,7 +237,7 @@ class HttpService {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       
-      return _handleResponse(response);
+      return await _handleResponse(response);
     } catch (e) {
       throw HttpException('File upload failed: $e');
     }

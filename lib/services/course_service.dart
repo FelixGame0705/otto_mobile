@@ -16,6 +16,11 @@ class CourseService {
     bool includeDeleted = false,
     int pageNumber = 1,
     int pageSize = 10,
+    int? minPrice,
+    int? maxPrice,
+    int? type,
+    int? sortBy,
+    int? sortDirection,
   }) async {
     try {
       final queryParams = <String, String>{
@@ -26,6 +31,21 @@ class CourseService {
 
       if (searchTerm != null && searchTerm.isNotEmpty) {
         queryParams['SearchTerm'] = searchTerm;
+      }
+      if (minPrice != null) {
+        queryParams['MinPrice'] = minPrice.toString();
+      }
+      if (maxPrice != null) {
+        queryParams['MaxPrice'] = maxPrice.toString();
+      }
+      if (type != null) {
+        queryParams['Type'] = type.toString();
+      }
+      if (sortBy != null) {
+        queryParams['SortBy'] = sortBy.toString();
+      }
+      if (sortDirection != null) {
+        queryParams['SortDirection'] = sortDirection.toString();
       }
 
       print('CourseService: Making request to /v1/courses');
@@ -54,8 +74,9 @@ class CourseService {
         throw Exception(friendly);
       }
     } catch (e) {
-      print('CourseService: Exception: $e');
-      throw Exception('Error fetching courses: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (getCourses): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -72,7 +93,9 @@ class CourseService {
       }
       return null;
     } catch (e) {
-      throw Exception('Error fetching course: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (getCourseById): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -85,7 +108,9 @@ class CourseService {
 
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      throw Exception('Error enrolling in course: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (enrollInCourse): $friendly');
+      throw Exception(friendly);
     }
   }
 
@@ -98,7 +123,9 @@ class CourseService {
 
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      throw Exception('Error unenrolling from course: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CourseService error (unenrollFromCourse): $friendly');
+      throw Exception(friendly);
     }
   }
 

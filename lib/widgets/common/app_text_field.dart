@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AppTextField extends StatefulWidget {
   final TextEditingController controller;
@@ -34,8 +35,8 @@ class _AppTextFieldState extends State<AppTextField> {
       keyboardType: widget.keyboardType,
       obscureText: widget.isPassword && !_visible,
       decoration: InputDecoration(
-        labelText: widget.label,
-        hintText: widget.hint,
+        labelText: widget.label.tr(),
+        hintText: widget.hint?.tr(),
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(

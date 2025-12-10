@@ -6,11 +6,18 @@ class CourseDetail {
   final String title;
   final String description;
   final String imageUrl;
+  final int price;
+  final int type; // 1 = free, 2 = paid
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isDeleted;
   final int lessonsCount;
   final int enrollmentsCount;
   final String createdByName;
+  final bool? isEnrolled;
+  final DateTime? enrollmentDate;
+  final double ratingAverage;
+  final int ratingCount;
 
   CourseDetail({
     required this.id,
@@ -18,11 +25,18 @@ class CourseDetail {
     required this.title,
     required this.description,
     required this.imageUrl,
+    required this.price,
+    required this.type,
     required this.createdAt,
     required this.updatedAt,
+    required this.isDeleted,
     required this.lessonsCount,
     required this.enrollmentsCount,
     required this.createdByName,
+    this.isEnrolled,
+    this.enrollmentDate,
+    required this.ratingAverage,
+    required this.ratingCount,
   });
 
   factory CourseDetail.fromJson(Map<String, dynamic> json) {
@@ -32,11 +46,20 @@ class CourseDetail {
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       imageUrl: json['imageUrl'] ?? '',
+      price: (json['price'] as num?)?.toInt() ?? 0,
+      type: (json['type'] as num?)?.toInt() ?? 1,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
-      lessonsCount: json['lessonsCount'] ?? 0,
-      enrollmentsCount: json['enrollmentsCount'] ?? 0,
+      isDeleted: json['isDeleted'] ?? false,
+      lessonsCount: (json['lessonsCount'] as num?)?.toInt() ?? 0,
+      enrollmentsCount: (json['enrollmentsCount'] as num?)?.toInt() ?? 0,
       createdByName: json['createdByName'] ?? '',
+      isEnrolled: json.containsKey('isEnrolled') ? (json['isEnrolled'] as bool?) : null,
+      enrollmentDate: json['enrollmentDate'] != null 
+          ? DateTime.tryParse(json['enrollmentDate']) 
+          : null,
+      ratingAverage: (json['ratingAverage'] as num?)?.toDouble() ?? 0.0,
+      ratingCount: json['ratingCount'] ?? 0,
     );
   }
 
@@ -47,11 +70,18 @@ class CourseDetail {
       'title': title,
       'description': description,
       'imageUrl': imageUrl,
+      'price': price,
+      'type': type,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'isDeleted': isDeleted,
       'lessonsCount': lessonsCount,
       'enrollmentsCount': enrollmentsCount,
       'createdByName': createdByName,
+      'isEnrolled': isEnrolled,
+      'enrollmentDate': enrollmentDate?.toIso8601String(),
+      'ratingAverage': ratingAverage,
+      'ratingCount': ratingCount,
     };
   }
 
@@ -62,6 +92,14 @@ class CourseDetail {
   String get formattedUpdatedAt {
     return DateFormat('dd/MM/yyyy').format(updatedAt);
   }
+
+  String get formattedPrice {
+    final formatter = NumberFormat('#,###', 'vi_VN');
+    return '${formatter.format(price)} VNĐ';
+  }
+
+  bool get isFree => type == 1;
+  bool get isPaid => type == 2;
 }
 
 class CourseDetailApiResponse {

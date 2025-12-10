@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
 import 'package:ottobit/widgets/common/section_card.dart';
@@ -52,8 +53,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Đổi mật khẩu',
-      gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+      title: 'auth.changePassword.title'.tr(),
+      alignment: Alignment.center,
+      gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       child: SectionCard(
         child: Form(
           key: _formKey,
@@ -61,30 +63,30 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               AppTextField(
                 controller: _currentPassController,
-                label: 'Mật khẩu hiện tại',
+                label: 'auth.changePassword.current',
                 prefixIcon: Icons.lock_outline,
                 isPassword: true,
-                validator: (v) => (v == null || v.isEmpty) ? 'Nhập mật khẩu hiện tại' : null,
+                validator: (v) => (v == null || v.isEmpty) ? 'auth.changePassword.currentRequired'.tr() : null,
               ),
               const SizedBox(height: 12),
               AppTextField(
                 controller: _newPassController,
-                label: 'Mật khẩu mới',
+                label: 'auth.changePassword.new',
                 prefixIcon: Icons.lock,
                 isPassword: true,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Nhập mật khẩu mới';
-                  if (v.length < 6) return 'Ít nhất 6 ký tự';
+                  if (v == null || v.isEmpty) return 'auth.changePassword.newRequired'.tr();
+                  if (v.length < 6) return 'auth.min6'.tr();
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               AppTextField(
                 controller: _confirmNewPassController,
-                label: 'Xác nhận mật khẩu mới',
+                label: 'auth.changePassword.confirm',
                 prefixIcon: Icons.lock,
                 isPassword: true,
-                validator: (v) => v != _newPassController.text ? 'Không khớp' : null,
+                validator: (v) => v != _newPassController.text ? 'auth.changePassword.notMatch'.tr() : null,
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -93,14 +95,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleChangePassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFEDFCF2),
+                    backgroundColor: const Color(0xFF17a64b),
                     foregroundColor: const Color(0xFF2D3748),
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54))
-                      : const Text('Đổi mật khẩu', style: TextStyle(fontWeight: FontWeight.w600)),
+                      : Text('auth.changePassword.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

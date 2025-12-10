@@ -17,7 +17,7 @@ class AuthService {
   static const String _resetPasswordEndpoint = '/Auth/reset-password';
   static const String _refreshTokenEndpoint = '/v1/authentications/refresh-token';
   static const String _logoutEndpoint = '/Auth/logout';
-  static const String _profileEndpoint = '/Auth/profile';
+  static const String _profileEndpoint = '/v1/accounts/profile';
 
   // Đăng nhập
   static Future<AuthResult> login(String email, String password) async {
@@ -90,7 +90,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -109,16 +110,16 @@ class AuthService {
       final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
       return data;
     } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
       return {
-        'message': 'Login Google failed',
-        'error': e.toString(),
+        'message': friendly,
+        'error': friendly,
       };
     }
   }
 
   // Đăng ký
   static Future<AuthResult> register({
-    required String fullName,
     required String email,
     required String phone,
     required String password,
@@ -127,7 +128,6 @@ class AuthService {
       final response = await HttpService().post(
         _registerEndpoint,
         body: {
-          'fullName': fullName,
           'email': email,
           'password': password,
           'confirmPassword': password,
@@ -142,7 +142,7 @@ class AuthService {
         final payload = data['data'] as Map<String, dynamic>;
         final user = UserModel(
           id: (payload['userId'] ?? '').toString(),
-          fullName: (payload['fullName'] ?? fullName).toString(),
+          fullName: (payload['fullName'] ?? '').toString(),
           email: (payload['email'] ?? email).toString(),
           phone: phone,
           avatar: '',
@@ -173,7 +173,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -195,7 +196,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -220,7 +222,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -233,13 +236,17 @@ class AuthService {
         return AuthResult.failure(message: 'Không có refresh token');
       }
 
+      // Xóa accessToken cũ trước khi gọi refresh token endpoint
+      // để đảm bảo không gửi accessToken cũ trong header
+      await StorageService.clearToken();
+
       final response = await HttpService().post(
         _refreshTokenEndpoint,
         body: {
           'userId': currentUser?.id ?? '',
           'refreshToken': storedRefreshToken,
         },
-        includeAuth: false,
+        includeAuth: false, // Quan trọng: không gửi accessToken trong header
       );
 
       final data = jsonDecode(response.body);
@@ -292,57 +299,75 @@ class AuthService {
         return AuthResult.failure(message: data['message'] ?? 'Phiên đăng nhập đã hết hạn');
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi làm mới token: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
   // Lấy thông tin profile
   static Future<AuthResult> getProfile() async {
     try {
-      final response = await HttpService().get(_profileEndpoint);
-      final data = jsonDecode(response.body);
-      
+      final response = await HttpService().get(_profileEndpoint, throwOnError: false);
+      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200) {
-        final user = UserModel.fromJson(data['user']);
+        final Map<String, dynamic> payload = (data['data'] ?? {}) as Map<String, dynamic>;
+        final user = UserModel(
+          id: (payload['id'] ?? '').toString(),
+          fullName: (payload['fullName'] ?? '').toString(),
+          email: (payload['email'] ?? '').toString(),
+          phone: (payload['phoneNumber'] ?? '').toString(),
+          avatar: (payload['avatarUrl'] ?? '')?.toString(),
+          createdAt: DateTime.tryParse((payload['registrationDate'] ?? '').toString()) ?? DateTime.now(),
+          isActive: true,
+        );
         await StorageService.saveUser(user);
-        return AuthResult.success(user: user);
-      } else {
-        return AuthResult.failure(message: 'Không thể lấy thông tin profile');
+        return AuthResult.success(user: user, message: data['message'] as String?);
       }
+      final message = data['message']?.toString() ?? 'Không thể lấy thông tin profile';
+      return AuthResult.failure(message: message);
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
   // Cập nhật profile
   static Future<AuthResult> updateProfile({
     String? fullName,
-    String? phone,
-    String? avatar,
+    String? avatarUrl,
   }) async {
     try {
       final body = <String, dynamic>{};
       if (fullName != null) body['fullName'] = fullName;
-      if (phone != null) body['phone'] = phone;
-      if (avatar != null) body['avatar'] = avatar;
+      if (avatarUrl != null) body['avatarUrl'] = avatarUrl;
 
       final response = await HttpService().put(
         _profileEndpoint,
         body: body,
+        throwOnError: false,
       );
 
-      final data = jsonDecode(response.body);
-      
+      final Map<String, dynamic> data = jsonDecode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200) {
-        final user = UserModel.fromJson(data['user']);
+        final Map<String, dynamic> payload = (data['data'] ?? {}) as Map<String, dynamic>;
+        final user = UserModel(
+          id: (payload['id'] ?? '').toString(),
+          fullName: (payload['fullName'] ?? '').toString(),
+          email: (payload['email'] ?? '').toString(),
+          phone: (payload['phoneNumber'] ?? '').toString(),
+          avatar: (payload['avatarUrl'] ?? '')?.toString(),
+          createdAt: DateTime.tryParse((payload['registrationDate'] ?? '').toString()) ?? DateTime.now(),
+          isActive: true,
+        );
         await StorageService.saveUser(user);
-        return AuthResult.success(user: user);
+        return AuthResult.success(user: user, message: data['message'] as String?);
       } else {
-        final message = data['message'] ?? 'Cập nhật profile thất bại';
+        final message = data['message']?.toString() ?? 'Cập nhật profile thất bại';
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -361,7 +386,8 @@ class AuthService {
 
       return AuthResult.success(message: 'Đăng xuất thành công');
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi đăng xuất: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 
@@ -408,7 +434,8 @@ class AuthService {
         return AuthResult.failure(message: message);
       }
     } catch (e) {
-      return AuthResult.failure(message: 'Lỗi kết nối: $e');
+      final friendly = ApiErrorMapper.fromException(e);
+      return AuthResult.failure(message: friendly);
     }
   }
 }

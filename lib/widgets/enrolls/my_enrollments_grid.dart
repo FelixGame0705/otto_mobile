@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/enrollment_model.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/enrollment_service.dart';
+import 'package:ottobit/screens/home/home_screen.dart';
 
 class MyEnrollmentsGrid extends StatefulWidget {
   const MyEnrollmentsGrid({super.key});
@@ -117,12 +119,12 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
             if (isNotStudent)
               ElevatedButton(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
-                child: const Text('Đăng ký'),
+                child: Text('common.register'.tr()),
               )
             else
               ElevatedButton(
                 onPressed: () => _load(refresh: true),
-                child: const Text('Thử lại'),
+                child: Text('common.retry'.tr()),
               ),
           ],
         ),
@@ -134,24 +136,24 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
           child: Row(
             children: [
-              const Text('Lọc:'),
+              Text('common.filter'.tr()),
               const SizedBox(width: 8),
               SizedBox(
                 width: 230,
                 child: DropdownButtonFormField<bool?>(
                   value: _isCompleted,
-                  items: const [
+                  items: [
                     DropdownMenuItem<bool?>(
                       value: null,
-                      child: Row(children: [Icon(Icons.all_inclusive, size: 18), SizedBox(width: 8), Text('Tất cả')]),
+                      child: Row(children: [const Icon(Icons.all_inclusive, size: 18), const SizedBox(width: 8), Text('common.all'.tr())]),
                     ),
                     DropdownMenuItem<bool?>(
                       value: false,
-                      child: Row(children: [Icon(Icons.timelapse, size: 18), SizedBox(width: 8), Text('Chưa hoàn thành')]),
+                      child: Row(children: [const Icon(Icons.timelapse, size: 18), const SizedBox(width: 8), Text('common.inProgress'.tr())]),
                     ),
                     DropdownMenuItem<bool?>(
                       value: true,
-                      child: Row(children: [Icon(Icons.check_circle, size: 18), SizedBox(width: 8), Text('Đã hoàn thành')]),
+                      child: Row(children: [const Icon(Icons.check_circle, size: 18), const SizedBox(width: 8), Text('common.completed'.tr())]),
                     ),
                   ],
                   onChanged: (v) {
@@ -173,7 +175,7 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
         ),
         const SizedBox(height: 8),
         if (_items.isEmpty)
-          const Expanded(child: Center(child: Text('Không có khóa học phù hợp')))
+          Expanded(child: Center(child: Text('common.noMatchingCourses'.tr())))
         else
           Expanded(
             child: GridView.builder(
@@ -191,7 +193,7 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
-                  return Center(child: Text('Đã hiển thị tất cả'));
+                  return Center(child: Text('common.viewAllShown'.tr()));
                 }
                 if (index < _items.length) {
                   final e = _items[index];
@@ -224,7 +226,10 @@ class _EnrollmentCard extends StatelessWidget {
               'courseId': enrollment.courseId,
               'hideEnroll': true,
             },
-          );
+          ).then((_) {
+            // Refresh cart count when returning from course detail
+            HomeScreen.refreshCartCount(context);
+          });
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(
@@ -275,7 +280,7 @@ class _EnrollmentCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Tiến độ: ${enrollment.progress}%', style: const TextStyle(fontSize: 12, color: Color(0xFF4A5568))),
+                      Text('common.progress'.tr(namedArgs: {'percent': '${enrollment.progress}'}), style: const TextStyle(fontSize: 12, color: Color(0xFF4A5568))),
                       if (enrollment.isCompleted)
                         const Icon(Icons.check_circle, color: Color(0xFF48BB78), size: 18),
                     ],

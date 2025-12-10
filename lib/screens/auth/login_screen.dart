@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:ottobit/widgets/common/language_dropdown.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/layout/app_scaffold.dart';
@@ -36,32 +39,143 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Xử lý lỗi PlatformException từ Google Sign-In
+  String _handleGoogleSignInError(dynamic error) {
+    if (error is PlatformException) {
+      final code = error.code;
+      final message = error.message ?? '';
+      
+      switch (code) {
+        case 'sign_in_canceled':
+        case 'SIGN_IN_CANCELLED':
+          return 'auth.googleLoginCanceled'.tr();
+        case 'sign_in_failed':
+        case 'SIGN_IN_FAILED':
+          return 'auth.googleSignInFailed'.tr();
+        case 'network_error':
+        case 'SIGN_IN_NETWORK_ERROR':
+          return 'auth.googleNetworkError'.tr();
+        case 'sign_in_required':
+        case 'SIGN_IN_REQUIRED':
+          return 'auth.googleSignInRequired'.tr();
+        case 'internal_error':
+          return 'auth.googleInternalError'.tr();
+        case 'invalid_account':
+        case 'INVALID_ACCOUNT':
+          return 'auth.googleInvalidAccount'.tr();
+        case 'account_disabled':
+          return 'auth.googleAccountDisabled'.tr();
+        case 'DEVELOPER_ERROR':
+          return 'auth.googleDeveloperError'.tr();
+        default:
+          // Nếu có message từ PlatformException, sử dụng nó
+          if (message.isNotEmpty) {
+            return message;
+          }
+          return 'auth.googleSignInFailed'.tr();
+      }
+    }
+    
+    // Xử lý các loại lỗi khác
+    final errorStr = error.toString().toLowerCase();
+    if (errorStr.contains('canceled') || errorStr.contains('cancelled')) {
+      return 'auth.googleLoginCanceled'.tr();
+    }
+    if (errorStr.contains('network') || errorStr.contains('connection')) {
+      return 'auth.googleNetworkError'.tr();
+    }
+    if (errorStr.contains('sign_in_failed') || errorStr.contains('sign_in_error')) {
+      return 'auth.googleSignInFailed'.tr();
+    }
+    
+    return 'auth.googleSignInFailed'.tr();
+  }
+
   Future<void> _handleGoogleLogin() async {
+    if (!mounted) return;
+    
     try {
       setState(() => _isLoading = true);
-      final account = await _googleSignIn.signIn();
-      if (account == null) {
+      
+      // Sign out trước để luôn hiển thị dialog chọn tài khoản
+      try {
+        await _googleSignIn.signOut();
+      } catch (e) {
+        // Log nhưng không báo lỗi khi sign out
+        debugPrint('Google Sign-Out error (ignored): $e');
+      }
+      
+      // Sign in - sẽ luôn hiển thị dialog chọn tài khoản
+      GoogleSignInAccount? account;
+      try {
+        account = await _googleSignIn.signIn();
+      } on PlatformException catch (e) {
         setState(() => _isLoading = false);
-        showErrorToast(context, 'Đăng nhập Google bị hủy.');
+        if (mounted) {
+          final errorMsg = _handleGoogleSignInError(e);
+          showErrorToast(context, errorMsg);
+        }
+        return;
+      } catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          final errorMsg = _handleGoogleSignInError(e);
+          showErrorToast(context, errorMsg);
+        }
         return;
       }
-      final auth = await account.authentication;
+      
+      if (account == null) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          showErrorToast(context, 'auth.googleLoginCanceled'.tr());
+        }
+        return;
+      }
+      
+      // Lấy authentication
+      GoogleSignInAuthentication? auth;
+      try {
+        auth = await account.authentication;
+      } on PlatformException catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          final errorMsg = _handleGoogleSignInError(e);
+          showErrorToast(context, errorMsg);
+        }
+        return;
+      } catch (e) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          showErrorToast(context, 'Lỗi khi lấy thông tin xác thực Google: ${_handleGoogleSignInError(e)}');
+        }
+        return;
+      }
+      
       final idtoken = auth.idToken;
       if (idtoken == null || idtoken.isEmpty) {
         setState(() => _isLoading = false);
-        showErrorToast(context, 'Không lấy được Google ID token. $auth');
+        if (mounted) {
+          showErrorToast(context, 'auth.googleIdTokenError'.tr());
+        }
         return;
       }
 
+      // Gọi API đăng nhập với backend
       final response = await AuthService.loginWithGoogle(idtoken);
 
-      // Handle like _handleLogin: persist tokens, user, then navigate
+      // Handle response: persist tokens, user, then navigate
       try {
         final message = (response['message'] ?? '').toString();
         final data = response['data'] as Map<String, dynamic>?;
         if (data == null) {
           setState(() => _isLoading = false);
-          showErrorToast(context, message.isNotEmpty ? message : 'Đăng nhập Google thất bại');
+        if (mounted) {
+          showErrorToast(
+            context,
+            message.isNotEmpty ? message : 'auth.googleLoginFailed'.tr(),
+          );
+        }
           return;
         }
 
@@ -73,7 +187,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (accessToken.isEmpty) {
           setState(() => _isLoading = false);
-          showErrorToast(context, 'Đăng nhập Google thất bại: thiếu accessToken');
+          if (mounted) {
+            showErrorToast(context, 'auth.googleLoginFailed'.tr());
+          }
           return;
         }
 
@@ -115,11 +231,25 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } catch (e) {
         setState(() => _isLoading = false);
-        showErrorToast(context, 'Lỗi xử lý đăng nhập Google: $e');
+        if (mounted) {
+          final errorMsg = e is PlatformException 
+              ? _handleGoogleSignInError(e)
+              : 'auth.googleAuthError'.tr();
+          showErrorToast(context, errorMsg);
+        }
+      }
+    } on PlatformException catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        final errorMsg = _handleGoogleSignInError(e);
+        showErrorToast(context, errorMsg);
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      showErrorToast(context, 'Google Sign-In lỗi: $e');
+      if (mounted) {
+        final errorMsg = _handleGoogleSignInError(e);
+        showErrorToast(context, errorMsg);
+      }
     }
   }
 
@@ -179,12 +309,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       showAppBar: false,
-      gradientColors: const [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
-      child: Form(
-        key: _formKey,
-        child: SectionCard(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+      alignment: Alignment.center,
+      gradientColors: const [Color(0xFFEDFCF2), Color.fromARGB(255, 255, 255, 255)],
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Form(
+            key: _formKey,
+            child: SectionCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
                 height: 50,
@@ -206,20 +340,34 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text('Chào mừng trở lại!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
+              Text('auth.welcomeBack'.tr(), style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF2D3748))),
               const SizedBox(height: 8),
-              const Text('Đăng nhập để tiếp tục', style: TextStyle(fontSize: 16, color: Color(0xFF718096))),
+              Text('auth.loginToContinue'.tr(), style: const TextStyle(fontSize: 16, color: Color(0xFF718096))),
+              const SizedBox(height: 8),
+              // Language switcher
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+      // Language dropdown with flags
+      SizedBox(
+        width: 240,
+        child: LanguageDropdown(
+          onLocaleChanged: (_) {},
+        ),
+      ),
+                ],
+              ),
               const SizedBox(height: 24),
 
               AppTextField(
                 controller: _emailController,
-                label: 'Email',
-                hint: 'Nhập email của bạn',
+                label: 'auth.email',
+                hint: 'auth.enterEmail',
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập email';
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Email không hợp lệ';
+                  if (value == null || value.isEmpty) return 'auth.enterEmail'.tr();
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'auth.emailInvalid'.tr();
                   return null;
                 },
               ),
@@ -231,13 +379,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
               AppTextField(
                 controller: _passwordController,
-                label: 'Mật khẩu',
-                hint: 'Nhập mật khẩu của bạn',
+                label: 'auth.password',
+                hint: 'auth.enterPassword',
                 prefixIcon: Icons.lock_outlined,
                 isPassword: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Vui lòng nhập mật khẩu';
-                  if (value.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
+                  if (value == null || value.isEmpty) return 'auth.enterPassword'.tr();
+                  if (value.length < 6) return 'auth.min6'.tr();
                   return null;
                 },
               ),
@@ -251,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.forgotPassword),
-                  child: const Text('Quên mật khẩu?', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
+                  child: Text('auth.forgotPassword'.tr(), style: const TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(height: 8),
@@ -269,7 +417,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.black54)))
-                      : const Text('Đăng nhập', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                      : Text('auth.login'.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),
@@ -281,7 +429,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : _handleGoogleLogin,
                   icon: const Icon(Icons.login),
-                  label: const Text('Đăng nhập với Google'),
+                  label: Text('auth.loginWithGoogle'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2D3748),
                     side: const BorderSide(color: Color(0xFF2D3748)),
@@ -294,14 +442,16 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text('Chưa có tài khoản? ', style: TextStyle(color: Color(0xFF718096))),
+                  Text('auth.noAccount'.tr() + ' ', style: const TextStyle(color: Color(0xFF718096))),
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                    child: const Text('Đăng ký ngay', style: TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
+                    child: Text('auth.registerNow'.tr(), style: const TextStyle(color: Color(0xFF2D3748), fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
             ],
+              ),
+            ),
           ),
         ),
       ),

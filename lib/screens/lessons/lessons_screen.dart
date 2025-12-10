@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_model.dart';
 import 'package:ottobit/services/lesson_service.dart';
 import 'package:ottobit/services/lesson_detail_service.dart';
@@ -6,6 +7,7 @@ import 'package:ottobit/widgets/lessons/lesson_card.dart';
 import 'package:ottobit/widgets/lessons/lesson_search_bar.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String courseId;
@@ -89,8 +91,10 @@ class _LessonsScreenState extends State<LessonsScreen> {
     } catch (e) {
       print('Error loading lessons: $e');
       if (mounted) {
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          _errorMessage = friendly;
           _isLoading = false;
         });
         if (_errorMessage.isNotEmpty) {
@@ -151,20 +155,18 @@ class _LessonsScreenState extends State<LessonsScreen> {
       Navigator.pushNamed(context, AppRoutes.lessonDetail, arguments: lessonId);
     } catch (e) {
       if (!mounted) return;
-      final message = e.toString().replaceFirst('Exception: ', '');
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+      final message = friendly.isNotEmpty ? friendly : 'lesson.unknownError'.tr();
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Không thể mở bài học'),
-          content: Text(
-            message.isNotEmpty
-                ? message
-                : 'Có lỗi không xác định xảy ra',
-          ),
+          title: Text('lesson.cannotOpen'.tr()),
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Đóng'),
+              child: Text('common.close'.tr()),
             ),
           ],
         ),
@@ -176,13 +178,13 @@ class _LessonsScreenState extends State<LessonsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.courseTitle ?? 'Danh sách bài học'),
+        title: Text(widget.courseTitle ?? 'lessons.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Làm mới',
+            tooltip: 'lesson.refresh'.tr(),
             onPressed: () => _loadLessons(isRefresh: true),
           ),
         ],
@@ -192,7 +194,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFEDFCF2), Color(0xFFEDFCF2)],
+            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
           ),
         ),
         child: SafeArea(child: _buildContent()),
@@ -224,16 +226,16 @@ class _LessonsScreenState extends State<LessonsScreen> {
 
   Widget _buildMainContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+            const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4299E1)),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'Đang tải bài học...',
+              'lessons.loading'.tr(),
               style: TextStyle(fontSize: 16, color: Color(0xFF718096)),
             ),
           ],
@@ -248,11 +250,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
           children: [
             const Icon(Icons.error, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            Text('Lỗi: $_errorMessage'),
+            Text('${'common.error'.tr()}: $_errorMessage'),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () => _loadLessons(isRefresh: true),
-              child: const Text('Thử lại'),
+              child: Text('common.retry'.tr()),
             ),
           ],
         ),
@@ -260,14 +262,14 @@ class _LessonsScreenState extends State<LessonsScreen> {
     }
 
     if (_lessons.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.menu_book, size: 64, color: Colors.grey),
             SizedBox(height: 16),
             Text(
-              'Không có bài học nào',
+              'lessons.empty'.tr(),
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -334,7 +336,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'Đã hiển thị tất cả bài học',
+                'lessons.allShown'.tr(),
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
