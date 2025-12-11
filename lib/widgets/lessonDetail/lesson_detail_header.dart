@@ -113,7 +113,7 @@ class LessonDetailHeader extends StatelessWidget {
                       const SizedBox(width: 24),
                       _buildStatItem(
                         Icons.flag_outlined,
-                        '${lesson.challengesCount} ${'common.challenges'.tr()}',
+                        '${lesson.challengeCount} ${'common.challenges'.tr()}',
                       ),
                     ],
                   ),

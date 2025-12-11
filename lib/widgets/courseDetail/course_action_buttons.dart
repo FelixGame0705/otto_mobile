@@ -49,12 +49,6 @@ class CourseActionButtons extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.attach_money,
-                    color: Color(0xFF48BB78),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
                   Text(
                     price!,
                     style: const TextStyle(

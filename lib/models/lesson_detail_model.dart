@@ -9,7 +9,7 @@ class LessonDetail {
   final int order;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final int challengesCount;
+  final int challengeCount;
   final String courseTitle;
 
   LessonDetail({
@@ -21,7 +21,7 @@ class LessonDetail {
     required this.order,
     required this.createdAt,
     required this.updatedAt,
-    required this.challengesCount,
+    required this.challengeCount,
     required this.courseTitle,
   });
 
@@ -37,7 +37,7 @@ class LessonDetail {
               ?? DateTime.fromMillisecondsSinceEpoch(0),
       updatedAt: DateTime.tryParse((json['updatedAt'] as String?) ?? '')
               ?? DateTime.fromMillisecondsSinceEpoch(0),
-      challengesCount: (json['challengesCount'] as int?) ?? 0,
+      challengeCount: (json['challengeCount'] as int?) ?? 0,
       courseTitle: (json['courseTitle'] as String?) ?? '',
     );
   }
