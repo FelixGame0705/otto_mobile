@@ -2,7 +2,7 @@ class LessonNote {
   final String id;
   final String studentId;
   final String lessonId;
-  final String lessonResourceId;
+  final String? lessonResourceId;
   final String content;
   final int timestampInSeconds;
   final DateTime createdAt;
@@ -17,7 +17,7 @@ class LessonNote {
     required this.id,
     required this.studentId,
     required this.lessonId,
-    required this.lessonResourceId,
+    this.lessonResourceId,
     required this.content,
     required this.timestampInSeconds,
     required this.createdAt,
@@ -30,15 +30,28 @@ class LessonNote {
   });
 
   factory LessonNote.fromJson(Map<String, dynamic> json) {
+    DateTime _parseDateTimeWithOffset(String dateTimeString) {
+      try {
+        final dateTime = DateTime.parse(dateTimeString);
+        return dateTime.add(const Duration(hours: 7));
+      } catch (_) {
+        return DateTime.now();
+      }
+    }
+
     return LessonNote(
       id: (json['id'] as String?) ?? '',
       studentId: (json['studentId'] as String?) ?? '',
       lessonId: (json['lessonId'] as String?) ?? '',
-      lessonResourceId: (json['lessonResourceId'] as String?) ?? '',
+      lessonResourceId: json['lessonResourceId'] as String?,
       content: (json['content'] as String?) ?? '',
       timestampInSeconds: (json['timestampInSeconds'] as int?) ?? 0,
-      createdAt: DateTime.tryParse((json['createdAt'] as String?) ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse((json['updatedAt'] as String?) ?? '') ?? DateTime.now(),
+      createdAt: json['createdAt'] != null 
+          ? _parseDateTimeWithOffset(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? _parseDateTimeWithOffset(json['updatedAt'] as String)
+          : DateTime.now(),
       studentFullname: (json['studentFullname'] as String?) ?? '',
       lessonTitle: (json['lessonTitle'] as String?) ?? '',
       courseTitle: (json['courseTitle'] as String?) ?? '',

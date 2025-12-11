@@ -285,6 +285,8 @@
     "myOrders": "Đơn hàng của tôi",
     "myCertificates": "Chứng chỉ của tôi",
     "myRobots": "Robot của tôi",
+    "myNotes": "Ghi chú của tôi",
+    "noNotes": "Không tìm thấy ghi chú nào",
     "activateRobot": "Kích hoạt Robot",
     "logout": "Đăng xuất",
     "phone": "SĐT",

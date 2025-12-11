@@ -284,6 +284,8 @@
     "myOrders": "My Orders",
     "myCertificates": "My Certificates",
     "myRobots": "My Robots",
+    "myNotes": "My Notes",
+    "noNotes": "No notes found",
     "activateRobot": "Activate Robot",
     "logout": "Logout",
     "phone": "Phone",

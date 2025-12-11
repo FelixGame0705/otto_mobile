@@ -134,6 +134,43 @@ class LessonNoteService {
       rethrow;
     }
   }
+
+  Future<LessonNotePage> getAllMyNotes({
+    int pageNumber = 1,
+    int pageSize = 10,
+    String? searchTerm,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'PageNumber': pageNumber.toString(),
+        'PageSize': pageSize.toString(),
+      };
+      if (searchTerm != null && searchTerm.isNotEmpty) {
+        queryParams['SearchTerm'] = searchTerm;
+      }
+      
+      final response = await _http.get(
+        '/v1/lesson-notes/my-notes',
+        queryParams: queryParams,
+        throwOnError: false,
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        final data = jsonData['data'] as Map<String, dynamic>? ?? <String, dynamic>{};
+        return LessonNotePage.fromJson(data);
+      }
+
+      final friendly = ApiErrorMapper.fromBody(
+        response.body,
+        statusCode: response.statusCode,
+        fallback: 'Không thể tải danh sách ghi chú (${response.statusCode})',
+      );
+      throw Exception(friendly);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
 

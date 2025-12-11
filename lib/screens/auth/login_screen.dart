@@ -27,10 +27,47 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _emailError;
   String? _passwordError;
+  bool _isProcessingError = false; // Flag để ngăn listener clear errors khi đang xử lý response
+  String _lastEmailValue = ''; // Lưu giá trị email trước đó để detect thay đổi
+  String _lastPasswordValue = ''; // Lưu giá trị password trước đó để detect thay đổi
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email'],
     serverClientId: '230205957347-92orekvvv41o7dkis4431883v35ei9s5.apps.googleusercontent.com',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    // Khởi tạo giá trị ban đầu để tránh clear errors khi initState chạy
+    _lastEmailValue = _emailController.text;
+    _lastPasswordValue = _passwordController.text;
+    
+    // Clear errors chỉ khi user thực sự thay đổi text (không phải khi text đã có sẵn)
+    _emailController.addListener(() {
+      if (!_isProcessingError && 
+          _emailError != null && 
+          _emailController.text != _lastEmailValue) {
+        _lastEmailValue = _emailController.text;
+        setState(() {
+          _emailError = null;
+        });
+      } else if (!_isProcessingError) {
+        _lastEmailValue = _emailController.text;
+      }
+    });
+    _passwordController.addListener(() {
+      if (!_isProcessingError && 
+          _passwordError != null && 
+          _passwordController.text != _lastPasswordValue) {
+        _lastPasswordValue = _passwordController.text;
+        setState(() {
+          _passwordError = null;
+        });
+      } else if (!_isProcessingError) {
+        _lastPasswordValue = _passwordController.text;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -257,6 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // Chỉ validate, không thay đổi state nếu fail
   if (!_formKey.currentState!.validate()) return;
 
+  // Clear errors trước khi submit
   setState(() {
     _isLoading = true;
     _emailError = null;
@@ -264,39 +302,80 @@ class _LoginScreenState extends State<LoginScreen> {
   });
 
   try {
+    // Set flag để ngăn listener clear errors khi đang xử lý response
+    _isProcessingError = true;
+    
     final result = await AuthService.login(
       _emailController.text.trim(),
       _passwordController.text,
     );
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    if (!mounted) {
+      _isProcessingError = false;
+      return;
+    }
 
     if (result.isSuccess) {
+      _isProcessingError = false;
+      setState(() => _isLoading = false);
       showSuccessToast(context, 'Đăng nhập thành công!');
       Navigator.pushReplacementNamed(context, AppRoutes.home);
       return;
     }
 
+    // Xử lý lỗi từ backend - set errors và loading state trong cùng một setState
     final msg = (result.message ?? '').trim();
     bool handledInline = false;
     final lower = msg.toLowerCase();
-    setState(() {
-      if (lower.contains('email is not a valid') || lower.contains('email')) {
+    
+    // Xác định loại lỗi để hiển thị inline
+    // Kiểm tra lỗi email cụ thể trước
+    if (lower.contains('email is not a valid') || 
+        (lower.contains('email') && !lower.contains('password') && !lower.contains('invalid') && !lower.contains('mật khẩu'))) {
+      setState(() {
+        _isLoading = false;
         _emailError = msg;
-        handledInline = true;
-      }
-      if (lower.contains('invalid email or password')) {
+      });
+      handledInline = true;
+    } 
+    // Kiểm tra lỗi đăng nhập (email hoặc password không đúng)
+    else if (lower.contains('invalid email or password') || 
+             lower.contains('email hoặc mật khẩu không đúng') ||
+             lower.contains('email hoặc mật khẩu') ||
+             (lower.contains('password') && (lower.contains('invalid') || lower.contains('incorrect') || lower.contains('wrong') || lower.contains('không đúng'))) ||
+             lower.contains('incorrect') ||
+             lower.contains('wrong')) {
+      setState(() {
+        _isLoading = false;
         _passwordError = msg;
-        handledInline = true;
-      }
+      });
+      handledInline = true;
+    } else {
+      // Nếu không xác định được loại lỗi, chỉ hiển thị toast
+      setState(() {
+        _isLoading = false;
+      });
+    }
+    
+    // Reset flag sau khi UI đã render xong để đảm bảo errors không bị clear
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _isProcessingError = false;
     });
-    if (!handledInline) {
-      showErrorToast(context, msg.isNotEmpty ? msg : 'Đăng nhập thất bại');
+    
+    // Hiển thị toast nếu không set inline error
+    if (!handledInline && msg.isNotEmpty) {
+      showErrorToast(context, msg);
+    } else if (!handledInline) {
+      showErrorToast(context, 'Đăng nhập thất bại');
     }
   } catch (e) {
+    _isProcessingError = false;
     if (!mounted) return;
-    setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = false;
+      _emailError = null;
+      _passwordError = null;
+    });
     showErrorToast(context, 'Lỗi kết nối: $e');
   }
 }

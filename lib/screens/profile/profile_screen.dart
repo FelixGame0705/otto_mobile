@@ -15,6 +15,7 @@ import 'package:ottobit/screens/support/tickets_screen.dart';
 import 'package:ottobit/screens/submissions/my_submissions_screen.dart';
 import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
 import 'package:ottobit/screens/profile/my_robots_screen.dart';
+import 'package:ottobit/screens/profile/my_notes_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -384,6 +385,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   icon: const Icon(Icons.smart_toy),
                   label: Text('profile.myRobots'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MyNotesScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF9333EA), width: 2),
+                    foregroundColor: const Color(0xFF9333EA),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.note_outlined),
+                  label: Text('profile.myNotes'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
