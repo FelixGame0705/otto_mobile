@@ -416,7 +416,7 @@ class _PriceTag extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          isFree ? Icons.workspace_premium : Icons.attach_money,
+          isFree ? Icons.workspace_premium : null,
           size: isCompact ? 12 : 14,
           color: isFree ? const Color(0xFF48BB78) : const Color(0xFF2D3748),
         ),
