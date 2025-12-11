@@ -362,7 +362,9 @@
     "addToCart": "Add to Cart",
     "addedToCart": "Added to cart",
     "price": "Price",
-    "specifications": "Specifications"
+    "specifications": "Specifications",
+    "quantity": "Quantity",
+    "robotName": "Robot"
   },
   "store": {
     "title": "Store",

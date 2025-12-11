@@ -363,7 +363,9 @@
     "addToCart": "Thêm vào giỏ",
     "addedToCart": "Đã thêm vào giỏ",
     "price": "Giá",
-    "specifications": "Thông số kỹ thuật"
+    "specifications": "Thông số kỹ thuật",
+    "quantity": "Số lượng",
+    "robotName": "Robot"
   },
   "store": {
     "title": "Cửa hàng",
