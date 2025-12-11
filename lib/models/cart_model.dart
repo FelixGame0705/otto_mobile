@@ -1,5 +1,10 @@
 import 'package:intl/intl.dart';
 
+/// Helper function to parse DateTime and add 7 hours for timezone offset
+DateTime _parseDateTimeWithOffset(String dateTimeString) {
+  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
+}
+
 class CartItem {
   final String id;
   final String cartId;
@@ -38,8 +43,8 @@ class CartItem {
       unitPrice: (json['unitPrice'] as num?)?.toInt() ?? 0,
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['unitPrice'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: _parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
     );
   }
 
@@ -111,8 +116,8 @@ class Cart {
       voucherCode: json['voucherCode'],
       voucherName: json['voucherName'],
       itemsCount: (json['itemsCount'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: _parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
       items: (json['items'] as List<dynamic>?)
           ?.map((item) => CartItem.fromJson(item as Map<String, dynamic>))
           .toList() ?? [],
@@ -198,7 +203,7 @@ class CartSummary {
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
       isEmpty: json['isEmpty'] ?? true,
-      lastUpdated: DateTime.parse(json['lastUpdated']),
+      lastUpdated: _parseDateTimeWithOffset(json['lastUpdated']),
     );
   }
 
@@ -294,7 +299,7 @@ class CartApiResponse<T> {
       data: parsedData,
       errors: json['errors'],
       errorCode: json['errorCode'],
-      timestamp: DateTime.parse(json['timestamp']),
+      timestamp: _parseDateTimeWithOffset(json['timestamp']),
     );
   }
 
