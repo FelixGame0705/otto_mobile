@@ -948,6 +948,25 @@
             // Serialize loop variable references as template tokens for Phaser
             return `{{${v}}}`;
           }
+          if (target.type === "math_arithmetic") {
+            // Handle arithmetic operations - convert to Phaser format
+            const left = numFrom(target, "A");
+            const right = numFrom(target, "B");
+            const op = target.getFieldValue("OP");
+            // Map Blockly operators to Phaser operators
+            const opMap = {
+              "ADD": "+",
+              "MINUS": "-",
+              "MULTIPLY": "*",
+              "DIVIDE": "/"
+            };
+            return {
+              type: "arithmetic",
+              op: opMap[op] || op,
+              left: left,
+              right: right
+            };
+          }
       return 0;
     }
         
@@ -965,6 +984,25 @@
             const v = target.getFieldValue("VAR");
             // Serialize loop variable references as template tokens for Phaser
             return `{{${v}}}`;
+          }
+          if (target.type === "math_arithmetic") {
+            // Handle arithmetic operations - convert to Phaser format
+            const left = numFromForComparison(target, "A");
+            const right = numFromForComparison(target, "B");
+            const op = target.getFieldValue("OP");
+            // Map Blockly operators to Phaser operators
+            const opMap = {
+              "ADD": "+",
+              "MINUS": "-",
+              "MULTIPLY": "*",
+              "DIVIDE": "/"
+            };
+            return {
+              type: "arithmetic",
+              op: opMap[op] || op,
+              left: left,
+              right: right
+            };
           }
       return 0;
     }

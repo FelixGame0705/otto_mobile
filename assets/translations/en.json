@@ -294,6 +294,7 @@
     "phoneNumber": "Phone Number",
     "phoneNumberHint": "Enter phone number",
     "phoneNumberRequired": "Phone number is required",
+    "phoneNumberInvalid": "Invalid phone number.",
     "addressHint": "Enter address",
     "addressRequired": "Address is required",
     "provinceCity": "Province/City",

@@ -295,6 +295,7 @@
     "phoneNumber": "Số điện thoại",
     "phoneNumberHint": "Nhập số điện thoại",
     "phoneNumberRequired": "Số điện thoại là bắt buộc",
+    "phoneNumberInvalid": "Số điện thoại không hợp lệ.",
     "addressHint": "Nhập địa chỉ",
     "addressRequired": "Địa chỉ là bắt buộc",
     "provinceCity": "Tỉnh/Thành phố",

@@ -839,9 +839,17 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.phone),
                 ),
+                keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'profile.phoneNumberRequired'.tr();
+                  }
+                  // Validate Vietnamese phone number format
+                  final phone = value.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
+                  // Vietnamese phone numbers: 10 digits starting with 0[3|5|7|8|9], or 11 digits starting with 84[3|5|7|8|9]
+                  final phoneRegex = RegExp(r'^(0[35789][0-9]{8})$|^(84[35789][0-9]{8})$');
+                  if (!phoneRegex.hasMatch(phone)) {
+                    return 'profile.phoneNumberInvalid'.tr();
                   }
                   return null;
                 },
