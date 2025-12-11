@@ -403,6 +403,9 @@
     "clearError": "Failed to clear cart",
     "subtotal": "Subtotal",
     "discount": "Discount",
+    "courseDiscount": "Course discount",
+    "voucherDiscount": "Voucher discount",
+    "voucherDiscountWithCode": "Voucher discount ({0})",
     "total": "Total",
     "checkout": "Checkout",
     "discountApplied": "Discount applied successfully",
@@ -625,12 +628,7 @@
     "submitting": "Submitting...",
     "simulation": "Simulation",
     "close": "Close",
-    "gameOverTitle": "Game Over!",
-    "defeatReasonTitle": "Defeat reason",
-    "defeatReasonPrefix": "Defeat reason:",
-    "errorDetails": "Error details",
-    "expand": "See more",
-    "collapse": "Collapse"
+    "gameOverTitle": "Game Over!"
   }
 }
 

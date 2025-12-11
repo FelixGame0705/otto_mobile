@@ -8,6 +8,8 @@ class CartItem {
   final String courseDescription;
   final String courseImageUrl;
   final int unitPrice;
+  final int discountAmount;
+  final int finalPrice;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +21,8 @@ class CartItem {
     required this.courseDescription,
     required this.courseImageUrl,
     required this.unitPrice,
+    required this.discountAmount,
+    required this.finalPrice,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -32,6 +36,8 @@ class CartItem {
       courseDescription: json['courseDescription'] ?? '',
       courseImageUrl: json['courseImageUrl'] ?? '',
       unitPrice: (json['unitPrice'] as num?)?.toInt() ?? 0,
+      discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
+      finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['unitPrice'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
     );
@@ -46,6 +52,8 @@ class CartItem {
       'courseDescription': courseDescription,
       'courseImageUrl': courseImageUrl,
       'unitPrice': unitPrice,
+      'discountAmount': discountAmount,
+      'finalPrice': finalPrice,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -53,7 +61,7 @@ class CartItem {
 
   String get formattedPrice {
     final formatter = NumberFormat('#,###', 'vi_VN');
-    return '${formatter.format(unitPrice)} VNĐ';
+    return '${formatter.format(finalPrice)} VNĐ';
   }
 }
 
@@ -61,8 +69,13 @@ class Cart {
   final String id;
   final String userId;
   final int subtotal;
+  final int courseDiscountTotal;
+  final int voucherDiscountAmount;
   final int discountAmount;
   final int total;
+  final String? voucherId;
+  final String? voucherCode;
+  final String? voucherName;
   final int itemsCount;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -72,8 +85,13 @@ class Cart {
     required this.id,
     required this.userId,
     required this.subtotal,
+    required this.courseDiscountTotal,
+    required this.voucherDiscountAmount,
     required this.discountAmount,
     required this.total,
+    required this.voucherId,
+    required this.voucherCode,
+    required this.voucherName,
     required this.itemsCount,
     required this.createdAt,
     required this.updatedAt,
@@ -85,8 +103,13 @@ class Cart {
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
       subtotal: (json['subtotal'] as num?)?.toInt() ?? 0,
+      courseDiscountTotal: (json['courseDiscountTotal'] as num?)?.toInt() ?? 0,
+      voucherDiscountAmount: (json['voucherDiscountAmount'] as num?)?.toInt() ?? 0,
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
+      voucherId: json['voucherId'],
+      voucherCode: json['voucherCode'],
+      voucherName: json['voucherName'],
       itemsCount: (json['itemsCount'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
@@ -101,8 +124,13 @@ class Cart {
       'id': id,
       'userId': userId,
       'subtotal': subtotal,
+      'courseDiscountTotal': courseDiscountTotal,
+      'voucherDiscountAmount': voucherDiscountAmount,
       'discountAmount': discountAmount,
       'total': total,
+      'voucherId': voucherId,
+      'voucherCode': voucherCode,
+      'voucherName': voucherName,
       'itemsCount': itemsCount,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -132,6 +160,11 @@ class CartSummary {
   final String cartId;
   final int itemsCount;
   final int subtotal;
+  final int courseDiscountTotal;
+  final int voucherDiscountAmount;
+  final String? voucherId;
+  final String? voucherCode;
+  final String? voucherName;
   final int discountAmount;
   final int total;
   final bool isEmpty;
@@ -141,6 +174,11 @@ class CartSummary {
     required this.cartId,
     required this.itemsCount,
     required this.subtotal,
+    required this.courseDiscountTotal,
+    required this.voucherDiscountAmount,
+    required this.voucherId,
+    required this.voucherCode,
+    required this.voucherName,
     required this.discountAmount,
     required this.total,
     required this.isEmpty,
@@ -152,6 +190,11 @@ class CartSummary {
       cartId: json['cartId'] ?? '',
       itemsCount: (json['itemsCount'] as num?)?.toInt() ?? 0,
       subtotal: (json['subtotal'] as num?)?.toInt() ?? 0,
+      courseDiscountTotal: (json['courseDiscountTotal'] as num?)?.toInt() ?? 0,
+      voucherDiscountAmount: (json['voucherDiscountAmount'] as num?)?.toInt() ?? 0,
+      voucherId: json['voucherId'],
+      voucherCode: json['voucherCode'],
+      voucherName: json['voucherName'],
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
       isEmpty: json['isEmpty'] ?? true,
@@ -164,6 +207,11 @@ class CartSummary {
       'cartId': cartId,
       'itemsCount': itemsCount,
       'subtotal': subtotal,
+      'courseDiscountTotal': courseDiscountTotal,
+      'voucherDiscountAmount': voucherDiscountAmount,
+      'voucherId': voucherId,
+      'voucherCode': voucherCode,
+      'voucherName': voucherName,
       'discountAmount': discountAmount,
       'total': total,
       'isEmpty': isEmpty,

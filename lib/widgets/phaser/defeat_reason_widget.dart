@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'responsive_helpers.dart';
 
 class DefeatReasonWidget extends StatefulWidget {
@@ -82,10 +81,10 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                   ),
                   SizedBox(width: 12),
                   Expanded(
-                  child: Text(
-                    _isExpanded 
-                      ? 'phaser.defeatReasonTitle'.tr()
-                      : '${'phaser.defeatReasonPrefix'.tr()} ${widget.data['message'] ?? 'phaser.defeatDefault'.tr()}',
+                    child: Text(
+                      _isExpanded 
+                        ? 'Lý do thua' 
+                        : 'Lý do thua: ${widget.data['message'] ?? 'Game Over'}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -114,7 +113,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _isExpanded ? 'phaser.collapse'.tr() : 'phaser.expand'.tr(),
+                          _isExpanded ? 'Thu gọn' : 'Xem thêm',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: widget.isTablet ? 11 : 10,
@@ -196,7 +195,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'phaser.errorDetails'.tr(),
+                      'Chi tiết lỗi',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: widget.isTablet ? 13 : 12,
@@ -207,7 +206,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  '${widget.data['message'] ?? 'phaser.defeatDefault'.tr()}',
+                  '${widget.data['message'] ?? 'Game Over'}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: ResponsiveHelpers.getResponsiveFontSize(

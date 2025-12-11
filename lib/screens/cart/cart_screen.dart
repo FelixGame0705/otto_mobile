@@ -365,9 +365,41 @@ class _CartScreenState extends State<CartScreen> {
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(item.formattedPrice,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1A202C))),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (item.discountAmount > 0) ...[
+                                    Text(
+                                      '${NumberFormat('#,###', 'vi_VN').format(item.unitPrice)} VNĐ',
+                                      style: TextStyle(
+                                        color: Colors.grey[500],
+                                        fontSize: 13,
+                                        decoration: TextDecoration.lineThrough,
+                                      ),
+                                    ),
+                                  ],
+                                  Text(
+                                    item.formattedPrice,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Color(0xFF1A202C),
+                                    ),
+                                  ),
+                                  if (item.discountAmount > 0) ...[
+                                    Text(
+                                      '- ${NumberFormat('#,###', 'vi_VN').format(item.discountAmount)} VNĐ',
+                                      style: const TextStyle(
+                                        color: Color(0xFF10B981),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                               isRemoving
                                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                                   : TextButton.icon(
@@ -406,6 +438,33 @@ class _CartScreenState extends State<CartScreen> {
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
                   ],
                 ),
+                if (_cartSummary!.courseDiscountTotal > 0) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('cart.courseDiscount'.tr(), style: const TextStyle(fontSize: 16, color: Colors.white70)),
+                      Text('-${NumberFormat('#,###', 'vi_VN').format(_cartSummary!.courseDiscountTotal)} VNĐ',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
+                    ],
+                  ),
+                ],
+                if (_cartSummary!.voucherDiscountAmount > 0) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _cartSummary!.voucherCode != null && _cartSummary!.voucherCode!.isNotEmpty
+                            ? 'cart.voucherDiscountWithCode'.tr(args: [_cartSummary!.voucherCode!])
+                            : 'cart.voucherDiscount'.tr(),
+                        style: const TextStyle(fontSize: 16, color: Colors.white70),
+                      ),
+                      Text('-${NumberFormat('#,###', 'vi_VN').format(_cartSummary!.voucherDiscountAmount)} VNĐ',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
+                    ],
+                  ),
+                ],
                 if (_cartSummary!.discountAmount > 0) ...[
                   const SizedBox(height: 8),
                   Row(
