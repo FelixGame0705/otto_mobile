@@ -332,12 +332,12 @@ class _LoginScreenState extends State<LoginScreen> {
     // Kiểm tra lỗi email cụ thể trước
     if (lower.contains('email is not a valid') || 
         (lower.contains('email') && !lower.contains('password') && !lower.contains('invalid') && !lower.contains('mật khẩu'))) {
-      setState(() {
+    setState(() {
         _isLoading = false;
         _emailError = msg;
       });
-      handledInline = true;
-    } 
+        handledInline = true;
+      }
     // Kiểm tra lỗi đăng nhập (email hoặc password không đúng)
     else if (lower.contains('invalid email or password') || 
              lower.contains('email hoặc mật khẩu không đúng') ||
@@ -349,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
         _passwordError = msg;
       });
-      handledInline = true;
+        handledInline = true;
     } else {
       // Nếu không xác định được loại lỗi, chỉ hiển thị toast
       setState(() {

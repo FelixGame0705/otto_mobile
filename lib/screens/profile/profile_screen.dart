@@ -455,16 +455,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: const Icon(Icons.smart_toy),
                   label: Text('profile.activateRobot'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
-                OutlinedButton.icon(
-                  onPressed: _handleLogout,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
-                    foregroundColor: const Color(0xFFE53E3E),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  icon: const Icon(Icons.logout),
-                  label: Text('profile.logout'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
               ],
             ),
           ),
@@ -543,6 +533,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     icon: const Icon(Icons.password),
                     label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _handleLogout,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
+                      foregroundColor: const Color(0xFFE53E3E),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.logout),
+                    label: Text('profile.logout'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],

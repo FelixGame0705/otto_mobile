@@ -1188,7 +1188,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             children: [
               // Header với nút đóng
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00ba4a),
                   borderRadius: const BorderRadius.only(
@@ -1198,13 +1198,13 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.usb, color: Colors.white),
+                    const Icon(Icons.usb, color: Colors.white, size: 20),
                     const SizedBox(width: 8),
                     const Text(
                       'Universal Hex Builder',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1215,12 +1215,17 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                         // Gọi method buildAndFlashFromBlockly từ UniversalHexScreen
                         _triggerBuildAndFlashFromBlockly();
                       },
-                      icon: const Icon(Icons.flash_on, color: Colors.white),
+                      icon: const Icon(Icons.flash_on, color: Colors.white, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      icon: const Icon(Icons.close, color: Colors.white, size: 20),
                       tooltip: 'Close Universal Hex',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
@@ -1229,6 +1234,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               Expanded(
                 child: UniversalHexScreen(
                   key: _keyUniversalHex,
+                  onBuildFromBlockly: _triggerBuildAndFlashFromBlockly,
                 ),
               ),
             ],

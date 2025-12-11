@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/http_service.dart';
@@ -8,6 +9,12 @@ import 'package:ottobit/utils/api_error_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Tắt các debug overlays và paint indicators
+  debugPaintSizeEnabled = false;
+  debugRepaintRainbowEnabled = false;
+  debugRepaintTextRainbowEnabled = false;
+  
   await EasyLocalization.ensureInitialized();
 
   await StorageService.init();

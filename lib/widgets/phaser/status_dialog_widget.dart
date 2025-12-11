@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
@@ -347,47 +346,47 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                 ),
               ],
               
-              // Only show details for non-Game Over or if user wants to see them
-              if (!isGameOver && widget.status != 'VICTORY') ...[
-                SizedBox(height: isTablet ? 20 : 16),
-                
-                // Expandable details section
-                Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    title: Text(
-                      'phaser.details'.tr(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isTablet ? 16 : 14,
-                      ),
-                    ),
-                    iconColor: Colors.white,
-                    collapsedIconColor: Colors.white70,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(isTablet ? 20 : 16),
-                        margin: EdgeInsets.only(top: isTablet ? 12 : 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: Text(
-                          const JsonEncoder.withIndent('  ').convert(widget.data),
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: isTablet ? 13 : (isLandscape ? 10 : 11),
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              // Ẩn phần details/code trong dialog
+              // if (!isGameOver && widget.status != 'VICTORY') ...[
+              //   SizedBox(height: isTablet ? 20 : 16),
+              //   
+              //   // Expandable details section
+              //   Theme(
+              //     data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              //     child: ExpansionTile(
+              //       title: Text(
+              //         'phaser.details'.tr(),
+              //         style: TextStyle(
+              //           color: Colors.white,
+              //           fontWeight: FontWeight.bold,
+              //           fontSize: isTablet ? 16 : 14,
+              //         ),
+              //       ),
+              //       iconColor: Colors.white,
+              //       collapsedIconColor: Colors.white70,
+              //       children: [
+              //         Container(
+              //           width: double.infinity,
+              //           padding: EdgeInsets.all(isTablet ? 20 : 16),
+              //           margin: EdgeInsets.only(top: isTablet ? 12 : 8),
+              //           decoration: BoxDecoration(
+              //             color: Colors.black.withOpacity(0.2),
+              //             borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+              //             border: Border.all(color: Colors.white.withOpacity(0.1)),
+              //           ),
+              //           child: Text(
+              //             const JsonEncoder.withIndent('  ').convert(widget.data),
+              //             style: TextStyle(
+              //               fontFamily: 'monospace',
+              //               fontSize: isTablet ? 13 : (isLandscape ? 10 : 11),
+              //               color: Colors.white70,
+              //             ),
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ],
             ],
           ),
         ),
@@ -608,7 +607,8 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                     ? 10 
                     : 8,
             ),
-            if (widget.onSimulation != null && widget.status == 'VICTORY') ...[
+            // Cho phép chạy simulator cả khi thắng và khi thua
+            if (widget.onSimulation != null && (widget.status == 'VICTORY' || widget.status == 'LOSE')) ...[
               Expanded(
                 child: ActionButtonWidget(
                   text: 'phaser.simulation'.tr(),

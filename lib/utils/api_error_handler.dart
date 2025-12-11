@@ -478,6 +478,22 @@ class ApiErrorMapper {
       return 'Bạn chưa có robot đã kích hoạt tương thích với khóa học này.';
     }
     
+    // Blog comment error messages - check exact phrases
+    if (lowerMsg == 'please wait a few seconds before commenting again.' ||
+        lowerMsg.contains('please wait a few seconds before commenting again')) {
+      return 'Vui lòng đợi vài giây trước khi bình luận lại.';
+    }
+    
+    if (lowerMsg == 'too many comments in a short time. please try again later.' ||
+        lowerMsg.contains('too many comments in a short time')) {
+      return 'Bạn đã bình luận quá nhiều trong thời gian ngắn. Vui lòng thử lại sau.';
+    }
+    
+    if (lowerMsg == 'duplicate comment detected.' ||
+        lowerMsg.contains('duplicate comment detected')) {
+      return 'Phát hiện bình luận trùng lặp.';
+    }
+    
     // Add more common translations as needed
     return null;
   }
