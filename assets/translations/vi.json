@@ -284,6 +284,7 @@
     "mySubmissions": "Bài nộp của tôi",
     "myOrders": "Đơn hàng của tôi",
     "myCertificates": "Chứng chỉ của tôi",
+    "myRobots": "Robot của tôi",
     "activateRobot": "Kích hoạt Robot",
     "logout": "Đăng xuất",
     "phone": "SĐT",
@@ -328,6 +329,14 @@
       "updateSuccess": "Cập nhật học sinh thành công",
       "updateFailed": "Không thể cập nhật học sinh",
       "updateError": "Lỗi khi cập nhật học sinh: {err}"
+    },
+    "robots": {
+      "title": "Robot của tôi",
+      "noRobots": "Chưa có robot nào được kích hoạt",
+      "loadFailed": "Không thể tải danh sách robot",
+      "activatedAt": "Đã kích hoạt: {date}",
+      "expiresAt": "Hết hạn: {date}",
+      "expired": "Đã hết hạn"
     }
   },
   "challenge": {

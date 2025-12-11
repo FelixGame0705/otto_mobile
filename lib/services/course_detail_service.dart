@@ -77,7 +77,7 @@ class CourseDetailService {
   Future<List<CourseAvailableDiscount>> getCourseAvailableDiscounts(String courseId) async {
     try {
       final response = await _httpService.get(
-        '/v1/courses/$courseId/discounts-available)',
+        '/v1/courses/$courseId/discounts-available',
         throwOnError: false,
       );
 

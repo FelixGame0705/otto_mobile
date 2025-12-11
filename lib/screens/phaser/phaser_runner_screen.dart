@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/program_storage_service.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/widgets/phaser/status_dialog_widget.dart';
+import 'package:ottobit/services/submission_service.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;
@@ -32,10 +33,12 @@ class PhaserRunnerScreen extends StatefulWidget {
 class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   late final WebViewController _controller;
   late final PhaserBridge _bridge;
+  final SubmissionService _submissionService = SubmissionService();
   bool _isLoading = true;
   bool _isGameReady = false;
   bool _isDialogShowing = false;
   bool _sentInitialLoad = false;
+  bool _hasAutoSubmitted = false;
   String _cachedCodeJson = '{}';
   double _webViewZoom = 0.8; // Giảm zoom mặc định từ 1.0 xuống 0.8 (80%)
   static const double _minZoom = 0.5;
@@ -116,6 +119,9 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
     _bridge.onVictory = (data) {
       debugPrint('🎉 onVictory callback called with data: $data');
       if (mounted) {
+        // Auto-submit on victory
+        _autoSubmitOnVictory(data);
+        
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final message = data['message'] as String? ?? 'phaser.victoryDefault'.tr();
           _showStatusDialog(
@@ -287,6 +293,79 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
       return _cachedCodeJson;
     }
     return '{}';
+  }
+
+  Future<void> _autoSubmitOnVictory(Map<String, dynamic> data) async {
+    if (_hasAutoSubmitted) {
+      debugPrint('⚠️ Already auto-submitted, skipping');
+      return;
+    }
+
+    final challengeId = widget.initialChallengeJson?['id'] ??
+        widget.initialChallengeJson?['challengeId'];
+    
+    if (challengeId == null || challengeId.toString().isEmpty) {
+      debugPrint('⚠️ Cannot auto-submit: missing challengeId');
+      return;
+    }
+
+    final codeJson = _getCodeJsonStringSync();
+    if (codeJson.isEmpty || codeJson == '{}') {
+      debugPrint('⚠️ Cannot auto-submit: missing codeJson');
+      return;
+    }
+
+    _hasAutoSubmitted = true;
+    debugPrint('🚀 Auto-submitting on victory - ChallengeId: $challengeId');
+
+    try {
+      // Calculate stars from the victory data
+      final dynamicCardScore = data['cardScore'] ?? 
+          (data['details'] is Map<String, dynamic> ? data['details']['cardScore'] : null);
+      double normalizedScore;
+      if (dynamicCardScore is num) {
+        normalizedScore = dynamicCardScore.toDouble();
+      } else {
+        final rawScore = data['score'];
+        if (rawScore is num) {
+          final s = rawScore.toDouble();
+          normalizedScore = s <= 1.0 ? s : (s / 100.0);
+        } else {
+          normalizedScore = 0.0;
+        }
+      }
+      int stars = (normalizedScore * 3).ceil();
+      if (stars < 1) stars = 1;
+      if (stars > 3) stars = 3;
+
+      final response = await _submissionService.createSubmission(
+        challengeId: challengeId.toString(),
+        codeJson: codeJson,
+        star: stars,
+      );
+
+      if (mounted) {
+        debugPrint('✅ Auto-submit successful: ${response.message}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: const Color(0xFF48BB78),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        debugPrint('❌ Auto-submit failed: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('phaser.submissionFailed'.tr(args: [e.toString()])),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadMapAndRunProgram() async {

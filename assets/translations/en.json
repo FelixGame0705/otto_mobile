@@ -283,6 +283,7 @@
     "mySubmissions": "My Submissions",
     "myOrders": "My Orders",
     "myCertificates": "My Certificates",
+    "myRobots": "My Robots",
     "activateRobot": "Activate Robot",
     "logout": "Logout",
     "phone": "Phone",
@@ -327,6 +328,14 @@
       "updateSuccess": "Student updated successfully",
       "updateFailed": "Failed to update student",
       "updateError": "Error updating student: {err}"
+    },
+    "robots": {
+      "title": "My Robots",
+      "noRobots": "No robots activated yet",
+      "loadFailed": "Failed to load robots",
+      "activatedAt": "Activated: {date}",
+      "expiresAt": "Expires: {date}",
+      "expired": "Expired"
     }
   },
   "challenge": {

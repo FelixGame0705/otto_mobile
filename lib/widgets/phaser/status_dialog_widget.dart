@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
-import 'package:ottobit/services/submission_service.dart';
 import 'responsive_helpers.dart';
 import 'action_button_widget.dart';
 import 'defeat_reason_widget.dart';
@@ -38,88 +37,6 @@ class StatusDialogWidget extends StatefulWidget {
 }
 
 class _StatusDialogWidgetState extends State<StatusDialogWidget> {
-  final SubmissionService _submissionService = SubmissionService();
-  bool _isSubmitting = false;
-
-  Future<void> _handleSubmit() async {
-    debugPrint('🔍 Submit attempt - ChallengeId: ${widget.challengeId}, CodeJson: ${widget.codeJson}');
-    
-    if (widget.challengeId == null || widget.challengeId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('phaser.missingChallengeId'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    
-    if (widget.codeJson == null || widget.codeJson!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('phaser.missingCodeData'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      // Calculate stars from the victory data
-      final dynamicCardScore = widget.data['cardScore'] ?? (widget.data['details'] is Map<String, dynamic> ? widget.data['details']['cardScore'] : null);
-      double normalizedScore;
-      if (dynamicCardScore is num) {
-        normalizedScore = dynamicCardScore.toDouble();
-      } else {
-        final rawScore = widget.data['score'];
-        if (rawScore is num) {
-          final s = rawScore.toDouble();
-          normalizedScore = s <= 1.0 ? s : (s / 100.0);
-        } else {
-          normalizedScore = 0.0;
-        }
-      }
-      int stars = (normalizedScore * 3).ceil();
-      if (stars < 1) stars = 1;
-      if (stars > 3) stars = 3;
-
-      final response = await _submissionService.createSubmission(
-        challengeId: widget.challengeId!,
-        codeJson: widget.codeJson!,
-        star: stars,
-      );
-
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: const Color(0xFF48BB78),
-          ),
-        );
-        
-        widget.onClose();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('phaser.submissionFailed'.tr(args: [e.toString()])),
-            backgroundColor: Colors.red,
-        ));
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -664,22 +581,22 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             Expanded(
               child: ActionButtonWidget(
                 text: widget.status == 'VICTORY' 
-                  ? (_isSubmitting ? 'phaser.submitting'.tr() : 'phaser.submit'.tr())
+                  ? 'phaser.reset'.tr()
                   : 'phaser.playAgain'.tr(),
                 icon: widget.status == 'VICTORY' 
-                  ? (_isSubmitting ? Icons.hourglass_empty : Icons.upload)
+                  ? Icons.refresh
                   : Icons.refresh,
                 textColor: Colors.white,
                 backgroundColor: widget.color.withOpacity(0.15),
                 isTablet: isTablet,
                 isLandscape: isLandscape,
-                onPressed: _isSubmitting 
-                  ? () {} // Disabled state
-                  : (widget.status == 'VICTORY' 
-                      ? _handleSubmit
+                onPressed: widget.status == 'VICTORY' 
+                  ? () {
+                      widget.onPlayAgain();
+                    }
                       : () {
                           widget.onPlayAgain();
-                        }),
+                    },
               ),
             ),
             SizedBox(
