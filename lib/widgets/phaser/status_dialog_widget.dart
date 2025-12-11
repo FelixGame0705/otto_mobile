@@ -115,7 +115,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
         
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('phaser.submissionFailed'.tr(args: [e.toString()])),
-          backgroundColor: Colors.red,
+            backgroundColor: Colors.red,
         ));
       }
     }
@@ -143,9 +143,9 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   ? 40 
                   : screenWidth > 500 
                     ? 32  // Samsung A23 (720px) - tăng padding để dialog nhỏ hơn
-                    : screenWidth > 400 
-                      ? 24 
-                      : 16,
+                  : screenWidth > 400 
+                    ? 24 
+                    : 16,
             vertical: screenHeight > 1200 
               ? (isGameOver ? 40 : 50)
               : screenHeight > 900 
@@ -244,7 +244,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                 ? (isLandscape ? 12 : 20)
                 : screenWidth > 500
                   ? (isLandscape ? 8 : 12)  // Giảm spacing cho Samsung A23
-                  : (isLandscape ? 10 : 16),
+                : (isLandscape ? 10 : 16),
           ),
           // Title
           Text(
@@ -268,9 +268,9 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   ? 20
                   : screenWidth > 500
                     ? 12  // Giảm spacing cho Samsung A23
-                    : screenWidth > 400
-                      ? 16
-                      : 12)
+                  : screenWidth > 400
+                    ? 16
+                    : 12)
               : (screenWidth > 1200 
                 ? 16
                 : screenWidth > 600 
@@ -286,18 +286,18 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   ? 20 
                   : screenWidth > 500
                     ? 14  // Giảm padding cho Samsung A23
-                    : screenWidth > 400 
-                      ? 16 
-                      : 12,
+                  : screenWidth > 400 
+                    ? 16 
+                    : 12,
               vertical: screenWidth > 1200 
                 ? 10
                 : screenWidth > 600 
                   ? 8 
                   : screenWidth > 500
                     ? 5  // Giảm padding cho Samsung A23
-                    : screenWidth > 400 
-                      ? 6 
-                      : 4,
+                  : screenWidth > 400 
+                    ? 6 
+                    : 4,
             ),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
@@ -346,18 +346,18 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
           ? 20 
           : screenWidth > 500
             ? 12  // Giảm từ 18 xuống 12
-            : screenWidth > 400 
-              ? 16 
-              : 12;
+          : screenWidth > 400 
+            ? 16 
+            : 12;
       double bottomPadding = screenWidth > 1200
         ? (isLandscape ? 8 : 12)
         : screenWidth > 600
           ? (isLandscape ? 6 : 10)
           : screenWidth > 500
             ? (isLandscape ? 3 : 6)  // Giảm từ 5/9 xuống 3/6
-            : screenWidth > 400
-              ? (isLandscape ? 4 : 8)
-              : (isLandscape ? 2 : 6);
+          : screenWidth > 400
+            ? (isLandscape ? 4 : 8)
+            : (isLandscape ? 2 : 6);
       
       // Height = star size + glow effect (8px) + top padding + bottom padding + extra space
       // Giảm extra space để tránh overflow trên màn hình nhỏ

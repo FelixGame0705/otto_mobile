@@ -253,57 +253,53 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-        _emailError = null;
-        _passwordError = null;
-      });
+  Future<void> _handleLogin() async {
+  // Chỉ validate, không thay đổi state nếu fail
+  if (!_formKey.currentState!.validate()) return;
 
-      try {
-        final result = await AuthService.login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+  setState(() {
+    _isLoading = true;
+    _emailError = null;
+    _passwordError = null;
+  });
 
-        setState(() {
-          _isLoading = false;
-        });
+  try {
+    final result = await AuthService.login(
+      _emailController.text.trim(),
+      _passwordController.text,
+    );
 
-        if (mounted) {
-          if (result.isSuccess) {
-            showSuccessToast(context, 'Đăng nhập thành công!');
-            Navigator.pushReplacementNamed(context, AppRoutes.home);
-          } else {
-            final msg = (result.message ?? '').trim();
-            bool handledInline = false;
-            setState(() {
-              final lower = msg.toLowerCase();
-              if (lower.contains('email is not a valid') || lower.contains('email')) {
-                _emailError = msg;
-                handledInline = true;
-              }
-              if (lower.contains('invalid email or password')) {
-                _passwordError = msg;
-                handledInline = true;
-              }
-            });
-            if (!handledInline) {
-              showErrorToast(context, msg.isNotEmpty ? msg : 'Đăng nhập thất bại');
-            }
-          }
-        }
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        if (mounted) {
-          showErrorToast(context, 'Lỗi kết nối: $e');
-        }
-      }
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess) {
+      showSuccessToast(context, 'Đăng nhập thành công!');
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      return;
     }
+
+    final msg = (result.message ?? '').trim();
+    bool handledInline = false;
+    final lower = msg.toLowerCase();
+    setState(() {
+      if (lower.contains('email is not a valid') || lower.contains('email')) {
+        _emailError = msg;
+        handledInline = true;
+      }
+      if (lower.contains('invalid email or password')) {
+        _passwordError = msg;
+        handledInline = true;
+      }
+    });
+    if (!handledInline) {
+      showErrorToast(context, msg.isNotEmpty ? msg : 'Đăng nhập thất bại');
+    }
+  } catch (e) {
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+    showErrorToast(context, 'Lỗi kết nối: $e');
   }
+}
 
   @override
   Widget build(BuildContext context) {

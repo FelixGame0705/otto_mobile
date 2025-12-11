@@ -262,6 +262,13 @@ class ApiErrorMapper {
     }
 
     // For Vietnamese: Use mapped messages first, then translate rawMessage if available
+    // Special-case: if server message is known, translate it first to bypass wrong errorCode mapping
+    final serverMsg = error.rawMessage?.trim();
+    if (serverMsg != null && serverMsg.isNotEmpty) {
+      final translatedEarly = _translateCommonMessage(serverMsg);
+      if (translatedEarly != null) return translatedEarly;
+    }
+
     final code = error.errorCode?.trim();
     if (code != null && code.isNotEmpty) {
       final mapped = _codeToMessage[code];
@@ -271,7 +278,6 @@ class ApiErrorMapper {
     }
 
     // If no mapped message but have rawMessage, try to translate it
-    final serverMsg = error.rawMessage?.trim();
     if (serverMsg != null && serverMsg.isNotEmpty) {
       // Try to find translation for common messages
       final translated = _translateCommonMessage(serverMsg);
@@ -465,6 +471,11 @@ class ApiErrorMapper {
     if (lowerMsg.contains('course progress must be at least 50%') ||
         lowerMsg.contains('progress must be at least 50% to rate')) {
       return 'Tiến độ khóa học của bạn phải đạt ít nhất 50% để có thể đánh giá.';
+    }
+
+    // Robot compatibility / activation
+    if (lowerMsg.contains('you do not have an activated robot compatible with this course')) {
+      return 'Bạn chưa có robot đã kích hoạt tương thích với khóa học này.';
     }
     
     // Add more common translations as needed

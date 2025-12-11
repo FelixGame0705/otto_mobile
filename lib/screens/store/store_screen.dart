@@ -537,9 +537,9 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
                   values: _ageRange,
                   activeColor: const Color(0xFF17a64b),
                   inactiveColor: const Color(0xFF17a64b).withOpacity(0.2),
-                  min: 0,
-                  max: 25,
-                  divisions: 25,
+                  min: 1,
+                  max: 100,
+                  divisions: 100,
                   labels: RangeLabels('${_ageRange.start.round()}', '${_ageRange.end.round()}'),
                   onChanged: (v) {
                     setState(() {
