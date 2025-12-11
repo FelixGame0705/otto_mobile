@@ -94,7 +94,7 @@ class LessonCard extends StatelessWidget {
                       Expanded(
                         child: _buildStatChip(
                           Icons.flag,
-                          '${lesson.challengesCount}',
+                          '${lesson.challengeCount}',
                           const Color(0xFFED8936),
                         ),
                       ),
