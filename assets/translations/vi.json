@@ -150,8 +150,11 @@
     "enrolled": "Đã đăng ký",
     "enrollNow": "Đăng ký ngay",
     "enrollSuccess": "Đăng ký khóa học thành công!",
+    "studentRequiredTitle": "Cần đăng ký học viên",
+    "studentRequiredMessage": "Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.",
+    "registerStudentNow": "Đăng ký ngay",
     "info": "Thông tin khóa học",
-    "teacher": "Giảng viên",
+    "teacher": "Tạo bởi",
     "createdAt": "Ngày tạo",
     "updatedAt": "Cập nhật lần cuối",
     "lessonsCount": "Số bài học",
@@ -631,6 +634,15 @@
       "error": "Không thể gửi đánh giá: {0}",
       "selectStars": "Vui lòng chọn số sao"
     }
+  },
+  "courseMeta": {
+    "lessonsCountLabel": "{count} bài học",
+    "enrollmentsCountLabel": "{count} học viên"
+  },
+  "duration": {
+    "minutes": "{minutes} phút",
+    "hours": "{hours} giờ",
+    "hoursMinutes": "{hours} giờ {minutes} phút"
   },
   "phaser": {
     "title": "Trò chơi robot Phaser",

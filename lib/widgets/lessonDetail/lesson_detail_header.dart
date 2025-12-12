@@ -33,18 +33,6 @@ class LessonDetailHeader extends StatelessWidget {
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.share, color: Colors.white),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('common.shareLesson'.tr()),
-                          backgroundColor: Colors.blue,
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
             ),
@@ -108,7 +96,7 @@ class LessonDetailHeader extends StatelessWidget {
                     children: [
                       _buildStatItem(
                         Icons.timer_outlined,
-                        lesson.formattedDuration,
+                        lesson.formattedDurationLocalized(context),
                       ),
                       const SizedBox(width: 24),
                       _buildStatItem(

@@ -6,7 +6,7 @@ class LessonActionButtons extends StatelessWidget {
   final VoidCallback onViewChallenges;
   final VoidCallback onViewTheory;
   final bool isStarting;
-  final int challengesCount;
+  final int challengeCount;
   final bool canStartLesson;
   final bool isCheckingEnrollment;
   final String lockedMessage;
@@ -17,7 +17,7 @@ class LessonActionButtons extends StatelessWidget {
     required this.onViewChallenges,
     required this.onViewTheory,
     this.isStarting = false,
-    required this.challengesCount,
+    required this.challengeCount,
     this.canStartLesson = true,
     this.isCheckingEnrollment = false,
     String? lockedMessage,
@@ -67,14 +67,14 @@ class LessonActionButtons extends StatelessWidget {
           const SizedBox(height: 12),
 
           // Challenges Button
-          if (challengesCount > 0)
+          if (challengeCount > 0)
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: onViewChallenges,
                 icon: const Icon(Icons.flag, size: 20),
                 label: Text(
-                  'common.viewChallenges'.tr(namedArgs: {'count': '$challengesCount'}),
+                  'common.viewChallenges'.tr(namedArgs: {'count': '$challengeCount'}),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

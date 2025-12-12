@@ -149,8 +149,11 @@
     "enrolled": "Enrolled",
     "enrollNow": "Enroll now",
     "enrollSuccess": "Course enrolled successfully!",
+    "studentRequiredTitle": "Student profile required",
+    "studentRequiredMessage": "You are not registered as a student. Please register to continue.",
+    "registerStudentNow": "Register now",
     "info": "Course information",
-    "teacher": "Instructor",
+    "teacher": "Created by",
     "createdAt": "Created at",
     "updatedAt": "Last updated",
     "lessonsCount": "Lessons",
@@ -630,6 +633,15 @@
       "error": "Failed to submit rating: {0}",
       "selectStars": "Please select a rating"
     }
+  },
+  "courseMeta": {
+    "lessonsCountLabel": "{count} lessons",
+    "enrollmentsCountLabel": "{count} students"
+  },
+  "duration": {
+    "minutes": "{minutes} min",
+    "hours": "{hours} hours",
+    "hoursMinutes": "{hours} hours {minutes} minutes"
   },
   "phaser": {
     "title": "Phaser Robot Game",

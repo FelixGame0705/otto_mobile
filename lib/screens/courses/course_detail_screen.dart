@@ -22,6 +22,7 @@ import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
+import 'package:ottobit/widgets/common/student_required_dialog.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -223,7 +224,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       });
       final isEnglish = context.locale.languageCode == 'en';
       final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-      showErrorToast(context, msg);
+      if (_isStudentMissing(msg)) {
+        await StudentRequiredDialog.show(context);
+      } else {
+        showErrorToast(context, msg);
+      }
     }
   }
 
@@ -306,7 +311,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         
         final isEnglish = context.locale.languageCode == 'en';
         final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-        showErrorToast(context, msg);
+        if (_isStudentMissing(msg)) {
+          await StudentRequiredDialog.show(context);
+        } else {
+          showErrorToast(context, msg);
+        }
       }
     }
   }
@@ -316,6 +325,28 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final url = 'https://ottobit-fe.vercel.app/user/courses/${_course!.id}';
     final message = '${_course!.title}\n\n${_course!.description}\n\n$url';
     Share.share(message, subject: _course!.title);
+  }
+
+  void _handleRobotTap() {
+    if (_requiredRobot == null) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.productDetail,
+      arguments: {
+        'productId': _requiredRobot!.robotId,
+        'productType': 'robot',
+      },
+    );
+  }
+
+  bool _isStudentMissing(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('student not found') ||
+        lower.contains('no student found') ||
+        lower.contains('student profile not found') ||
+        lower.contains('không tìm thấy học sinh') ||
+        lower.contains('chưa là học viên') ||
+        lower.contains('vui lòng đăng ký học viên');
   }
 
   Future<void> _showCreateTicketDialog() async {
@@ -447,6 +478,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   ? _handleAddToCart
                   : null,
               onShare: _handleShare,
+              onRobotTap: _handleRobotTap,
               isEnrolled: _isEnrolled,
               isLoading: _isEnrolling || _isAddingToCart,
               isPaid: _course!.isPaid,

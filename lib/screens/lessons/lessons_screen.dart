@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_model.dart';
 import 'package:ottobit/services/lesson_service.dart';
@@ -8,6 +9,7 @@ import 'package:ottobit/widgets/lessons/lesson_search_bar.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
+import 'package:ottobit/widgets/common/student_required_dialog.dart';
 
 class LessonsScreen extends StatefulWidget {
   final String courseId;
@@ -60,18 +62,20 @@ class _LessonsScreenState extends State<LessonsScreen> {
     });
 
     try {
-      print(
-        'Search term: $_searchTerm, Page: $_currentPage, CourseId: ${widget.courseId}',
-      );
+     
+      // Đảm bảo _searchTerm được sync với _searchController
+      final finalSearchTerm = _searchTerm.trim().isNotEmpty 
+          ? _searchTerm.trim() 
+          : (_searchController.text.trim().isNotEmpty ? _searchController.text.trim() : null);
+      
+      
       final response = await _lessonService.getLessons(
         courseId: widget.courseId,
-        searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
+        searchTerm: finalSearchTerm,
         pageNumber: _currentPage,
         pageSize: 10,
       );
 
-      print('Response received: ${response.data?.items.length ?? 0} lessons');
-      print('Response data: ${response.data}');
 
       if (mounted) {
         setState(() {
@@ -97,7 +101,9 @@ class _LessonsScreenState extends State<LessonsScreen> {
           _errorMessage = friendly;
           _isLoading = false;
         });
-        if (_errorMessage.isNotEmpty) {
+        if (_isStudentMissing(_errorMessage)) {
+          await StudentRequiredDialog.show(context);
+        } else if (_errorMessage.isNotEmpty) {
           showErrorToast(context, _errorMessage);
         }
       }
@@ -127,7 +133,15 @@ class _LessonsScreenState extends State<LessonsScreen> {
   }
 
   void _handleSearch() {
-    _searchTerm = _searchController.text.trim();
+    // Lấy giá trị từ _searchTerm vì nó đã được cập nhật qua onSearchChanged
+    // Hoặc từ _searchController nếu _searchTerm chưa được cập nhật
+    final searchValue = _searchTerm.trim().isNotEmpty 
+        ? _searchTerm.trim() 
+        : _searchController.text.trim();
+    _searchTerm = searchValue;
+    debugPrint('=== LessonsScreen: _handleSearch() ===');
+    debugPrint('LessonsScreen: _searchTerm after search: "$_searchTerm"');
+    debugPrint('LessonsScreen: _searchController.text: "${_searchController.text}"');
     _loadLessons(isRefresh: true);
   }
 
@@ -158,6 +172,21 @@ class _LessonsScreenState extends State<LessonsScreen> {
       final isEnglish = context.locale.languageCode == 'en';
       final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       final message = friendly.isNotEmpty ? friendly : 'lesson.unknownError'.tr();
+
+      if (_isStudentMissing(message)) {
+        await StudentRequiredDialog.show(context);
+        return;
+      }
+
+      // Nếu lỗi yêu cầu hoàn thành bài học trước, chỉ hiển thị toast (dùng message đã được map)
+      final lowerMsg = message.toLowerCase();
+      if (lowerMsg.contains('previous lessons must be completed first') ||
+          lowerMsg.contains('bài học trước đó') ||
+          lowerMsg.contains('hoàn thành các bài học trước')) {
+        showErrorToast(context, message);
+        return;
+      }
+
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -208,6 +237,7 @@ class _LessonsScreenState extends State<LessonsScreen> {
         // Search Bar
         LessonSearchBar(
           searchTerm: _searchTerm,
+          controller: _searchController,
           onSearchChanged: _handleSearchChanged,
           onSearchPressed: _handleSearch,
           onClearPressed: _handleClearSearch,
@@ -370,5 +400,15 @@ class _LessonsScreenState extends State<LessonsScreen> {
     if (width >= 900) return 0.72;
     if (width >= 600) return 0.68;
     return orientation == Orientation.landscape ? 0.78 : 0.68;
+  }
+
+  bool _isStudentMissing(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('student not found') ||
+        lower.contains('no student found') ||
+        lower.contains('student profile not found') ||
+        lower.contains('không tìm thấy học sinh') ||
+        lower.contains('chưa là học viên') ||
+        lower.contains('vui lòng đăng ký học viên');
   }
 }

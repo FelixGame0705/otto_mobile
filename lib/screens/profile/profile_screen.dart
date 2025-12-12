@@ -24,6 +24,7 @@ import 'dart:typed_data';
 import 'package:ottobit/services/location_service.dart';
 import 'package:ottobit/models/location_model.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
+import 'package:ottobit/widgets/common/student_required_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -338,6 +339,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => Scaffold(
@@ -360,6 +365,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const MySubmissionsScreen()),
                     );
@@ -374,6 +383,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const MyRobotsScreen()),
                     );
@@ -388,6 +401,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const MyNotesScreen()),
                     );
@@ -401,7 +418,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text('profile.myNotes'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.cart);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFED8936), width: 2),
                     foregroundColor: const Color(0xFFED8936),
@@ -411,7 +434,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text('cart.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.orders);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF3182CE), width: 2),
                     foregroundColor: const Color(0xFF3182CE),
@@ -421,7 +450,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text('profile.myOrders'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.certificates),
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.certificates);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF7C3AED), width: 2),
                     foregroundColor: const Color(0xFF7C3AED),
@@ -432,6 +467,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const TicketsScreen()),

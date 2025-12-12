@@ -234,7 +234,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                     onViewChallenges: _handleViewChallenges,
                     onViewTheory: _handleViewTheory,
                     isStarting: _isStarting,
-                    challengesCount: _lessonDetail!.challengeCount,
+                    challengeCount: _lessonDetail!.challengeCount,
                     canStartLesson:
                         !_isCheckingEnrollment && (_isCourseEnrolled ?? false),
                     isCheckingEnrollment: _isCheckingEnrollment,

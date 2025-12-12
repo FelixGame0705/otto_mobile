@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 
 class LessonDetail {
@@ -37,7 +39,7 @@ class LessonDetail {
               ?? DateTime.fromMillisecondsSinceEpoch(0),
       updatedAt: DateTime.tryParse((json['updatedAt'] as String?) ?? '')
               ?? DateTime.fromMillisecondsSinceEpoch(0),
-      challengeCount: (json['challengeCount'] as int?) ?? 0,
+      challengeCount: (json['challengesCount'] as int?) ?? 0,
       courseTitle: (json['courseTitle'] as String?) ?? '',
     );
   }
@@ -60,6 +62,30 @@ class LessonDetail {
       return '$hours giờ';
     }
     return '$hours giờ $minutes phút';
+  }
+
+  String formattedDurationLocalized(BuildContext context) {
+    if (durationInMinutes < 60) {
+      return 'duration.minutes'.tr(
+        context: context,
+        namedArgs: {'minutes': durationInMinutes.toString()},
+      );
+    }
+    final hours = durationInMinutes ~/ 60;
+    final minutes = durationInMinutes % 60;
+    if (minutes == 0) {
+      return 'duration.hours'.tr(
+        context: context,
+        namedArgs: {'hours': hours.toString()},
+      );
+    }
+    return 'duration.hoursMinutes'.tr(
+      context: context,
+      namedArgs: {
+        'hours': hours.toString(),
+        'minutes': minutes.toString(),
+      },
+    );
   }
 
   String get lessonNumber {

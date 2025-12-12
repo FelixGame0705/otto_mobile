@@ -150,7 +150,8 @@ class ApiErrorMapper {
         'Không tìm thấy đánh giá hoặc đánh giá không tồn tại cho phiếu hỗ trợ này.',
 
     // ================= STUDENT / ENROLLMENT / SUBMISSION / VOUCHER / ACTIVATION =================
-    'STU_001': 'Không tìm thấy học sinh.',
+    // Student profile missing / not registered
+    'STU_001': 'Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.',
     'STU_005': 'Hồ sơ học sinh đã tồn tại cho người dùng này.',
 
     'ENR_001': 'Học sinh chưa đăng ký khóa học này.',
@@ -471,6 +472,23 @@ class ApiErrorMapper {
     if (lowerMsg.contains('course progress must be at least 50%') ||
         lowerMsg.contains('progress must be at least 50% to rate')) {
       return 'Tiến độ khóa học của bạn phải đạt ít nhất 50% để có thể đánh giá.';
+    }
+
+    // Lessons prerequisites
+    if (lowerMsg.contains('previous lessons must be completed first')) {
+      return 'Bạn cần hoàn thành các bài học trước đó trước khi tiếp tục.';
+    }
+    // .NET auth handler misconfiguration message containing the prerequisite text
+    if (lowerMsg.contains("no authentication handler is registered for the scheme 'previous lessons must be completed first'")
+        || lowerMsg.contains("previous lessons must be completed first'. the registered schemes are")) {
+      return 'Bạn cần hoàn thành các bài học trước đó trước khi tiếp tục.';
+    }
+
+    // Student not found / not registered
+    if (lowerMsg.contains('student not found') ||
+        lowerMsg.contains('no student found') ||
+        lowerMsg.contains('student profile not found')) {
+      return 'Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.';
     }
 
     // Robot compatibility / activation

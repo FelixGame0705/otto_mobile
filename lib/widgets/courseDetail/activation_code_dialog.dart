@@ -61,16 +61,20 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
         widget.onCodeRedeemed?.call();
       }
     } catch (e) {
-      if (mounted) {
-        final isEnglish = context.locale.languageCode == 'en';
-        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(friendly),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+
+      final messenger = ScaffoldMessenger.of(context);
+      final navigator = Navigator.of(context);
+      final isEnglish = context.locale.languageCode == 'en';
+      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(friendly),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -118,10 +122,6 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
                 ),
               ],
             ),

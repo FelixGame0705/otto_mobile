@@ -112,13 +112,21 @@ class CourseDetailHeader extends StatelessWidget {
                     children: [
                       _buildStatChip(
                         Icons.play_lesson,
-                        '${course.lessonsCount} bài học',
+                        'courseMeta.lessonsCountLabel'.tr(
+                          namedArgs: {
+                            'count': course.lessonsCount.toString(),
+                          },
+                        ),
                         Colors.white,
                       ),
                       const SizedBox(width: 12),
                       _buildStatChip(
                         Icons.people,
-                        '${course.enrollmentsCount} học viên',
+                        'courseMeta.enrollmentsCountLabel'.tr(
+                          namedArgs: {
+                            'count': course.enrollmentsCount.toString(),
+                          },
+                        ),
                         Colors.white,
                       ),
                     ],

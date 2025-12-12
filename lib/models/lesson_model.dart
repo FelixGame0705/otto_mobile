@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 
 class Lesson {
@@ -64,6 +66,30 @@ class Lesson {
       return '${hours}h';
     }
     return '${hours}h ${minutes}p';
+  }
+
+  String formattedDurationLocalized(BuildContext context) {
+    if (durationInMinutes < 60) {
+      return 'duration.minutes'.tr(
+        context: context,
+        namedArgs: {'minutes': durationInMinutes.toString()},
+      );
+    }
+    final hours = durationInMinutes ~/ 60;
+    final minutes = durationInMinutes % 60;
+    if (minutes == 0) {
+      return 'duration.hours'.tr(
+        context: context,
+        namedArgs: {'hours': hours.toString()},
+      );
+    }
+    return 'duration.hoursMinutes'.tr(
+      context: context,
+      namedArgs: {
+        'hours': hours.toString(),
+        'minutes': minutes.toString(),
+      },
+    );
   }
 }
 

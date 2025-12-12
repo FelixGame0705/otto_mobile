@@ -50,9 +50,23 @@ class HttpService {
     bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
+    
+    print('=== HttpService: GET Request Details ===');
+    print('HttpService: Base URL: $_baseUrl');
+    print('HttpService: Endpoint: $endpoint');
+    print('HttpService: Query params received: $queryParams');
+    print('HttpService: Query params is null: ${queryParams == null}');
+    if (queryParams != null) {
+      print('HttpService: Query params keys: ${queryParams.keys.toList()}');
+      print('HttpService: Query params values: ${queryParams.values.toList()}');
+      print('HttpService: SearchTerm in queryParams: ${queryParams['SearchTerm']}');
+    }
+    
     final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
     
-    print('HttpService: Making GET request to: $uri');
+    print('HttpService: Final URI: $uri');
+    print('HttpService: URI query: ${uri.query}');
+    print('HttpService: URI queryParameters: ${uri.queryParameters}');
     print('HttpService: Headers: $headers');
     
     try {
