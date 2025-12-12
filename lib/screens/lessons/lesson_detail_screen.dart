@@ -118,6 +118,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       );
       // Reload lesson detail in case counters/status changed
       await _loadLessonDetail();
+      // After starting, go straight to challenges if available
+      _handleViewChallenges();
     } catch (e) {
       if (!mounted) return;
       final isEnglish = context.locale.languageCode == 'en';
@@ -231,7 +233,6 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   // Action Buttons
                   LessonActionButtons(
                     onStartLesson: _handleStartLesson,
-                    onViewChallenges: _handleViewChallenges,
                     onViewTheory: _handleViewTheory,
                     isStarting: _isStarting,
                     challengeCount: _lessonDetail!.challengeCount,

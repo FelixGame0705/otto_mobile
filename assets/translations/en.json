@@ -444,6 +444,7 @@
   },
   "order": {
     "title": "Checkout",
+    "empty": "No orders",
     "summary": "Order Summary",
     "subtotal": "Subtotal",
     "discount": "Discount",
@@ -487,6 +488,18 @@
       "failed": "Failed",
       "cancelled": "Cancelled",
       "refunded": "Refunded"
+    }
+  },
+  "orders": {
+    "empty": "No orders",
+    "itemsCount": "{count} items",
+    "allShown": "All orders shown",
+    "filter": {
+      "status": "Status",
+      "from": "From",
+      "to": "To",
+      "reset": "Reset",
+      "apply": "Apply"
     }
   },
   "news": {

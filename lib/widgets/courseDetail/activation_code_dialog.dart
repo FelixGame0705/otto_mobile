@@ -65,16 +65,16 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
 
       final messenger = ScaffoldMessenger.of(context);
       final navigator = Navigator.of(context);
-      final isEnglish = context.locale.languageCode == 'en';
-      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
 
       navigator.pop();
       messenger.showSnackBar(
-        SnackBar(
-          content: Text(friendly),
-          backgroundColor: Colors.red,
-        ),
-      );
+          SnackBar(
+            content: Text(friendly),
+            backgroundColor: Colors.red,
+          ),
+        );
     } finally {
       if (mounted) {
         setState(() {

@@ -244,6 +244,12 @@ class ApiErrorMapper {
     if (isEn) {
       final serverMsg = error.rawMessage?.trim();
       if (serverMsg != null && serverMsg.isNotEmpty) {
+        final lower = serverMsg.toLowerCase();
+        // Normalize noisy prerequisite lesson errors from backend/.NET
+        if (lower.contains('previous lessons must be completed first') ||
+            lower.contains("no authentication handler is registered for the scheme 'previous lessons must be completed first'")) {
+          return 'Previous lessons must be completed first.';
+        }
         return serverMsg;
       }
       
@@ -489,6 +495,11 @@ class ApiErrorMapper {
         lowerMsg.contains('no student found') ||
         lowerMsg.contains('student profile not found')) {
       return 'Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.';
+    }
+
+    // Price changed between add-to-cart and checkout
+    if (lowerMsg.contains('price has changed for course')) {
+      return 'Giá khóa học đã thay đổi. Vui lòng tải lại giỏ hàng.';
     }
 
     // Robot compatibility / activation

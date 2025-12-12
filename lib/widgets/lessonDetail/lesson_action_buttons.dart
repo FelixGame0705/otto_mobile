@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 
 class LessonActionButtons extends StatelessWidget {
   final VoidCallback onStartLesson;
-  final VoidCallback onViewChallenges;
   final VoidCallback onViewTheory;
   final bool isStarting;
   final int challengeCount;
@@ -14,7 +13,6 @@ class LessonActionButtons extends StatelessWidget {
   LessonActionButtons({
     super.key,
     required this.onStartLesson,
-    required this.onViewChallenges,
     required this.onViewTheory,
     this.isStarting = false,
     required this.challengeCount,
@@ -65,34 +63,6 @@ class LessonActionButtons extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-
-          // Challenges Button
-          if (challengeCount > 0)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onViewChallenges,
-                icon: const Icon(Icons.flag, size: 20),
-                label: Text(
-                  'common.viewChallenges'.tr(namedArgs: {'count': '$challengeCount'}),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF48BB78),
-                  side: const BorderSide(
-                    color: Color(0xFF48BB78),
-                    width: 2,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
           
           const SizedBox(height: 12)
         ],

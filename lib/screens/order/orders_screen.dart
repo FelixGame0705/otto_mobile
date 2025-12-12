@@ -145,7 +145,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               children: [
                 const Icon(Icons.receipt_long, color: Colors.grey),
                 const SizedBox(width: 12),
-                Expanded(child: Text('Không có đơn hàng', style: TextStyle(color: Colors.grey[700]))),
+                Expanded(child: Text('orders.empty'.tr(), style: TextStyle(color: Colors.grey[700]))),
               ],
             ),
           )
@@ -166,7 +166,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text('Đã hiển thị tất cả', style: TextStyle(color: Colors.grey[600])),
+                  child: Text('orders.allShown'.tr(), style: TextStyle(color: Colors.grey[600])),
                 ),
               );
             }
@@ -200,7 +200,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('${o.items.length} items', style: TextStyle(color: Colors.grey[700])),
+                      Text('orders.itemsCount'.tr(namedArgs: {'count': '${o.items.length}'}), style: TextStyle(color: Colors.grey[700])),
                       Text(o.formattedTotal, style: const TextStyle(fontWeight: FontWeight.w700)),
                     ],
                   ),
@@ -229,13 +229,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 Expanded(
                   child: DropdownButtonFormField<int>(
                     value: _status,
-                    decoration: const InputDecoration(labelText: 'Status'),
-                    items: const [
-                      DropdownMenuItem(value: 0, child: Text('Pending')),
-                      DropdownMenuItem(value: 1, child: Text('Paid')),
-                      DropdownMenuItem(value: 2, child: Text('Failed')),
-                      DropdownMenuItem(value: 3, child: Text('Cancelled')),
-                      DropdownMenuItem(value: 4, child: Text('Refunded')),
+                    decoration: InputDecoration(labelText: 'orders.filter.status'.tr()),
+                    items: [
+                      DropdownMenuItem(value: 0, child: Text('order.status.pending'.tr())),
+                      DropdownMenuItem(value: 1, child: Text('order.status.paid'.tr())),
+                      DropdownMenuItem(value: 2, child: Text('order.status.failed'.tr())),
+                      DropdownMenuItem(value: 3, child: Text('order.status.cancelled'.tr())),
+                      DropdownMenuItem(value: 4, child: Text('order.status.refunded'.tr())),
                     ],
                     onChanged: (v) => setState(() => _status = v),
                   ),
@@ -253,7 +253,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       if (picked != null) setState(() => _from = picked);
                     },
                     child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'From'),
+                      decoration: InputDecoration(labelText: 'orders.filter.from'.tr()),
                       child: Text(_from != null ? DateFormat('dd/MM/yyyy').format(_from!) : '--/--/----'),
                     ),
                   ),
@@ -271,7 +271,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       if (picked != null) setState(() => _to = picked);
                     },
                     child: InputDecorator(
-                      decoration: const InputDecoration(labelText: 'To'),
+                      decoration: InputDecoration(labelText: 'orders.filter.to'.tr()),
                       child: Text(_to != null ? DateFormat('dd/MM/yyyy').format(_to!) : '--/--/----'),
                     ),
                   ),
@@ -288,16 +288,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       _load(refresh: true);
                     },
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Reset'),
+                    label: Text('orders.filter.reset'.tr(), style: const TextStyle(color: Colors.black)),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: OutlinedButton.icon(
                     onPressed: () => _load(refresh: true),
-                    icon: const Icon(Icons.filter_list),
-                    label: const Text('Apply'),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+                    icon: const Icon(Icons.filter_list, color: Colors.black),
+                    label: Text('orders.filter.apply'.tr(), style: const TextStyle(color: Colors.black)),
                   ),
                 ),
               ],
@@ -322,13 +321,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
   String _statusText(int status) {
     switch (status) {
-      case 1: return 'Paid';
-      case 2: return 'Failed';
-      case 3: return 'Cancelled';
-      case 4: return 'Refunded';
+      case 1: return 'order.status.paid'.tr();
+      case 2: return 'order.status.failed'.tr();
+      case 3: return 'order.status.cancelled'.tr();
+      case 4: return 'order.status.refunded'.tr();
       case 0:
       default:
-        return 'Pending';
+        return 'order.status.pending'.tr();
     }
   }
 }

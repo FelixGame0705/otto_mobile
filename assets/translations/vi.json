@@ -144,7 +144,7 @@
     "detailTitle": "Chi tiết khóa học",
     "loading": "Đang tải thông tin khóa học...",
     "notFound": "Không tìm thấy khóa học",
-    "viewLessons": "Xem danh sách bài học",
+    "viewLessons": "Danh sách bài học",
     "title": "Khóa học",
     "enrolling": "Đang xử lý...",
     "enrolled": "Đã đăng ký",
@@ -445,6 +445,7 @@
   },
   "order": {
     "title": "Thanh toán",
+    "empty": "Không có đơn hàng",
     "summary": "Tóm tắt đơn hàng",
     "subtotal": "Tạm tính",
     "discount": "Giảm giá",
@@ -489,6 +490,18 @@
       "refunded": "Đã hoàn tiền"
     },
     "voucherInvalidMessage": "Voucher không hợp lệ hoặc đã đạt giới hạn sử dụng"
+  },
+  "orders": {
+    "empty": "Không có đơn hàng",
+    "itemsCount": "{count} sản phẩm",
+    "allShown": "Đã hiển thị tất cả đơn hàng",
+    "filter": {
+      "status": "Trạng thái",
+      "from": "Từ ngày",
+      "to": "Đến ngày",
+      "reset": "Đặt lại",
+      "apply": "Áp dụng"
+    }
   },
   "news": {
     "searchHint": "Tìm kiếm bài viết...",
