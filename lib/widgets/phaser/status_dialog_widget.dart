@@ -16,6 +16,7 @@ class StatusDialogWidget extends StatefulWidget {
   final VoidCallback onPlayAgain;
   final VoidCallback onClose;
   final VoidCallback? onSimulation;
+  final VoidCallback? onContinueToNext;
 
   const StatusDialogWidget({
     super.key,
@@ -29,6 +30,7 @@ class StatusDialogWidget extends StatefulWidget {
     required this.onPlayAgain,
     required this.onClose,
     this.onSimulation,
+    this.onContinueToNext,
   });
 
   @override
@@ -638,13 +640,23 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             ],
             Expanded(
               child: ActionButtonWidget(
-                text: 'phaser.close'.tr(),
-                icon: Icons.close,
-                textColor: Colors.white70,
-                backgroundColor: Colors.white.withOpacity(0.1),
+                text: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? 'phaser.continue'.tr()
+                    : 'phaser.close'.tr(),
+                icon: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? Icons.arrow_forward
+                    : Icons.close,
+                textColor: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? Colors.white
+                    : Colors.white70,
+                backgroundColor: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? widget.color.withOpacity(0.3)
+                    : Colors.white.withOpacity(0.1),
                 isTablet: isTablet,
                 isLandscape: isLandscape,
-                onPressed: widget.onClose,
+                onPressed: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? widget.onContinueToNext!
+                    : widget.onClose,
               ),
             ),
           ],

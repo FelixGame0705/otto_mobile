@@ -23,14 +23,16 @@ class ProductInfoSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          product.model,
-          style: const TextStyle(
-            fontSize: 16,
-            color: Color(0xFF6B7280),
+        if (product.model.isNotEmpty) ...[
+          Text(
+            product.model,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF6B7280),
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
+          const SizedBox(height: 16),
+        ],
         Text(
           product.description,
           style: const TextStyle(

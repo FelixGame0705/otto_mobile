@@ -70,7 +70,7 @@ class Product {
       imageUrl: json['imageUrl'],
       price: _parseInt(json['price']),
       stockQuantity: _parseInt(json['stockQuantity']),
-      technicalSpecs: json['technicalSpecs'] ?? '',
+      technicalSpecs: json['technicalSpecs'] ?? json['specifications'] ?? '',
       requirements: json['requirements'] ?? '',
       minAge: _parseInt(json['minAge']),
       maxAge: _parseInt(json['maxAge']),

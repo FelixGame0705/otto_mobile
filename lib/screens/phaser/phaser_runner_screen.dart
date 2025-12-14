@@ -2,12 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/program_storage_service.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
 import 'package:ottobit/widgets/phaser/status_dialog_widget.dart';
 import 'package:ottobit/services/submission_service.dart';
+import 'package:ottobit/services/challenge_service.dart';
+import 'package:ottobit/models/challenge_model.dart';
+import 'package:ottobit/screens/blockly/blockly_editor_screen.dart';
 
 class PhaserRunnerScreen extends StatefulWidget {
   final Map<String, dynamic>? initialProgram;
@@ -34,6 +38,8 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   late final WebViewController _controller;
   late final PhaserBridge _bridge;
   final SubmissionService _submissionService = SubmissionService();
+  final ChallengeService _challengeService = ChallengeService();
+  List<Challenge> _challenges = [];
   bool _isLoading = true;
   bool _isGameReady = false;
   bool _isDialogShowing = false;
@@ -49,6 +55,123 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
   void initState() {
     super.initState();
     _initializeWebView();
+    _loadChallenges();
+  }
+
+  Future<void> _loadChallenges() async {
+    try {
+      final lessonId = widget.initialChallengeJson?['lessonId']?.toString();
+      if (lessonId == null || lessonId.isEmpty) {
+        debugPrint('⚠️ Cannot load challenges: missing lessonId');
+        return;
+      }
+
+      final courseId = widget.initialChallengeJson?['courseId']?.toString();
+      final response = await _challengeService.getChallenges(
+        lessonId: lessonId,
+        courseId: courseId,
+        pageNumber: 1,
+        pageSize: 100,
+      );
+
+      if (mounted) {
+        setState(() {
+          _challenges = response.data?.items ?? [];
+        });
+        debugPrint('✅ Loaded ${_challenges.length} challenges');
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to load challenges: $e');
+    }
+  }
+
+  Challenge? _getNextChallenge() {
+    final currentOrder = widget.initialChallengeJson?['order'];
+    if (currentOrder == null) return null;
+
+    final currentOrderInt = currentOrder is int 
+        ? currentOrder 
+        : (currentOrder is String ? int.tryParse(currentOrder) : null);
+    
+    if (currentOrderInt == null) return null;
+
+    // Find challenge with order = currentOrder + 1
+    try {
+      return _challenges.firstWhere(
+        (challenge) => challenge.order == currentOrderInt + 1,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _continueToNextChallenge() async {
+    final nextChallenge = _getNextChallenge();
+    if (nextChallenge == null) {
+      debugPrint('⚠️ No next challenge found');
+      _isDialogShowing = false;
+      Navigator.pop(context);
+      return;
+    }
+
+    try {
+      debugPrint('🚀 Loading next challenge: ${nextChallenge.id}');
+      final detail = await _challengeService.getChallengeDetail(nextChallenge.id);
+      if (!mounted) return;
+
+      _isDialogShowing = false;
+      Navigator.pop(context); // Close victory dialog
+
+      // Force landscape orientation before navigating
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      
+      // Wait a bit for orientation to apply
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Navigate to next challenge - use rootNavigator to navigate from embedded context
+      if (!mounted) return;
+      final navigator = Navigator.of(context, rootNavigator: true);
+      
+      // Set orientation again after navigation to ensure it's applied
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+      });
+      
+      navigator.pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => BlocklyEditorScreen(
+            initialMapJson: detail.mapJson,
+            initialChallengeJson: {
+              ...?detail.challengeJson,
+              'id': detail.id,
+              'lessonId': detail.lessonId,
+              'order': detail.order,
+              'courseId': widget.initialChallengeJson?['courseId'],
+              'challengeMode': detail.challengeMode ?? 
+                  (detail.challengeJson != null
+                      ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
+                      : 0),
+              'challengeType': detail.challengeType ?? 
+                  (detail.challengeJson != null
+                      ? detail.challengeJson!['challengeType']
+                      : null),
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('❌ Failed to load next challenge: $e');
+      if (mounted) {
+        _isDialogShowing = false;
+        Navigator.pop(context);
+      }
+    }
   }
 
   void _initializeWebView() {
@@ -236,6 +359,9 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
             _isDialogShowing = false;
             Navigator.pop(context);
           },
+          onContinueToNext: status == 'VICTORY' && _getNextChallenge() != null
+              ? _continueToNextChallenge
+              : null,
           onSimulation: widget.getActionsProgram != null
               ? () async {
                   try {

@@ -369,7 +369,9 @@
     "price": "Price",
     "specifications": "Specifications",
     "quantity": "Quantity",
-    "robotName": "Robot"
+    "robotName": "Robot",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at"
   },
   "store": {
     "title": "Store",
@@ -679,6 +681,7 @@
     "submitting": "Submitting...",
     "simulation": "Simulation",
     "close": "Close",
+    "continue": "Continue",
     "gameOverTitle": "Game Over!"
   }
 }

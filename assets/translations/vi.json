@@ -370,7 +370,9 @@
     "price": "Giá",
     "specifications": "Thông số kỹ thuật",
     "quantity": "Số lượng",
-    "robotName": "Robot"
+    "robotName": "Robot",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật"
   },
   "store": {
     "title": "Cửa hàng",
@@ -680,6 +682,7 @@
     "submitting": "Đang nộp...",
     "simulation": "Giả lập",
     "close": "Đóng",
+    "continue": "Tiếp tục",
     "gameOverTitle": "Thua cuộc!",
     "defeatReasonTitle": "Lý do thua",
     "defeatReasonPrefix": "Lý do thua:",

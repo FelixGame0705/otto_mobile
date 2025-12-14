@@ -9,6 +9,7 @@ import 'package:ottobit/services/component_service.dart';
 import 'package:ottobit/services/course_robot_service.dart';
 import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/products/product_image_gallery.dart';
 import 'package:ottobit/widgets/products/product_info_section.dart';
 import 'package:ottobit/widgets/products/technical_specs_section.dart';
@@ -52,13 +53,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _hasMoreComponents = true;
   final ScrollController _componentsScrollController = ScrollController();
 
+  bool get _isComponent => widget.productType == 'component';
+
   @override
   void initState() {
     super.initState();
     _componentsScrollController.addListener(_onComponentsScroll);
     _loadProductDetail();
-    _loadImages();
-    _loadRelatedCourses();
+    if (!_isComponent) {
+      _loadImages();
+      _loadRelatedCourses();
+    }
   }
 
   @override
@@ -98,7 +103,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          final isEnglish = context.locale.languageCode == 'en';
+          _errorMessage = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
           _isLoading = false;
         });
         showErrorToast(context, _errorMessage);
@@ -107,6 +113,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _loadImages() async {
+    if (_isComponent) return;
     setState(() { _isLoadingImages = true; });
     try {
       final productId = widget.productId;
@@ -309,17 +316,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           TechnicalSpecsSection(product: _product!),
           const SizedBox(height: 24),
           
-          // Requirements
-          RequirementsSection(product: _product!),
-          const SizedBox(height: 24),
-          
-          // Age Range
-          AgeRangeSection(product: _product!),
-          const SizedBox(height: 24),
-          
-          // Brand Info
-          BrandInfoSection(product: _product!),
-          const SizedBox(height: 24),
+          if (!_isComponent) ...[
+            // Requirements
+            RequirementsSection(product: _product!),
+            const SizedBox(height: 24),
+            
+            // Age Range
+            AgeRangeSection(product: _product!),
+            const SizedBox(height: 24),
+            
+            // Brand Info
+            BrandInfoSection(product: _product!),
+            const SizedBox(height: 24),
+          ],
           
           // Related Components (only for robots)
           if (widget.productType == 'robot') ...[

@@ -118,10 +118,21 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Set orientation immediately
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    
+    // Also set after first frame to ensure it's applied
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    });
+    
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
@@ -466,7 +477,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       if (cls == 'collect') {
         final count = rawVal is int ? rawVal : int.tryParse((rawVal ?? '').toString()) ?? 1;
         // Provide explicit default color to be safe
-        return '<block type="collect"><field name="COLOR">green</field>' + numberShadow('COUNT', count) + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
+        return '<block type="collect"><field name="COLOR">yellow</field>' + numberShadow('COUNT', count) + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
       }
       if (cls == 'turn_right') {
         return '<block type="turn"><field name="DIR">turnRight</field>' + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
@@ -629,7 +640,32 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Ensure landscape orientation is maintained when navigating to new challenge
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    });
+  }
+
+  @override
   void didChangeMetrics() {
+    // Ensure landscape orientation is maintained
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final orientation = MediaQuery.of(context).orientation;
+        if (orientation != Orientation.landscape) {
+          SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
+        }
+      }
+    });
+    
     if (!_tutorialQueued) return;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 200));

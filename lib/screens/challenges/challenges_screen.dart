@@ -32,18 +32,39 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
 
   List<Challenge> _items = [];
   Map<String, int> _challengeBestStars = {}; // Map challenge ID to best star
+  Set<String> _unlockedChallengeIds = {}; // Set of unlocked challenge IDs
   bool _loading = true;
   bool _loadingMore = false;
   String _error = '';
   int _page = 1;
-  int _totalPages = 1;
   bool _hasMore = true;
+  DateTime? _lastRefreshTime;
 
   @override
   void initState() {
     super.initState();
     _load();
     _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh when screen becomes visible again (user returns from blockly)
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent) {
+      final now = DateTime.now();
+      // Only refresh if last refresh was more than 1 second ago (avoid multiple refreshes)
+      if (_lastRefreshTime == null || 
+          now.difference(_lastRefreshTime!).inSeconds > 1) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _load(refresh: true);
+            _lastRefreshTime = DateTime.now();
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -70,7 +91,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         courseId: widget.courseId,
         searchTerm: null,
         pageNumber: _page,
-        pageSize: 10,
+        pageSize: 100,
       );
       
       // Load best submissions by lesson (server-calculated best stars)
@@ -87,15 +108,20 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       
       setState(() {
         final list = res.data?.items ?? [];
+        
+        // Calculate unlocked challenges based on best submissions
+        final unlockedIds = _calculateUnlockedChallenges(list, bestStars);
         if (refresh) {
           _items = list;
           _challengeBestStars = bestStars;
+          _unlockedChallengeIds = unlockedIds;
+          _lastRefreshTime = DateTime.now();
         } else {
           _items.addAll(list);
           _challengeBestStars.addAll(bestStars);
+          _unlockedChallengeIds.addAll(unlockedIds);
         }
-        _totalPages = res.data?.totalPages ?? 1;
-        _hasMore = _page < _totalPages;
+        _hasMore = false; // Only load first page with up to 100 items
         _loading = false;
       });
     } catch (e) {
@@ -138,6 +164,50 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
       _loadMore();
     }
+  }
+
+  /// Calculate which challenges should be unlocked based on best submissions
+  /// Rules:
+  /// - First challenge (order = 1) is always unlocked
+  /// - Challenges that have been submitted are unlocked
+  /// - The next challenge after the highest submitted challenge is unlocked
+  Set<String> _calculateUnlockedChallenges(List<Challenge> challenges, Map<String, int> bestStars) {
+    final unlockedIds = <String>{};
+    
+    if (challenges.isEmpty) return unlockedIds;
+    
+    // Sort challenges by order
+    final sortedChallenges = List<Challenge>.from(challenges)..sort((a, b) => a.order.compareTo(b.order));
+    
+    // First challenge is always unlocked
+    if (sortedChallenges.isNotEmpty) {
+      unlockedIds.add(sortedChallenges.first.id);
+    }
+    
+    // Find the highest order challenge that has been submitted
+    int highestSubmittedOrder = 0;
+    for (final challenge in sortedChallenges) {
+      if (bestStars.containsKey(challenge.id)) {
+        unlockedIds.add(challenge.id);
+        if (challenge.order > highestSubmittedOrder) {
+          highestSubmittedOrder = challenge.order;
+        }
+      }
+    }
+    
+    // Unlock the next challenge after the highest submitted one
+    if (highestSubmittedOrder > 0) {
+      final nextOrder = highestSubmittedOrder + 1;
+      final nextChallenge = sortedChallenges.firstWhere(
+        (c) => c.order == nextOrder,
+        orElse: () => sortedChallenges.first,
+      );
+      if (nextChallenge.order == nextOrder) {
+        unlockedIds.add(nextChallenge.id);
+      }
+    }
+    
+    return unlockedIds;
   }
 
   int _cols(double w, Orientation o) {
@@ -244,14 +314,16 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                   if (index < _items.length) {
                                     final c = _items[index];
                                     final int? bestStar = _challengeBestStars[c.id];
+                                    final bool isUnlocked = _unlockedChallengeIds.contains(c.id);
                                     return _GameChallengeTile(
                                       challenge: c,
                                       bestStar: bestStar,
-                                      onTap: () async {
+                                      isUnlocked: isUnlocked,
+                                      onTap: isUnlocked ? () async {
                                         try {
                                           final detail = await _service.getChallengeDetail(c.id);
                                           if (!mounted) return;
-                                          Navigator.of(context).push(
+                                          await Navigator.of(context).push(
                                             MaterialPageRoute(
                                               builder: (_) => BlocklyEditorScreen(
                                                 initialMapJson: detail.mapJson,
@@ -260,6 +332,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                                   'id': detail.id,
                                                   'lessonId': detail.lessonId,
                                                   'order': detail.order,
+                                                  'courseId': widget.courseId,
                                                   // Prefer top-level API field; fallback to embedded JSON
                                                   'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
                                                       ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
@@ -272,12 +345,18 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                               ),
                                             ),
                                           );
+                                          
+                                          // Refresh when returning from blockly screen
+                                          if (mounted) {
+                                            print('🔄 Refreshing challenges after returning from blockly');
+                                            _load(refresh: true);
+                                          }
                                         } catch (e) {
                                           if (!mounted) return;
                                           final msg = e.toString().replaceFirst('Exception: ', '');
                                           showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
                                         }
-                                      },
+                                      } : null,
                                       index: index,
                                     );
                                   }
@@ -318,61 +397,100 @@ class _ChallengesGridShimmer extends StatelessWidget {
 class _GameChallengeTile extends StatelessWidget {
   final Challenge challenge;
   final int? bestStar;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isUnlocked;
   final int index;
-  const _GameChallengeTile({required this.challenge, required this.bestStar, required this.onTap, required this.index});
+  const _GameChallengeTile({
+    required this.challenge, 
+    required this.bestStar, 
+    required this.onTap, 
+    required this.isUnlocked,
+    required this.index
+  });
 
   @override
   Widget build(BuildContext context) {
     final Color accent = _palette(index);
+    final bool isLocked = !isUnlocked;
+    
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 96,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withOpacity(0.2), width: 1.5),
-          boxShadow: [
-            BoxShadow(color: accent.withOpacity(0.12), blurRadius: 14, offset: const Offset(0, 6)),
-          ],
-        ),
-        child: Row(
-          children: [
-            _BadgeSphere(color: accent, label: challenge.order.toString()),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
+      child: Opacity(
+        opacity: isLocked ? 0.5 : 1.0,
+        child: Container(
+          height: 96,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isLocked 
+                  ? Colors.grey.withOpacity(0.3) 
+                  : accent.withOpacity(0.2), 
+              width: 1.5
+            ),
+            boxShadow: isLocked 
+                ? []
+                : [
+                    BoxShadow(
+                      color: accent.withOpacity(0.12), 
+                      blurRadius: 14, 
+                      offset: const Offset(0, 6)
+                    ),
+                  ],
+          ),
+          child: Stack(
+            children: [
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          challenge.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                        ),
-                      ),
-                      if (bestStar != null) _StarRow(stars: bestStar!.clamp(0, 3)),
-                    ],
+                  _BadgeSphere(
+                    color: isLocked ? Colors.grey : accent, 
+                    label: challenge.order.toString()
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _Pill(icon: Icons.speed, text: 'Lv ${challenge.difficulty}'),
-                      const SizedBox(width: 8),
-                      _Pill(icon: Icons.access_time, text: '${(challenge.order + 1) * 2}p'),
-                    ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                challenge.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800, 
+                                  fontSize: 16,
+                                  color: isLocked ? Colors.grey : null,
+                                ),
+                              ),
+                            ),
+                            if (bestStar != null) _StarRow(stars: bestStar!.clamp(0, 3)),
+                            if (isLocked) 
+                              const Padding(
+                                padding: EdgeInsets.only(left: 8),
+                                child: Icon(Icons.lock, size: 16, color: Colors.grey),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            _Pill(icon: Icons.speed, text: 'Lv ${challenge.difficulty}'),
+                            const SizedBox(width: 8),
+                            _Pill(icon: Icons.access_time, text: '${(challenge.order + 1) * 2}p'),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
