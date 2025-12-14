@@ -3,10 +3,9 @@ import 'package:easy_localization/easy_localization.dart';
 
 class LessonActionButtons extends StatelessWidget {
   final VoidCallback onStartLesson;
-  final VoidCallback onViewChallenges;
   final VoidCallback onViewTheory;
   final bool isStarting;
-  final int challengesCount;
+  final int challengeCount;
   final bool canStartLesson;
   final bool isCheckingEnrollment;
   final String lockedMessage;
@@ -14,10 +13,9 @@ class LessonActionButtons extends StatelessWidget {
   LessonActionButtons({
     super.key,
     required this.onStartLesson,
-    required this.onViewChallenges,
     required this.onViewTheory,
     this.isStarting = false,
-    required this.challengesCount,
+    required this.challengeCount,
     this.canStartLesson = true,
     this.isCheckingEnrollment = false,
     String? lockedMessage,
@@ -65,95 +63,8 @@ class LessonActionButtons extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-
-          // Challenges Button
-          if (challengesCount > 0)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onViewChallenges,
-                icon: const Icon(Icons.flag, size: 20),
-                label: Text(
-                  'common.viewChallenges'.tr(namedArgs: {'count': '$challengesCount'}),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF48BB78),
-                  side: const BorderSide(
-                    color: Color(0xFF48BB78),
-                    width: 2,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
           
-          const SizedBox(height: 12),
-          
-          // Secondary Actions Row
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('common.markComplete'.tr()),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.check_circle_outline, size: 18),
-                  label: Text(
-                    'common.markComplete'.tr(),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF48BB78),
-                    side: const BorderSide(color: Color(0xFF48BB78)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(width: 8),
-              
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('common.addToFavorites'.tr()),
-                        backgroundColor: Colors.orange,
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.favorite_outline, size: 18),
-                  label: Text(
-                    'common.addToFavorites'.tr(),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFED8936),
-                    side: const BorderSide(color: Color(0xFFED8936)),
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const SizedBox(height: 12)
         ],
       ),
     );

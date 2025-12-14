@@ -9,6 +9,7 @@ import 'package:ottobit/services/component_service.dart';
 import 'package:ottobit/services/course_robot_service.dart';
 import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/products/product_image_gallery.dart';
 import 'package:ottobit/widgets/products/product_info_section.dart';
 import 'package:ottobit/widgets/products/technical_specs_section.dart';
@@ -17,7 +18,6 @@ import 'package:ottobit/widgets/products/age_range_section.dart';
 import 'package:ottobit/widgets/products/brand_info_section.dart';
 import 'package:ottobit/widgets/products/related_components_section.dart';
 import 'package:ottobit/widgets/products/related_courses_section.dart';
-import 'package:ottobit/widgets/products/component_card.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -40,21 +40,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final CourseRobotService _courseRobotService = CourseRobotService();
   Product? _product;
   List<RobotImageItem> _images = [];
-  List<Component> _components = [];
+  List<RobotComponent> _robotComponents = [];
   List<CourseRobot> _relatedCourses = [];
   bool _isLoading = true;
   bool _isLoadingImages = false;
   bool _isLoadingComponents = false;
+  bool _isLoadingMoreComponents = false;
   bool _isLoadingCourses = false;
   String _errorMessage = '';
+  int _componentsPage = 1;
+  int _componentsTotalPages = 1;
+  bool _hasMoreComponents = true;
+  final ScrollController _componentsScrollController = ScrollController();
+
+  bool get _isComponent => widget.productType == 'component';
 
   @override
   void initState() {
     super.initState();
+    _componentsScrollController.addListener(_onComponentsScroll);
     _loadProductDetail();
-    _loadComponents();
-    _loadImages();
-    _loadRelatedCourses();
+    if (!_isComponent) {
+      _loadImages();
+      _loadRelatedCourses();
+    }
+  }
+
+  @override
+  void dispose() {
+    _componentsScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onComponentsScroll() {
+    if (_componentsScrollController.position.pixels >=
+        _componentsScrollController.position.maxScrollExtent - 200) {
+      _loadMoreComponents();
+    }
   }
 
   Future<void> _loadProductDetail() async {
@@ -73,11 +95,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _product = response.data;
           _isLoading = false;
         });
+        // Load robot components if product type is robot
+        if (widget.productType == 'robot') {
+          _loadComponents();
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceFirst('Exception: ', '');
+          final isEnglish = context.locale.languageCode == 'en';
+          _errorMessage = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
           _isLoading = false;
         });
         showErrorToast(context, _errorMessage);
@@ -86,6 +113,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _loadImages() async {
+    if (_isComponent) return;
     setState(() { _isLoadingImages = true; });
     try {
       final productId = widget.productId;
@@ -102,23 +130,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _loadComponents() async {
+    if (widget.productType != 'robot') return;
+    
     setState(() {
       _isLoadingComponents = true;
+      _componentsPage = 1;
+      _hasMoreComponents = true;
     });
 
     try {
-      final response = await _componentService.getComponents(
+      final response = await _componentService.getRobotComponents(
+        robotId: widget.productId,
         page: 1,
         size: 10,
-        searchTerm: _product?.name, // Search for components related to this product
-        inStock: true,
-        orderBy: 'Name',
-        orderDirection: 'ASC',
       );
       
       if (mounted) {
         setState(() {
-          _components = response.data?.items ?? [];
+          _robotComponents = response.data?.items ?? [];
+          _componentsTotalPages = response.data?.totalPages ?? 1;
+          _hasMoreComponents = _componentsPage < _componentsTotalPages;
           _isLoadingComponents = false;
         });
       }
@@ -127,7 +158,43 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         setState(() {
           _isLoadingComponents = false;
         });
-        print('Failed to load components: $e');
+        print('Failed to load robot components: $e');
+      }
+    }
+  }
+
+  Future<void> _loadMoreComponents() async {
+    if (!_hasMoreComponents || _isLoadingMoreComponents || widget.productType != 'robot') {
+      return;
+    }
+
+    setState(() {
+      _isLoadingMoreComponents = true;
+    });
+
+    try {
+      final nextPage = _componentsPage + 1;
+      final response = await _componentService.getRobotComponents(
+        robotId: widget.productId,
+        page: nextPage,
+        size: 10,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _robotComponents.addAll(response.data?.items ?? []);
+          _componentsPage = nextPage;
+          _componentsTotalPages = response.data?.totalPages ?? 1;
+          _hasMoreComponents = _componentsPage < _componentsTotalPages;
+          _isLoadingMoreComponents = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMoreComponents = false;
+        });
+        print('Failed to load more robot components: $e');
       }
     }
   }
@@ -249,24 +316,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           TechnicalSpecsSection(product: _product!),
           const SizedBox(height: 24),
           
-          // Requirements
-          RequirementsSection(product: _product!),
-          const SizedBox(height: 24),
+          if (!_isComponent) ...[
+            // Requirements
+            RequirementsSection(product: _product!),
+            const SizedBox(height: 24),
+            
+            // Age Range
+            AgeRangeSection(product: _product!),
+            const SizedBox(height: 24),
+            
+            // Brand Info
+            BrandInfoSection(product: _product!),
+            const SizedBox(height: 24),
+          ],
           
-          // Age Range
-          AgeRangeSection(product: _product!),
-          const SizedBox(height: 24),
-          
-          // Brand Info
-          BrandInfoSection(product: _product!),
-          const SizedBox(height: 24),
-          
-          // Related Components
-          RelatedComponentsSection(
-            components: _components,
-            isLoadingComponents: _isLoadingComponents,
-            onComponentTap: _showComponentDetail,
-          ),
+          // Related Components (only for robots)
+          if (widget.productType == 'robot') ...[
+            RelatedComponentsSection(
+              robotComponents: _robotComponents,
+              isLoadingComponents: _isLoadingComponents,
+              isLoadingMore: _isLoadingMoreComponents,
+              hasMore: _hasMoreComponents,
+              scrollController: _componentsScrollController,
+              onComponentTap: _showRobotComponentDetail,
+            ),
+          ],
           const SizedBox(height: 24),
           
           // Related Courses (only for robots)
@@ -284,10 +358,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
 
-  void _showComponentDetail(Component component) {
+  void _showRobotComponentDetail(RobotComponent robotComponent) {
     showDialog(
       context: context,
-      builder: (context) => ComponentDetailDialog(component: component),
+      builder: (context) => RobotComponentDetailDialog(robotComponent: robotComponent),
     );
   }
 

@@ -149,8 +149,11 @@
     "enrolled": "Enrolled",
     "enrollNow": "Enroll now",
     "enrollSuccess": "Course enrolled successfully!",
+    "studentRequiredTitle": "Student profile required",
+    "studentRequiredMessage": "You are not registered as a student. Please register to continue.",
+    "registerStudentNow": "Register now",
     "info": "Course information",
-    "teacher": "Instructor",
+    "teacher": "Created by",
     "createdAt": "Created at",
     "updatedAt": "Last updated",
     "lessonsCount": "Lessons",
@@ -283,6 +286,9 @@
     "mySubmissions": "My Submissions",
     "myOrders": "My Orders",
     "myCertificates": "My Certificates",
+    "myRobots": "My Robots",
+    "myNotes": "My Notes",
+    "noNotes": "No notes found",
     "activateRobot": "Activate Robot",
     "logout": "Logout",
     "phone": "Phone",
@@ -294,6 +300,7 @@
     "phoneNumber": "Phone Number",
     "phoneNumberHint": "Enter phone number",
     "phoneNumberRequired": "Phone number is required",
+    "phoneNumberInvalid": "Invalid phone number.",
     "addressHint": "Enter address",
     "addressRequired": "Address is required",
     "provinceCity": "Province/City",
@@ -326,6 +333,14 @@
       "updateSuccess": "Student updated successfully",
       "updateFailed": "Failed to update student",
       "updateError": "Error updating student: {err}"
+    },
+    "robots": {
+      "title": "My Robots",
+      "noRobots": "No robots activated yet",
+      "loadFailed": "Failed to load robots",
+      "activatedAt": "Activated: {date}",
+      "expiresAt": "Expires: {date}",
+      "expired": "Expired"
     }
   },
   "challenge": {
@@ -352,7 +367,11 @@
     "addToCart": "Add to Cart",
     "addedToCart": "Added to cart",
     "price": "Price",
-    "specifications": "Specifications"
+    "specifications": "Specifications",
+    "quantity": "Quantity",
+    "robotName": "Robot",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at"
   },
   "store": {
     "title": "Store",
@@ -403,6 +422,21 @@
     "clearError": "Failed to clear cart",
     "subtotal": "Subtotal",
     "discount": "Discount",
+    "courseDiscount": "Course discount",
+    "voucherDiscount": "Voucher discount",
+    "voucherDiscountWithCode": "Voucher discount ({0})",
+    "offersTitle": "Recommended after completing this course",
+    "offersSubtitle": "Special discounts for related courses",
+    "discountPrice": "Discounted price",
+    "originalPrice": "Original price",
+    "discountAmount": "You save",
+    "viewCourse": "View course",
+    "addToCartOffer": "Add to cart",
+    "availableTitle": "Recommended before enrolling",
+    "availableSubtitle": "Complete these to unlock special discounts for this course",
+    "prereqOwned": "You already own/enrolled this course",
+    "prereqInCart": "This course is in your cart",
+    "prereqNotOwned": "You haven't owned/enrolled this course",
     "total": "Total",
     "checkout": "Checkout",
     "discountApplied": "Discount applied successfully",
@@ -412,6 +446,7 @@
   },
   "order": {
     "title": "Checkout",
+    "empty": "No orders",
     "summary": "Order Summary",
     "subtotal": "Subtotal",
     "discount": "Discount",
@@ -455,6 +490,18 @@
       "failed": "Failed",
       "cancelled": "Cancelled",
       "refunded": "Refunded"
+    }
+  },
+  "orders": {
+    "empty": "No orders",
+    "itemsCount": "{count} items",
+    "allShown": "All orders shown",
+    "filter": {
+      "status": "Status",
+      "from": "From",
+      "to": "To",
+      "reset": "Reset",
+      "apply": "Apply"
     }
   },
   "news": {
@@ -602,6 +649,15 @@
       "selectStars": "Please select a rating"
     }
   },
+  "courseMeta": {
+    "lessonsCountLabel": "{count} lessons",
+    "enrollmentsCountLabel": "{count} students"
+  },
+  "duration": {
+    "minutes": "{minutes} min",
+    "hours": "{hours} hours",
+    "hoursMinutes": "{hours} hours {minutes} minutes"
+  },
   "phaser": {
     "title": "Phaser Robot Game",
     "loading": "Loading game...",
@@ -625,12 +681,8 @@
     "submitting": "Submitting...",
     "simulation": "Simulation",
     "close": "Close",
-    "gameOverTitle": "Game Over!",
-    "defeatReasonTitle": "Defeat reason",
-    "defeatReasonPrefix": "Defeat reason:",
-    "errorDetails": "Error details",
-    "expand": "See more",
-    "collapse": "Collapse"
+    "continue": "Continue",
+    "gameOverTitle": "Game Over!"
   }
 }
 

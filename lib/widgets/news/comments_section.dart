@@ -4,6 +4,7 @@ import 'package:ottobit/models/blog_comment_model.dart';
 import 'package:ottobit/services/blog_service.dart';
 import 'package:ottobit/widgets/news/comment_card.dart';
 import 'package:ottobit/widgets/news/comment_input_widget.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class CommentsSection extends StatefulWidget {
   final String blogId;
@@ -76,8 +77,9 @@ class _CommentsSectionState extends State<CommentsSection> {
         setState(() {
           _isLoading = false;
         });
+        final errorMsg = ApiErrorMapper.fromException(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('news.loadCommentsError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -100,8 +102,9 @@ class _CommentsSectionState extends State<CommentsSection> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = ApiErrorMapper.fromException(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('news.loadCommentsError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -134,8 +137,9 @@ class _CommentsSectionState extends State<CommentsSection> {
         setState(() {
           _isLoading = false;
         });
+        final errorMsg = ApiErrorMapper.fromException(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('news.loadCommentsError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }
@@ -175,8 +179,9 @@ class _CommentsSectionState extends State<CommentsSection> {
         );
       }
     } catch (e) {
+      final errorMsg = ApiErrorMapper.fromException(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('news.commentError'.tr(args: [e.toString()]))),
+        SnackBar(content: Text(errorMsg)),
       );
     } finally {
       if (mounted) {
@@ -222,8 +227,9 @@ class _CommentsSectionState extends State<CommentsSection> {
           SnackBar(content: Text('news.commentDeleted'.tr())),
         );
       } catch (e) {
+        final errorMsg = ApiErrorMapper.fromException(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('news.commentError'.tr(args: [e.toString()]))),
+          SnackBar(content: Text(errorMsg)),
         );
       }
     }

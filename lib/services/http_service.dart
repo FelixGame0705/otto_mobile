@@ -50,16 +50,30 @@ class HttpService {
     bool throwOnError = true,
   }) async {
     final headers = await _getHeaders(includeAuth: includeAuth);
+    
+    print('=== HttpService: GET Request Details ===');
+    print('HttpService: Base URL: $_baseUrl');
+    print('HttpService: Endpoint: $endpoint');
+    print('HttpService: Query params received: $queryParams');
+    print('HttpService: Query params is null: ${queryParams == null}');
+    if (queryParams != null) {
+      print('HttpService: Query params keys: ${queryParams.keys.toList()}');
+      print('HttpService: Query params values: ${queryParams.values.toList()}');
+      print('HttpService: SearchTerm in queryParams: ${queryParams['SearchTerm']}');
+    }
+    
     final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
     
-    print('HttpService: Making GET request to: $uri');
+    print('HttpService: Final URI: $uri');
+    print('HttpService: URI query: ${uri.query}');
+    print('HttpService: URI queryParameters: ${uri.queryParameters}');
     print('HttpService: Headers: $headers');
     
     try {
       final response = await _client.get(uri, headers: headers);
       print('HttpService: Response status: ${response.statusCode}');
       print('HttpService: Response body: ${response.body}');
-      return await _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError, endpoint: endpoint);
     } catch (e) {
       print('HttpService: GET request failed: $e');
       throw HttpException('GET request failed: $e');
@@ -82,7 +96,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return await _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError, endpoint: endpoint);
     } catch (e) {
       throw HttpException('POST request failed: $e');
     }
@@ -104,7 +118,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return await _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError, endpoint: endpoint);
     } catch (e) {
       throw HttpException('PUT request failed: $e');
     }
@@ -121,7 +135,7 @@ class HttpService {
     
     try {
       final response = await _client.delete(uri, headers: headers);
-      return await _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError, endpoint: endpoint);
     } catch (e) {
       throw HttpException('DELETE request failed: $e');
     }
@@ -143,7 +157,7 @@ class HttpService {
         headers: headers,
         body: body != null ? jsonEncode(body) : null,
       );
-      return await _handleResponse(response, throwOnError: throwOnError);
+      return await _handleResponse(response, throwOnError: throwOnError, endpoint: endpoint);
     } catch (e) {
       throw HttpException('PATCH request failed: $e');
     }
@@ -153,12 +167,27 @@ class HttpService {
   Future<http.Response> _handleResponse(
     http.Response response, {
     bool throwOnError = true,
+    String? endpoint, // Thêm endpoint để check xem có phải auth endpoint không
   }) async {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     } else if (response.statusCode == 401) {
       // Token hết hạn hoặc không hợp lệ
-      await _handleUnauthorized();
+      // KHÔNG xử lý unauthorized cho các authentication endpoints
+      // vì những endpoints này không cần token và không nên trigger token refresh
+      final isAuthEndpoint = endpoint != null && (
+        endpoint.contains('/authentications/login') ||
+        endpoint.contains('/authentications/register') ||
+        endpoint.contains('/authentications/login-google') ||
+        endpoint.contains('/accounts/forgot-password') ||
+        endpoint.contains('/Auth/reset-password') ||
+        endpoint.contains('/authentications/refresh-token')
+      );
+      
+      if (!isAuthEndpoint) {
+        await _handleUnauthorized();
+      }
+      
       if (throwOnError) {
         throw HttpException('Unauthorized: Token expired or invalid');
       }
@@ -237,7 +266,7 @@ class HttpService {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       
-      return await _handleResponse(response);
+      return await _handleResponse(response, endpoint: endpoint);
     } catch (e) {
       throw HttpException('File upload failed: $e');
     }

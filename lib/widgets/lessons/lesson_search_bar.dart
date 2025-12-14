@@ -3,25 +3,29 @@ import 'package:easy_localization/easy_localization.dart';
 
 class LessonSearchBar extends StatelessWidget {
   final String searchTerm;
+  final TextEditingController? controller;
   final Function(String) onSearchChanged;
   final VoidCallback onSearchPressed;
   final VoidCallback onClearPressed;
+  final EdgeInsetsGeometry margin;
 
   const LessonSearchBar({
     super.key,
     required this.searchTerm,
+    this.controller,
     required this.onSearchChanged,
     required this.onSearchPressed,
     required this.onClearPressed,
+    this.margin = const EdgeInsets.all(16),
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: margin,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -30,64 +34,46 @@ class LessonSearchBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              onChanged: onSearchChanged,
-              decoration: InputDecoration(
-                hintText: 'lessons.searchHint'.tr(),
-                hintStyle: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: Colors.grey[600],
-                  size: 20,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              style: const TextStyle(fontSize: 14),
-            ),
+      child: TextField(
+        controller: controller,
+        onChanged: onSearchChanged,
+        onSubmitted: (_) => onSearchPressed(),
+        decoration: InputDecoration(
+          hintText: 'lessons.searchHint'.tr(),
+          hintStyle: const TextStyle(
+            color: Color(0xFFA0AEC0),
+            fontSize: 16,
           ),
-          if (searchTerm.isNotEmpty)
-            IconButton(
-              onPressed: onClearPressed,
-              icon: Icon(
-                Icons.clear,
-                color: Colors.grey[600],
-                size: 20,
-              ),
-              tooltip: 'common.clearSearch'.tr(),
-            ),
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            child: ElevatedButton(
-              onPressed: onSearchPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4299E1),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          suffixIcon: searchTerm.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Color(0xFFA0AEC0),
+                  ),
+                  onPressed: onClearPressed,
+                )
+              : IconButton(
+                  icon: const Icon(
+                    Icons.search,
+                    color: Color(0xFF4299E1),
+                  ),
+                  onPressed: onSearchPressed,
                 ),
-                elevation: 2,
-              ),
-            child: Text(
-              'common.search'.tr(),
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(32),
+            borderSide: BorderSide.none,
           ),
-        ],
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF2D3748),
+        ),
       ),
     );
   }

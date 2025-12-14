@@ -118,10 +118,21 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Set orientation immediately
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    
+    // Also set after first frame to ensure it's applied
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    });
+    
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..addJavaScriptChannel(
@@ -466,7 +477,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       if (cls == 'collect') {
         final count = rawVal is int ? rawVal : int.tryParse((rawVal ?? '').toString()) ?? 1;
         // Provide explicit default color to be safe
-        return '<block type="collect"><field name="COLOR">green</field>' + numberShadow('COUNT', count) + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
+        return '<block type="collect"><field name="COLOR">yellow</field>' + numberShadow('COUNT', count) + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
       }
       if (cls == 'turn_right') {
         return '<block type="turn"><field name="DIR">turnRight</field>' + (next != null ? '<next>' + next + '</next>' : '') + '</block>';
@@ -629,7 +640,32 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Ensure landscape orientation is maintained when navigating to new challenge
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    });
+  }
+
+  @override
   void didChangeMetrics() {
+    // Ensure landscape orientation is maintained
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final orientation = MediaQuery.of(context).orientation;
+        if (orientation != Orientation.landscape) {
+          SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
+        }
+      }
+    });
+    
     if (!_tutorialQueued) return;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 200));
@@ -1188,7 +1224,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
             children: [
               // Header với nút đóng
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: const Color(0xFF00ba4a),
                   borderRadius: const BorderRadius.only(
@@ -1198,13 +1234,13 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.usb, color: Colors.white),
+                    const Icon(Icons.usb, color: Colors.white, size: 20),
                     const SizedBox(width: 8),
                     const Text(
                       'Universal Hex Builder',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1215,12 +1251,17 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
                         // Gọi method buildAndFlashFromBlockly từ UniversalHexScreen
                         _triggerBuildAndFlashFromBlockly();
                       },
-                      icon: const Icon(Icons.flash_on, color: Colors.white),
+                      icon: const Icon(Icons.flash_on, color: Colors.white, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      icon: const Icon(Icons.close, color: Colors.white, size: 20),
                       tooltip: 'Close Universal Hex',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
@@ -1229,6 +1270,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               Expanded(
                 child: UniversalHexScreen(
                   key: _keyUniversalHex,
+                  onBuildFromBlockly: _triggerBuildAndFlashFromBlockly,
                 ),
               ),
             ],

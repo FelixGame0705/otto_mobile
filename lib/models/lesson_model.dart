@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 
 class Lesson {
@@ -9,7 +11,7 @@ class Lesson {
   final int order;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final int challengesCount;
+  final int challengeCount;
   final String courseTitle;
 
   Lesson({
@@ -21,7 +23,7 @@ class Lesson {
     required this.order,
     required this.createdAt,
     required this.updatedAt,
-    required this.challengesCount,
+    required this.challengeCount,
     required this.courseTitle,
   });
 
@@ -45,7 +47,7 @@ class Lesson {
       order: json['order'] ?? 0,
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
-      challengesCount: json['challengesCount'] ?? 0,
+      challengeCount: json['challengeCount'] ?? 0,
       courseTitle: json['courseTitle'] ?? '',
     );
   }
@@ -64,6 +66,30 @@ class Lesson {
       return '${hours}h';
     }
     return '${hours}h ${minutes}p';
+  }
+
+  String formattedDurationLocalized(BuildContext context) {
+    if (durationInMinutes < 60) {
+      return 'duration.minutes'.tr(
+        context: context,
+        namedArgs: {'minutes': durationInMinutes.toString()},
+      );
+    }
+    final hours = durationInMinutes ~/ 60;
+    final minutes = durationInMinutes % 60;
+    if (minutes == 0) {
+      return 'duration.hours'.tr(
+        context: context,
+        namedArgs: {'hours': hours.toString()},
+      );
+    }
+    return 'duration.hoursMinutes'.tr(
+      context: context,
+      namedArgs: {
+        'hours': hours.toString(),
+        'minutes': minutes.toString(),
+      },
+    );
   }
 }
 

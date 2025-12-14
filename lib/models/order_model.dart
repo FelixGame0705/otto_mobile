@@ -1,5 +1,10 @@
 import 'package:intl/intl.dart';
 
+/// Helper function to parse DateTime and add 7 hours for timezone offset
+DateTime _parseDateTimeWithOffset(String dateTimeString) {
+  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
+}
+
 class OrderItemModel {
   final String id;
   final String orderId;
@@ -8,6 +13,8 @@ class OrderItemModel {
   final String courseDescription;
   final String courseImageUrl;
   final int unitPrice;
+  final int discountAmount;
+  final int finalPrice;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +26,8 @@ class OrderItemModel {
     required this.courseDescription,
     required this.courseImageUrl,
     required this.unitPrice,
+    required this.discountAmount,
+    required this.finalPrice,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -32,8 +41,10 @@ class OrderItemModel {
       courseDescription: json['courseDescription'] ?? '',
       courseImageUrl: json['courseImageUrl'] ?? '',
       unitPrice: (json['unitPrice'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
+      finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['unitPrice'] as num?)?.toInt() ?? 0,
+      createdAt: _parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
     );
   }
 
@@ -47,9 +58,14 @@ class OrderModel {
   final String id;
   final String userId;
   final int subtotal;
+  final int courseDiscountTotal;
+  final int voucherDiscountAmount;
   final int discountAmount;
   final int total;
   final int status;
+  final String? voucherId;
+  final String? voucherCode;
+  final String? voucherName;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<OrderItemModel> items;
@@ -59,9 +75,14 @@ class OrderModel {
     required this.id,
     required this.userId,
     required this.subtotal,
+    required this.courseDiscountTotal,
+    required this.voucherDiscountAmount,
     required this.discountAmount,
     required this.total,
     required this.status,
+    required this.voucherId,
+    required this.voucherCode,
+    required this.voucherName,
     required this.createdAt,
     required this.updatedAt,
     required this.items,
@@ -73,11 +94,16 @@ class OrderModel {
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
       subtotal: (json['subtotal'] as num?)?.toInt() ?? 0,
+      courseDiscountTotal: (json['courseDiscountTotal'] as num?)?.toInt() ?? 0,
+      voucherDiscountAmount: (json['voucherDiscountAmount'] as num?)?.toInt() ?? 0,
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
       status: (json['status'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      voucherId: json['voucherId'],
+      voucherCode: json['voucherCode'],
+      voucherName: json['voucherName'],
+      createdAt: _parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
       items: (json['items'] as List<dynamic>?)
               ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -136,10 +162,10 @@ class PaymentTransactionModel {
       errorCode: json['errorCode']?.toString(),
       errorMessage: json['errorMessage']?.toString(),
       paidAt: (json['paidAt'] != null && json['paidAt'].toString().isNotEmpty)
-          ? DateTime.tryParse(json['paidAt'].toString())
+          ? DateTime.tryParse(json['paidAt'].toString())?.add(const Duration(hours: 7))
           : null,
-      createdAt: DateTime.parse(json['createdAt'].toString()),
-      updatedAt: DateTime.parse(json['updatedAt'].toString()),
+      createdAt: _parseDateTimeWithOffset(json['createdAt'].toString()),
+      updatedAt: _parseDateTimeWithOffset(json['updatedAt'].toString()),
     );
   }
 }

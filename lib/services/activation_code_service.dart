@@ -55,4 +55,50 @@ class ActivationCodeService {
       throw Exception(friendlyMsg);
     }
   }
+
+  Future<ActivationCodeListApiResponse> getMyActivationCodes({
+    int? status,
+    int pageNumber = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      final token = await StorageService.getToken();
+      if (token == null) {
+        throw Exception(ApiErrorMapper.fromException('No authentication token found'));
+      }
+
+      final queryParams = <String, String>{
+        'pageNumber': pageNumber.toString(),
+        'pageSize': pageSize.toString(),
+      };
+      if (status != null) {
+        queryParams['status'] = status.toString();
+      }
+
+      final uri = Uri.parse('$_baseUrl/activation-codes/my').replace(queryParameters: queryParams);
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'accept': '*/*',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body) as Map<String, dynamic>;
+        return ActivationCodeListApiResponse.fromJson(jsonData);
+      } else {
+        final errorMsg = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to get activation codes',
+        );
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      final friendlyMsg = ApiErrorMapper.fromException(e);
+      throw Exception(friendlyMsg);
+    }
+  }
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/services/lesson_note_service.dart';
@@ -26,22 +25,11 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
   final TextEditingController _controller = TextEditingController();
   final LessonNoteService _service = LessonNoteService();
   bool _submitting = false;
-  int _timestamp = 0;
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  String _format(int seconds) {
-    final h = seconds ~/ 3600;
-    final m = (seconds % 3600) ~/ 60;
-    final s = seconds % 60;
-    if (h > 0) {
-      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   Future<void> _submit() async {
@@ -53,7 +41,7 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
         lessonId: widget.lessonId,
         lessonResourceId: widget.lessonResourceId,
         content: content,
-        timestampInSeconds: _timestamp,
+        timestampInSeconds: 0,
       );
       if (!mounted) return;
       _controller.clear();
@@ -73,56 +61,6 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
     }
   }
 
-  Future<void> _openTimePicker() async {
-    Duration temp = Duration(seconds: _timestamp);
-    final result = await showModalBottomSheet<int>(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Text('lessonNote.selectTime'.tr(), style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF00ba4a))),
-              SizedBox(
-                height: 200,
-                child: CupertinoTimerPicker(
-                  mode: CupertinoTimerPickerMode.hms,
-                  initialTimerDuration: temp,
-                  onTimerDurationChanged: (d) {
-                    temp = d;
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text('common.cancel'.tr()),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(temp.inSeconds),
-                        child: Text('lessonNote.done'.tr()),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (result != null && mounted) {
-      setState(() => _timestamp = result);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -144,40 +82,6 @@ class _LessonNoteComposerState extends State<LessonNoteComposer> {
               Text(
                 'lessonNote.addNote'.tr(),
                 style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const Spacer(),
-              Text(_format(_timestamp), style: const TextStyle(color: Color(0xFF4A5568))),
-              const SizedBox(width: 8),
-              IconButton(
-                tooltip: 'lessonNote.getCurrentTime'.tr(),
-                icon: const Icon(Icons.timelapse_outlined),
-                onPressed: () {
-                  final getSeconds = widget.getCurrentSeconds;
-                  if (getSeconds != null) {
-                    setState(() => _timestamp = getSeconds());
-                  }
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: _openTimePicker,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF334155),
-                  elevation: 3,
-                  shadowColor: Colors.black12,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                ),
-                icon: const Icon(Icons.access_time),
-                label: Text('lessonNote.selectTime'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ],
           ),

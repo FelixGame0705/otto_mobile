@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:ottobit/models/lesson_model.dart';
 import 'package:ottobit/services/http_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
@@ -22,6 +23,19 @@ class LessonService {
     int sortDirection = 0,
   }) async {
     try {
+      // Debug: In log ngay đầu hàm để đảm bảo không bị miss
+      debugPrint('=== LessonService.getLessons() CALLED ===');
+      debugPrint('LessonService: searchTerm parameter received: "$searchTerm"');
+      debugPrint('LessonService: searchTerm type: ${searchTerm.runtimeType}');
+      debugPrint('LessonService: searchTerm == null: ${searchTerm == null}');
+      if (searchTerm != null) {
+        debugPrint('LessonService: searchTerm.isEmpty: ${searchTerm.isEmpty}');
+        debugPrint('LessonService: searchTerm.isNotEmpty: ${searchTerm.isNotEmpty}');
+        debugPrint('LessonService: searchTerm.length: ${searchTerm.length}');
+        debugPrint('LessonService: searchTerm.trim().isEmpty: ${searchTerm.trim().isEmpty}');
+        debugPrint('LessonService: searchTerm.trim().isNotEmpty: ${searchTerm.trim().isNotEmpty}');
+      }
+      
       final queryParams = <String, String>{
         'IncludeDeleted': includeDeleted.toString(),
         'PageNumber': pageNumber.toString(),
@@ -32,18 +46,35 @@ class LessonService {
         'SortDirection': sortDirection.toString(),
       };
 
-      if (searchTerm != null && searchTerm.isNotEmpty) {
-        queryParams['SearchTerm'] = searchTerm;
+      debugPrint('LessonService: queryParams BEFORE adding SearchTerm: $queryParams');
+      debugPrint('LessonService: queryParams keys BEFORE: ${queryParams.keys.toList()}');
+
+      // Thêm SearchTerm vào queryParams nếu có giá trị
+      if (searchTerm != null && searchTerm.trim().isNotEmpty) {
+        final trimmedSearchTerm = searchTerm.trim();
+        queryParams['SearchTerm'] = trimmedSearchTerm;
+        debugPrint('LessonService: ✅ SearchTerm ADDED to queryParams: "$trimmedSearchTerm"');
+        debugPrint('LessonService: queryParams AFTER adding SearchTerm: $queryParams');
+      } else {
+        debugPrint('LessonService: ❌ SearchTerm NOT added');
+        debugPrint('LessonService:   - searchTerm == null: ${searchTerm == null}');
+        if (searchTerm != null) {
+          debugPrint('LessonService:   - searchTerm.trim().isEmpty: ${searchTerm.trim().isEmpty}');
+        }
       }
+      
       if (durationFrom != null) {
         queryParams['DurationFrom'] = durationFrom.toString();
       }
       if (durationTo != null) {
         queryParams['DurationTo'] = durationTo.toString();
       }
-
-      print('LessonService: Making request to /v1/lessons/preview');
-      print('LessonService: Query params: $queryParams');
+      
+      debugPrint('LessonService: Final queryParams: $queryParams');
+      debugPrint('LessonService: Final queryParams keys: ${queryParams.keys.toList()}');
+      debugPrint('LessonService: Final queryParams values: ${queryParams.values.toList()}');
+      debugPrint('LessonService: SearchTerm in final queryParams: ${queryParams['SearchTerm']}');
+      debugPrint('LessonService: SearchTerm key exists: ${queryParams.containsKey('SearchTerm')}');
 
       final response = await _httpService.get(
         '/v1/lessons/preview',

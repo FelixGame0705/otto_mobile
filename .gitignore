@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+android/README_GOOGLE_SIGNIN.md
+android/get_release_sha.bat
+android/get_release_sha.ps1

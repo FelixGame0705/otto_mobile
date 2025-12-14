@@ -7,6 +7,7 @@ class CourseActionButtons extends StatelessWidget {
   final VoidCallback? onAddToCart;
   final VoidCallback? onActivateRobot;
   final VoidCallback? onShare;
+  final VoidCallback? onRobotTap;
   final bool isEnrolled;
   final bool isLoading;
   final bool isPaid;
@@ -21,6 +22,7 @@ class CourseActionButtons extends StatelessWidget {
     this.onAddToCart,
     this.onActivateRobot,
     this.onShare,
+    this.onRobotTap,
     this.isEnrolled = false,
     this.isLoading = false,
     this.isPaid = false,
@@ -49,12 +51,6 @@ class CourseActionButtons extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.attach_money,
-                    color: Color(0xFF48BB78),
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
                   Text(
                     price!,
                     style: const TextStyle(
@@ -71,51 +67,63 @@ class CourseActionButtons extends StatelessWidget {
 
           // Required Robot Info for all courses
           if (requiredRobot != null) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F9FF),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF0EA5E9)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.smart_toy,
-                        color: Color(0xFF0EA5E9),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'course.requiredRobot'.tr(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+            InkWell(
+              onTap: onRobotTap,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F9FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF0EA5E9)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.smart_toy,
                           color: Color(0xFF0EA5E9),
+                          size: 20,
                         ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'course.requiredRobot'.tr(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0EA5E9),
+                            ),
+                          ),
+                        ),
+                        if (onRobotTap != null)
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Color(0xFF0EA5E9),
+                            size: 16,
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${requiredRobot!.robotName} (${requiredRobot!.robotBrand} - ${requiredRobot!.robotModel})',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF1E40AF),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${requiredRobot!.robotName} (${requiredRobot!.robotBrand} - ${requiredRobot!.robotModel})',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E40AF),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'course.robotRequiredMessage'.tr(),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF64748B),
+                    const SizedBox(height: 4),
+                    Text(
+                      'course.robotRequiredMessage'.tr(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),

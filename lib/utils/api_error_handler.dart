@@ -150,7 +150,8 @@ class ApiErrorMapper {
         'Không tìm thấy đánh giá hoặc đánh giá không tồn tại cho phiếu hỗ trợ này.',
 
     // ================= STUDENT / ENROLLMENT / SUBMISSION / VOUCHER / ACTIVATION =================
-    'STU_001': 'Không tìm thấy học sinh.',
+    // Student profile missing / not registered
+    'STU_001': 'Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.',
     'STU_005': 'Hồ sơ học sinh đã tồn tại cho người dùng này.',
 
     'ENR_001': 'Học sinh chưa đăng ký khóa học này.',
@@ -243,6 +244,12 @@ class ApiErrorMapper {
     if (isEn) {
       final serverMsg = error.rawMessage?.trim();
       if (serverMsg != null && serverMsg.isNotEmpty) {
+        final lower = serverMsg.toLowerCase();
+        // Normalize noisy prerequisite lesson errors from backend/.NET
+        if (lower.contains('previous lessons must be completed first') ||
+            lower.contains("no authentication handler is registered for the scheme 'previous lessons must be completed first'")) {
+          return 'Previous lessons must be completed first.';
+        }
         return serverMsg;
       }
       
@@ -262,6 +269,13 @@ class ApiErrorMapper {
     }
 
     // For Vietnamese: Use mapped messages first, then translate rawMessage if available
+    // Special-case: if server message is known, translate it first to bypass wrong errorCode mapping
+    final serverMsg = error.rawMessage?.trim();
+    if (serverMsg != null && serverMsg.isNotEmpty) {
+      final translatedEarly = _translateCommonMessage(serverMsg);
+      if (translatedEarly != null) return translatedEarly;
+    }
+
     final code = error.errorCode?.trim();
     if (code != null && code.isNotEmpty) {
       final mapped = _codeToMessage[code];
@@ -271,7 +285,6 @@ class ApiErrorMapper {
     }
 
     // If no mapped message but have rawMessage, try to translate it
-    final serverMsg = error.rawMessage?.trim();
     if (serverMsg != null && serverMsg.isNotEmpty) {
       // Try to find translation for common messages
       final translated = _translateCommonMessage(serverMsg);
@@ -465,6 +478,49 @@ class ApiErrorMapper {
     if (lowerMsg.contains('course progress must be at least 50%') ||
         lowerMsg.contains('progress must be at least 50% to rate')) {
       return 'Tiến độ khóa học của bạn phải đạt ít nhất 50% để có thể đánh giá.';
+    }
+
+    // Lessons prerequisites
+    if (lowerMsg.contains('previous lessons must be completed first')) {
+      return 'Bạn cần hoàn thành các bài học trước đó trước khi tiếp tục.';
+    }
+    // .NET auth handler misconfiguration message containing the prerequisite text
+    if (lowerMsg.contains("no authentication handler is registered for the scheme 'previous lessons must be completed first'")
+        || lowerMsg.contains("previous lessons must be completed first'. the registered schemes are")) {
+      return 'Bạn cần hoàn thành các bài học trước đó trước khi tiếp tục.';
+    }
+
+    // Student not found / not registered
+    if (lowerMsg.contains('student not found') ||
+        lowerMsg.contains('no student found') ||
+        lowerMsg.contains('student profile not found')) {
+      return 'Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.';
+    }
+
+    // Price changed between add-to-cart and checkout
+    if (lowerMsg.contains('price has changed for course')) {
+      return 'Giá khóa học đã thay đổi. Vui lòng tải lại giỏ hàng.';
+    }
+
+    // Robot compatibility / activation
+    if (lowerMsg.contains('you do not have an activated robot compatible with this course')) {
+      return 'Bạn chưa có robot đã kích hoạt tương thích với khóa học này.';
+    }
+    
+    // Blog comment error messages - check exact phrases
+    if (lowerMsg == 'please wait a few seconds before commenting again.' ||
+        lowerMsg.contains('please wait a few seconds before commenting again')) {
+      return 'Vui lòng đợi vài giây trước khi bình luận lại.';
+    }
+    
+    if (lowerMsg == 'too many comments in a short time. please try again later.' ||
+        lowerMsg.contains('too many comments in a short time')) {
+      return 'Bạn đã bình luận quá nhiều trong thời gian ngắn. Vui lòng thử lại sau.';
+    }
+    
+    if (lowerMsg == 'duplicate comment detected.' ||
+        lowerMsg.contains('duplicate comment detected')) {
+      return 'Phát hiện bình luận trùng lặp.';
     }
     
     // Add more common translations as needed

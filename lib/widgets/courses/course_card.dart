@@ -271,7 +271,7 @@ class CourseGridCard extends StatelessWidget {
                                           icon: Icons.star,
                                           text: course.ratingCount > 0
                                               ? course.ratingAverage.toStringAsFixed(1)
-                                              : 'N/A',
+                                              : '0',
                                           color: const Color(0xFFF6AD55),
                                           isCompact: isNarrow,
                                         ),
@@ -416,7 +416,7 @@ class _PriceTag extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          isFree ? Icons.workspace_premium : Icons.attach_money,
+          isFree ? Icons.workspace_premium : null,
           size: isCompact ? 12 : 14,
           color: isFree ? const Color(0xFF48BB78) : const Color(0xFF2D3748),
         ),

@@ -86,7 +86,7 @@ class LessonCard extends StatelessWidget {
                       Expanded(
                         child: _buildStatChip(
                           Icons.timer,
-                          lesson.formattedDuration,
+                      lesson.formattedDurationLocalized(context),
                           const Color(0xFF4299E1),
                         ),
                       ),
@@ -94,7 +94,7 @@ class LessonCard extends StatelessWidget {
                       Expanded(
                         child: _buildStatChip(
                           Icons.flag,
-                          '${lesson.challengesCount}',
+                          '${lesson.challengeCount}',
                           const Color(0xFFED8936),
                         ),
                       ),

@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "230205957347-11r626sv6tvret7eht3nlbgimdqakjk6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.otto.ottobit",
+            "certificate_hash": "8ed5e1cfed6bee39390ee263517a0aed2b6239bc"
+          }
+        },
+        {
           "client_id": "230205957347-nldr90vq0muigr4130045ilfg1vb3ldt.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

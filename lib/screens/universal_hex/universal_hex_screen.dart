@@ -4,10 +4,17 @@ import 'package:ottobit/services/universal_hex_service.dart';
 import 'package:ottobit/services/usb_service.dart';
 import 'package:ottobit/services/insert_code_service.dart';
 import 'package:ottobit/services/room_id_service.dart';
+import 'package:ottobit/services/storage_service.dart';
 
 class UniversalHexScreen extends StatefulWidget {
   final String? initialPythonCode;
-  const UniversalHexScreen({super.key, this.initialPythonCode});
+  final VoidCallback? onBuildFromBlockly; // Callback để gọi hàm build từ Blockly editor
+  
+  const UniversalHexScreen({
+    super.key, 
+    this.initialPythonCode,
+    this.onBuildFromBlockly,
+  });
 
   @override
   State<UniversalHexScreen> createState() => _UniversalHexScreenState();
@@ -41,6 +48,39 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
     if (widget.initialPythonCode != null) {
       _pythonController.text = widget.initialPythonCode!;
     }
+    
+    // Load WiFi SSID và password từ storage
+    _loadWifiCredentials();
+    
+    // Thêm listener để tự động lưu khi người dùng thay đổi
+    _wifiSsidController.addListener(_saveWifiSsid);
+    _wifiPassController.addListener(_saveWifiPass);
+  }
+  
+  Future<void> _loadWifiCredentials() async {
+    try {
+      final savedSsid = await StorageService.getValue<String>('universal_hex_wifi_ssid');
+      final savedPass = await StorageService.getValue<String>('universal_hex_wifi_pass');
+      
+      if (savedSsid != null && savedSsid.isNotEmpty) {
+        _wifiSsidController.text = savedSsid;
+      }
+      if (savedPass != null && savedPass.isNotEmpty) {
+        _wifiPassController.text = savedPass;
+      }
+    } catch (e) {
+      // Ignore errors when loading
+    }
+  }
+  
+  void _saveWifiSsid() {
+    final ssid = _wifiSsidController.text;
+    StorageService.saveValue('universal_hex_wifi_ssid', ssid);
+  }
+  
+  void _saveWifiPass() {
+    final pass = _wifiPassController.text;
+    StorageService.saveValue('universal_hex_wifi_pass', pass);
   }
 
   Future<void> _initializeServices() async {
@@ -291,7 +331,17 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
 
   @override
   void dispose() {
+    // Remove listeners trước khi dispose
+    _wifiSsidController.removeListener(_saveWifiSsid);
+    _wifiPassController.removeListener(_saveWifiPass);
+    
+    // Lưu giá trị cuối cùng trước khi dispose
+    _saveWifiSsid();
+    _saveWifiPass();
+    
     _pythonController.dispose();
+    _wifiSsidController.dispose();
+    _wifiPassController.dispose();
     _usbService.dispose();
     UniversalHexService.dispose();
     super.dispose();
@@ -362,23 +412,23 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
                         )
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Python Code',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _pythonController,
-                      maxLines: 8,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter your Python code here...\nExample:\ndisplay.scroll("Hello World")',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
+                    // const SizedBox(height: 16),
+                    // const Text(
+                    //   'Python Code',
+                    //   style: TextStyle(
+                    //     fontSize: 18,
+                    //     fontWeight: FontWeight.bold,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 8),
+                    // TextField(
+                    //   controller: _pythonController,
+                    //   maxLines: 8,
+                    //   decoration: const InputDecoration(
+                    //     hintText: 'Enter your Python code here...\nExample:\ndisplay.scroll("Hello World")',
+                    //     border: OutlineInputBorder(),
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -389,12 +439,12 @@ class _UniversalHexScreenState extends State<UniversalHexScreen> {
             // Build Button
             ElevatedButton.icon(
               onPressed: _isBuilding ? null : () async {
-                // Try to build from Blockly first, fallback to manual build
-                try {
+                // Nếu có callback từ Blockly editor, sử dụng nó để đảm bảo build chính xác
+                if (widget.onBuildFromBlockly != null) {
+                  widget.onBuildFromBlockly!();
+                } else {
+                  // Fallback: gọi hàm build trực tiếp nếu không có callback
                   await buildAndFlashFromBlockly();
-                } catch (e) {
-                  // If Blockly build fails, try manual build
-                  await _buildUniversalHex();
                 }
               },
               icon: _isBuilding 

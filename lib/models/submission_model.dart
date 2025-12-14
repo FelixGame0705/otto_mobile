@@ -1,3 +1,8 @@
+/// Helper function to parse DateTime and add 7 hours for timezone offset
+DateTime _parseDateTimeWithOffset(String dateTimeString) {
+  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
+}
+
 class Submission {
   final String id;
   final String challengeId;
@@ -32,8 +37,8 @@ class Submission {
       studentId: json['studentId'] as String,
       codeJson: json['codeJson'] as String,
       star: json['star'] as int,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: _parseDateTimeWithOffset(json['createdAt'] as String),
+      updatedAt: _parseDateTimeWithOffset(json['updatedAt'] as String),
       challengeTitle: json['challengeTitle'] as String,
       studentName: json['studentName'] as String,
       lessonTitle: json['lessonTitle'] as String,
@@ -79,7 +84,7 @@ class SubmissionApiResponse {
       data: json['data'] != null ? Submission.fromJson(json['data'] as Map<String, dynamic>) : null,
       errors: json['errors'] != null ? List<String>.from(json['errors'] as List) : null,
       errorCode: json['errorCode'] as String?,
-      timestamp: DateTime.parse(json['timestamp'] as String),
+      timestamp: _parseDateTimeWithOffset(json['timestamp'] as String),
     );
   }
 }
@@ -107,7 +112,7 @@ class SubmissionListApiResponse {
           .toList(),
       errors: json['errors'] != null ? List<String>.from(json['errors'] as List) : null,
       errorCode: json['errorCode'] as String?,
-      timestamp: DateTime.parse((json['timestamp'] as String?) ?? DateTime.now().toIso8601String()),
+      timestamp: _parseDateTimeWithOffset((json['timestamp'] as String?) ?? DateTime.now().toIso8601String()),
     );
   }
 }

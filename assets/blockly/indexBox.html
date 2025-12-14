@@ -473,7 +473,7 @@
             this.appendStatementInput("THEN");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-            this.setColour("#8e44ad"); // teal sáng
+            this.setColour("#ffbe3b"); // teal sáng
           },
         };
 
@@ -485,7 +485,7 @@
             this.appendStatementInput("DO").appendField("do");
         this.setPreviousStatement(true, null);
         this.setNextStatement(true, null);
-            this.setColour("#4ecdc4"); // teal sáng
+            this.setColour("#ffbe3b"); // teal sáng
           },
         };
 
@@ -507,7 +507,7 @@
 
             this.setPreviousStatement(true);
             this.setNextStatement(true);
-            this.setColour("#8e44ad"); // teal sáng
+            this.setColour("#ffbe3b"); // teal sáng
             this.setTooltip(
               "Chọn số nhánh else-if (0–10). Mỗi nhánh là một điều kiện Boolean + then."
             );
@@ -948,6 +948,25 @@
             // Serialize loop variable references as template tokens for Phaser
             return `{{${v}}}`;
           }
+          if (target.type === "math_arithmetic") {
+            // Handle arithmetic operations - convert to Phaser format
+            const left = numFrom(target, "A");
+            const right = numFrom(target, "B");
+            const op = target.getFieldValue("OP");
+            // Map Blockly operators to Phaser operators
+            const opMap = {
+              "ADD": "+",
+              "MINUS": "-",
+              "MULTIPLY": "*",
+              "DIVIDE": "/"
+            };
+            return {
+              type: "arithmetic",
+              op: opMap[op] || op,
+              left: left,
+              right: right
+            };
+          }
       return 0;
     }
         
@@ -965,6 +984,25 @@
             const v = target.getFieldValue("VAR");
             // Serialize loop variable references as template tokens for Phaser
             return `{{${v}}}`;
+          }
+          if (target.type === "math_arithmetic") {
+            // Handle arithmetic operations - convert to Phaser format
+            const left = numFromForComparison(target, "A");
+            const right = numFromForComparison(target, "B");
+            const op = target.getFieldValue("OP");
+            // Map Blockly operators to Phaser operators
+            const opMap = {
+              "ADD": "+",
+              "MINUS": "-",
+              "MULTIPLY": "*",
+              "DIVIDE": "/"
+            };
+            return {
+              type: "arithmetic",
+              op: opMap[op] || op,
+              left: left,
+              right: right
+            };
           }
       return 0;
     }

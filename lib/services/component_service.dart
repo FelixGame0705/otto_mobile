@@ -82,4 +82,50 @@ class ComponentService {
       rethrow;
     }
   }
+
+  Future<RobotComponentApiResponse> getRobotComponents({
+    required String robotId,
+    int page = 1,
+    int size = 10,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'Page': page.toString(),
+        'Size': size.toString(),
+        'RobotId': robotId,
+      };
+
+      print('ComponentService: Making request to /v1/robot-components');
+      print('ComponentService: Query params: $queryParams');
+
+      final response = await _httpService.get(
+        '/v1/robot-components',
+        queryParams: queryParams,
+        throwOnError: false,
+      );
+
+      print('ComponentService: Response status: ${response.statusCode}');
+      print('ComponentService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        print('ComponentService: Parsed JSON: $jsonData');
+        return RobotComponentApiResponse.fromJson(jsonData);
+      } else {
+        print(
+          'ComponentService: Error response: ${response.statusCode} - ${response.body}',
+        );
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to load robot components: ${response.statusCode}',
+        );
+        throw Exception(friendly);
+      }
+    } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
+      print('ComponentService error (getRobotComponents): $friendly');
+      rethrow;
+    }
+  }
 }

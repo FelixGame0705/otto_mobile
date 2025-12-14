@@ -144,14 +144,17 @@
     "detailTitle": "Chi tiết khóa học",
     "loading": "Đang tải thông tin khóa học...",
     "notFound": "Không tìm thấy khóa học",
-    "viewLessons": "Xem danh sách bài học",
+    "viewLessons": "Danh sách bài học",
     "title": "Khóa học",
     "enrolling": "Đang xử lý...",
     "enrolled": "Đã đăng ký",
     "enrollNow": "Đăng ký ngay",
     "enrollSuccess": "Đăng ký khóa học thành công!",
+    "studentRequiredTitle": "Cần đăng ký học viên",
+    "studentRequiredMessage": "Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.",
+    "registerStudentNow": "Đăng ký ngay",
     "info": "Thông tin khóa học",
-    "teacher": "Giảng viên",
+    "teacher": "Tạo bởi",
     "createdAt": "Ngày tạo",
     "updatedAt": "Cập nhật lần cuối",
     "lessonsCount": "Số bài học",
@@ -284,6 +287,9 @@
     "mySubmissions": "Bài nộp của tôi",
     "myOrders": "Đơn hàng của tôi",
     "myCertificates": "Chứng chỉ của tôi",
+    "myRobots": "Robot của tôi",
+    "myNotes": "Ghi chú của tôi",
+    "noNotes": "Không tìm thấy ghi chú nào",
     "activateRobot": "Kích hoạt Robot",
     "logout": "Đăng xuất",
     "phone": "SĐT",
@@ -295,6 +301,7 @@
     "phoneNumber": "Số điện thoại",
     "phoneNumberHint": "Nhập số điện thoại",
     "phoneNumberRequired": "Số điện thoại là bắt buộc",
+    "phoneNumberInvalid": "Số điện thoại không hợp lệ.",
     "addressHint": "Nhập địa chỉ",
     "addressRequired": "Địa chỉ là bắt buộc",
     "provinceCity": "Tỉnh/Thành phố",
@@ -327,6 +334,14 @@
       "updateSuccess": "Cập nhật học sinh thành công",
       "updateFailed": "Không thể cập nhật học sinh",
       "updateError": "Lỗi khi cập nhật học sinh: {err}"
+    },
+    "robots": {
+      "title": "Robot của tôi",
+      "noRobots": "Chưa có robot nào được kích hoạt",
+      "loadFailed": "Không thể tải danh sách robot",
+      "activatedAt": "Đã kích hoạt: {date}",
+      "expiresAt": "Hết hạn: {date}",
+      "expired": "Đã hết hạn"
     }
   },
   "challenge": {
@@ -353,7 +368,11 @@
     "addToCart": "Thêm vào giỏ",
     "addedToCart": "Đã thêm vào giỏ",
     "price": "Giá",
-    "specifications": "Thông số kỹ thuật"
+    "specifications": "Thông số kỹ thuật",
+    "quantity": "Số lượng",
+    "robotName": "Robot",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật"
   },
   "store": {
     "title": "Cửa hàng",
@@ -404,6 +423,21 @@
     "clearError": "Không thể xóa giỏ hàng",
     "subtotal": "Tạm tính",
     "discount": "Giảm giá",
+    "courseDiscount": "Giảm giá khóa học",
+    "voucherDiscount": "Giảm giá voucher",
+    "voucherDiscountWithCode": "Giảm giá voucher ({0})",
+    "offersTitle": "Gợi ý sau khi hoàn thành khóa học",
+    "offersSubtitle": "Ưu đãi đặc biệt cho các khóa liên quan",
+    "discountPrice": "Giá sau giảm",
+    "originalPrice": "Giá gốc",
+    "discountAmount": "Tiết kiệm",
+    "viewCourse": "Xem khóa học",
+    "addToCartOffer": "Thêm vào giỏ",
+    "availableTitle": "Nên học trước khi đăng ký",
+    "availableSubtitle": "Hoàn thành các khóa này để mở ưu đãi cho khóa hiện tại",
+    "prereqOwned": "Bạn đã sở hữu/đăng ký khóa này",
+    "prereqInCart": "Khóa này đã có trong giỏ",
+    "prereqNotOwned": "Bạn chưa sở hữu/đăng ký khóa này",
     "total": "Tổng cộng",
     "checkout": "Thanh toán",
     "discountApplied": "Áp dụng mã giảm giá thành công",
@@ -413,6 +447,7 @@
   },
   "order": {
     "title": "Thanh toán",
+    "empty": "Không có đơn hàng",
     "summary": "Tóm tắt đơn hàng",
     "subtotal": "Tạm tính",
     "discount": "Giảm giá",
@@ -457,6 +492,18 @@
       "refunded": "Đã hoàn tiền"
     },
     "voucherInvalidMessage": "Voucher không hợp lệ hoặc đã đạt giới hạn sử dụng"
+  },
+  "orders": {
+    "empty": "Không có đơn hàng",
+    "itemsCount": "{count} sản phẩm",
+    "allShown": "Đã hiển thị tất cả đơn hàng",
+    "filter": {
+      "status": "Trạng thái",
+      "from": "Từ ngày",
+      "to": "Đến ngày",
+      "reset": "Đặt lại",
+      "apply": "Áp dụng"
+    }
   },
   "news": {
     "searchHint": "Tìm kiếm bài viết...",
@@ -603,6 +650,15 @@
       "selectStars": "Vui lòng chọn số sao"
     }
   },
+  "courseMeta": {
+    "lessonsCountLabel": "{count} bài học",
+    "enrollmentsCountLabel": "{count} học viên"
+  },
+  "duration": {
+    "minutes": "{minutes} phút",
+    "hours": "{hours} giờ",
+    "hoursMinutes": "{hours} giờ {minutes} phút"
+  },
   "phaser": {
     "title": "Trò chơi robot Phaser",
     "loading": "Đang tải trò chơi...",
@@ -626,6 +682,7 @@
     "submitting": "Đang nộp...",
     "simulation": "Giả lập",
     "close": "Đóng",
+    "continue": "Tiếp tục",
     "gameOverTitle": "Thua cuộc!",
     "defeatReasonTitle": "Lý do thua",
     "defeatReasonPrefix": "Lý do thua:",

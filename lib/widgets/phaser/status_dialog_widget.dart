@@ -1,8 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/features/phaser/phaser_bridge.dart';
-import 'package:ottobit/services/submission_service.dart';
 import 'responsive_helpers.dart';
 import 'action_button_widget.dart';
 import 'defeat_reason_widget.dart';
@@ -18,6 +16,7 @@ class StatusDialogWidget extends StatefulWidget {
   final VoidCallback onPlayAgain;
   final VoidCallback onClose;
   final VoidCallback? onSimulation;
+  final VoidCallback? onContinueToNext;
 
   const StatusDialogWidget({
     super.key,
@@ -31,6 +30,7 @@ class StatusDialogWidget extends StatefulWidget {
     required this.onPlayAgain,
     required this.onClose,
     this.onSimulation,
+    this.onContinueToNext,
   });
 
   @override
@@ -38,88 +38,6 @@ class StatusDialogWidget extends StatefulWidget {
 }
 
 class _StatusDialogWidgetState extends State<StatusDialogWidget> {
-  final SubmissionService _submissionService = SubmissionService();
-  bool _isSubmitting = false;
-
-  Future<void> _handleSubmit() async {
-    debugPrint('🔍 Submit attempt - ChallengeId: ${widget.challengeId}, CodeJson: ${widget.codeJson}');
-    
-    if (widget.challengeId == null || widget.challengeId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('phaser.missingChallengeId'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    
-    if (widget.codeJson == null || widget.codeJson!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('phaser.missingCodeData'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isSubmitting = true;
-    });
-
-    try {
-      // Calculate stars from the victory data
-      final dynamicCardScore = widget.data['cardScore'] ?? (widget.data['details'] is Map<String, dynamic> ? widget.data['details']['cardScore'] : null);
-      double normalizedScore;
-      if (dynamicCardScore is num) {
-        normalizedScore = dynamicCardScore.toDouble();
-      } else {
-        final rawScore = widget.data['score'];
-        if (rawScore is num) {
-          final s = rawScore.toDouble();
-          normalizedScore = s <= 1.0 ? s : (s / 100.0);
-        } else {
-          normalizedScore = 0.0;
-        }
-      }
-      int stars = (normalizedScore * 3).ceil();
-      if (stars < 1) stars = 1;
-      if (stars > 3) stars = 3;
-
-      final response = await _submissionService.createSubmission(
-        challengeId: widget.challengeId!,
-        codeJson: widget.codeJson!,
-        star: stars,
-      );
-
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: const Color(0xFF48BB78),
-          ),
-        );
-        
-        widget.onClose();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isSubmitting = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('phaser.submissionFailed'.tr(args: [e.toString()])),
-          backgroundColor: Colors.red,
-        ));
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,9 +61,9 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   ? 40 
                   : screenWidth > 500 
                     ? 32  // Samsung A23 (720px) - tăng padding để dialog nhỏ hơn
-                    : screenWidth > 400 
-                      ? 24 
-                      : 16,
+                  : screenWidth > 400 
+                    ? 24 
+                    : 16,
             vertical: screenHeight > 1200 
               ? (isGameOver ? 40 : 50)
               : screenHeight > 900 
@@ -244,7 +162,7 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                 ? (isLandscape ? 12 : 20)
                 : screenWidth > 500
                   ? (isLandscape ? 8 : 12)  // Giảm spacing cho Samsung A23
-                  : (isLandscape ? 10 : 16),
+                : (isLandscape ? 10 : 16),
           ),
           // Title
           Text(
@@ -268,9 +186,9 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   ? 20
                   : screenWidth > 500
                     ? 12  // Giảm spacing cho Samsung A23
-                    : screenWidth > 400
-                      ? 16
-                      : 12)
+                  : screenWidth > 400
+                    ? 16
+                    : 12)
               : (screenWidth > 1200 
                 ? 16
                 : screenWidth > 600 
@@ -286,18 +204,18 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                   ? 20 
                   : screenWidth > 500
                     ? 14  // Giảm padding cho Samsung A23
-                    : screenWidth > 400 
-                      ? 16 
-                      : 12,
+                  : screenWidth > 400 
+                    ? 16 
+                    : 12,
               vertical: screenWidth > 1200 
                 ? 10
                 : screenWidth > 600 
                   ? 8 
                   : screenWidth > 500
                     ? 5  // Giảm padding cho Samsung A23
-                    : screenWidth > 400 
-                      ? 6 
-                      : 4,
+                  : screenWidth > 400 
+                    ? 6 
+                    : 4,
             ),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
@@ -346,18 +264,18 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
           ? 20 
           : screenWidth > 500
             ? 12  // Giảm từ 18 xuống 12
-            : screenWidth > 400 
-              ? 16 
-              : 12;
+          : screenWidth > 400 
+            ? 16 
+            : 12;
       double bottomPadding = screenWidth > 1200
         ? (isLandscape ? 8 : 12)
         : screenWidth > 600
           ? (isLandscape ? 6 : 10)
           : screenWidth > 500
             ? (isLandscape ? 3 : 6)  // Giảm từ 5/9 xuống 3/6
-            : screenWidth > 400
-              ? (isLandscape ? 4 : 8)
-              : (isLandscape ? 2 : 6);
+          : screenWidth > 400
+            ? (isLandscape ? 4 : 8)
+            : (isLandscape ? 2 : 6);
       
       // Height = star size + glow effect (8px) + top padding + bottom padding + extra space
       // Giảm extra space để tránh overflow trên màn hình nhỏ
@@ -430,47 +348,47 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                 ),
               ],
               
-              // Only show details for non-Game Over or if user wants to see them
-              if (!isGameOver && widget.status != 'VICTORY') ...[
-                SizedBox(height: isTablet ? 20 : 16),
-                
-                // Expandable details section
-                Theme(
-                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    title: Text(
-                      'phaser.details'.tr(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: isTablet ? 16 : 14,
-                      ),
-                    ),
-                    iconColor: Colors.white,
-                    collapsedIconColor: Colors.white70,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.all(isTablet ? 20 : 16),
-                        margin: EdgeInsets.only(top: isTablet ? 12 : 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-                          border: Border.all(color: Colors.white.withOpacity(0.1)),
-                        ),
-                        child: Text(
-                          const JsonEncoder.withIndent('  ').convert(widget.data),
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: isTablet ? 13 : (isLandscape ? 10 : 11),
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              // Ẩn phần details/code trong dialog
+              // if (!isGameOver && widget.status != 'VICTORY') ...[
+              //   SizedBox(height: isTablet ? 20 : 16),
+              //   
+              //   // Expandable details section
+              //   Theme(
+              //     data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              //     child: ExpansionTile(
+              //       title: Text(
+              //         'phaser.details'.tr(),
+              //         style: TextStyle(
+              //           color: Colors.white,
+              //           fontWeight: FontWeight.bold,
+              //           fontSize: isTablet ? 16 : 14,
+              //         ),
+              //       ),
+              //       iconColor: Colors.white,
+              //       collapsedIconColor: Colors.white70,
+              //       children: [
+              //         Container(
+              //           width: double.infinity,
+              //           padding: EdgeInsets.all(isTablet ? 20 : 16),
+              //           margin: EdgeInsets.only(top: isTablet ? 12 : 8),
+              //           decoration: BoxDecoration(
+              //             color: Colors.black.withOpacity(0.2),
+              //             borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
+              //             border: Border.all(color: Colors.white.withOpacity(0.1)),
+              //           ),
+              //           child: Text(
+              //             const JsonEncoder.withIndent('  ').convert(widget.data),
+              //             style: TextStyle(
+              //               fontFamily: 'monospace',
+              //               fontSize: isTablet ? 13 : (isLandscape ? 10 : 11),
+              //               color: Colors.white70,
+              //             ),
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ],
             ],
           ),
         ),
@@ -664,22 +582,22 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             Expanded(
               child: ActionButtonWidget(
                 text: widget.status == 'VICTORY' 
-                  ? (_isSubmitting ? 'phaser.submitting'.tr() : 'phaser.submit'.tr())
+                  ? 'phaser.reset'.tr()
                   : 'phaser.playAgain'.tr(),
                 icon: widget.status == 'VICTORY' 
-                  ? (_isSubmitting ? Icons.hourglass_empty : Icons.upload)
+                  ? Icons.refresh
                   : Icons.refresh,
                 textColor: Colors.white,
                 backgroundColor: widget.color.withOpacity(0.15),
                 isTablet: isTablet,
                 isLandscape: isLandscape,
-                onPressed: _isSubmitting 
-                  ? () {} // Disabled state
-                  : (widget.status == 'VICTORY' 
-                      ? _handleSubmit
+                onPressed: widget.status == 'VICTORY' 
+                  ? () {
+                      widget.onPlayAgain();
+                    }
                       : () {
                           widget.onPlayAgain();
-                        }),
+                    },
               ),
             ),
             SizedBox(
@@ -691,7 +609,8 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
                     ? 10 
                     : 8,
             ),
-            if (widget.onSimulation != null && widget.status == 'VICTORY') ...[
+            // Cho phép chạy simulator cả khi thắng và khi thua
+            if (widget.onSimulation != null && (widget.status == 'VICTORY' || widget.status == 'LOSE')) ...[
               Expanded(
                 child: ActionButtonWidget(
                   text: 'phaser.simulation'.tr(),
@@ -721,13 +640,23 @@ class _StatusDialogWidgetState extends State<StatusDialogWidget> {
             ],
             Expanded(
               child: ActionButtonWidget(
-                text: 'phaser.close'.tr(),
-                icon: Icons.close,
-                textColor: Colors.white70,
-                backgroundColor: Colors.white.withOpacity(0.1),
+                text: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? 'phaser.continue'.tr()
+                    : 'phaser.close'.tr(),
+                icon: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? Icons.arrow_forward
+                    : Icons.close,
+                textColor: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? Colors.white
+                    : Colors.white70,
+                backgroundColor: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? widget.color.withOpacity(0.3)
+                    : Colors.white.withOpacity(0.1),
                 isTablet: isTablet,
                 isLandscape: isLandscape,
-                onPressed: widget.onClose,
+                onPressed: widget.onContinueToNext != null && widget.status == 'VICTORY'
+                    ? widget.onContinueToNext!
+                    : widget.onClose,
               ),
             ),
           ],

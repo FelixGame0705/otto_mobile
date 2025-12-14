@@ -11,6 +11,10 @@ import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/models/cart_model.dart';
+import 'package:ottobit/models/course_discount_offer_model.dart';
+import 'package:ottobit/widgets/courseDetail/course_discounts_offered_section.dart';
+import 'package:ottobit/models/course_available_discount_model.dart';
+import 'package:ottobit/widgets/courseDetail/course_available_discounts_section.dart';
 import 'package:ottobit/screens/home/home_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ottobit/services/course_robot_service.dart';
@@ -18,6 +22,7 @@ import 'package:ottobit/models/course_robot_model.dart';
 import 'package:ottobit/services/auth_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 import 'package:ottobit/widgets/common/create_ticket_dialog.dart';
+import 'package:ottobit/widgets/common/student_required_dialog.dart';
 import 'package:ottobit/widgets/ui/notifications.dart';
 
 class CourseDetailScreen extends StatefulWidget {
@@ -50,6 +55,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   CourseRobot? _requiredRobot;
   bool _isLoadingRobot = false;
   String? _currentStudentId;
+  List<CourseDiscountOffer> _offers = [];
+  bool _isLoadingOffers = false;
+  String _offersError = '';
+  List<CourseAvailableDiscount> _availableDiscounts = [];
+  bool _isLoadingAvailable = false;
+  String _availableError = '';
 
   @override
   void initState() {
@@ -117,6 +128,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         // Check cart status for paid courses
         if (_course != null && _course!.isPaid) {
           _checkCartStatus();
+          _loadCourseOffers();
+          _loadAvailableDiscounts();
         }
         
         // Load required robot for all courses
@@ -131,6 +144,54 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         setState(() {
           _errorMessage = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCourseOffers() async {
+    if (_course == null) return;
+    setState(() {
+      _isLoadingOffers = true;
+      _offersError = '';
+    });
+    try {
+      final result = await _courseDetailService.getCourseDiscountOffers(_course!.id);
+      if (mounted) {
+        setState(() {
+          _offers = result;
+          _isLoadingOffers = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _offersError = e.toString().replaceFirst('Exception: ', '');
+          _isLoadingOffers = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadAvailableDiscounts() async {
+    if (_course == null) return;
+    setState(() {
+      _isLoadingAvailable = true;
+      _availableError = '';
+    });
+    try {
+      final result = await _courseDetailService.getCourseAvailableDiscounts(_course!.id);
+      if (mounted) {
+        setState(() {
+          _availableDiscounts = result;
+          _isLoadingAvailable = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _availableError = e.toString().replaceFirst('Exception: ', '');
+          _isLoadingAvailable = false;
         });
       }
     }
@@ -163,7 +224,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       });
       final isEnglish = context.locale.languageCode == 'en';
       final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-      showErrorToast(context, msg);
+      if (_isStudentMissing(msg)) {
+        await StudentRequiredDialog.show(context);
+      } else {
+        showErrorToast(context, msg);
+      }
     }
   }
 
@@ -246,7 +311,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         
         final isEnglish = context.locale.languageCode == 'en';
         final msg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-        showErrorToast(context, msg);
+        if (_isStudentMissing(msg)) {
+          await StudentRequiredDialog.show(context);
+        } else {
+          showErrorToast(context, msg);
+        }
       }
     }
   }
@@ -256,6 +325,28 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     final url = 'https://ottobit-fe.vercel.app/user/courses/${_course!.id}';
     final message = '${_course!.title}\n\n${_course!.description}\n\n$url';
     Share.share(message, subject: _course!.title);
+  }
+
+  void _handleRobotTap() {
+    if (_requiredRobot == null) return;
+    Navigator.pushNamed(
+      context,
+      AppRoutes.productDetail,
+      arguments: {
+        'productId': _requiredRobot!.robotId,
+        'productType': 'robot',
+      },
+    );
+  }
+
+  bool _isStudentMissing(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('student not found') ||
+        lower.contains('no student found') ||
+        lower.contains('student profile not found') ||
+        lower.contains('không tìm thấy học sinh') ||
+        lower.contains('chưa là học viên') ||
+        lower.contains('vui lòng đăng ký học viên');
   }
 
   Future<void> _showCreateTicketDialog() async {
@@ -387,6 +478,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   ? _handleAddToCart
                   : null,
               onShare: _handleShare,
+              onRobotTap: _handleRobotTap,
               isEnrolled: _isEnrolled,
               isLoading: _isEnrolling || _isAddingToCart,
               isPaid: _course!.isPaid,
@@ -461,7 +553,47 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
             ),
           
-          // Course Rating (at the end)
+          // Discounts offered after completion (place above rating)
+          if (_course != null && _course!.isPaid)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _isLoadingOffers
+                  ? const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : (_offersError.isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Text(
+                            _offersError,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        )
+                      : CourseDiscountsOfferedSection(offers: _offers)),
+            ),
+
+          // Discounts available (prereq recommendations)
+          if (_course != null && _course!.isPaid)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _isLoadingAvailable
+                  ? const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : (_availableError.isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Text(
+                            _availableError,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        )
+                      : CourseAvailableDiscountsSection(discounts: _availableDiscounts)),
+            ),
+
+          // Course Rating
           CourseRatingWidget(
             courseId: widget.courseId,
             currentStudentId: _currentStudentId,

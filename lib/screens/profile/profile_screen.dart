@@ -14,6 +14,8 @@ import 'package:ottobit/widgets/enrolls/my_enrollments_grid.dart';
 import 'package:ottobit/screens/support/tickets_screen.dart';
 import 'package:ottobit/screens/submissions/my_submissions_screen.dart';
 import 'package:ottobit/widgets/courseDetail/activation_code_dialog.dart';
+import 'package:ottobit/screens/profile/my_robots_screen.dart';
+import 'package:ottobit/screens/profile/my_notes_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,6 +24,7 @@ import 'dart:typed_data';
 import 'package:ottobit/services/location_service.dart';
 import 'package:ottobit/models/location_model.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
+import 'package:ottobit/widgets/common/student_required_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -336,6 +339,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => Scaffold(
@@ -358,6 +365,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const MySubmissionsScreen()),
                     );
@@ -371,7 +382,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text('profile.mySubmissions'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.cart),
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MyRobotsScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF10B981), width: 2),
+                    foregroundColor: const Color(0xFF10B981),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.smart_toy),
+                  label: Text('profile.myRobots'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const MyNotesScreen()),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF9333EA), width: 2),
+                    foregroundColor: const Color(0xFF9333EA),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  icon: const Icon(Icons.note_outlined),
+                  label: Text('profile.myNotes'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.cart);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFED8936), width: 2),
                     foregroundColor: const Color(0xFFED8936),
@@ -381,7 +434,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text('cart.title'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.orders),
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.orders);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF3182CE), width: 2),
                     foregroundColor: const Color(0xFF3182CE),
@@ -391,7 +450,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text('profile.myOrders'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.certificates),
+                  onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
+                    Navigator.pushNamed(context, AppRoutes.certificates);
+                  },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF7C3AED), width: 2),
                     foregroundColor: const Color(0xFF7C3AED),
@@ -402,6 +467,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
+                    if (_student == null) {
+                      StudentRequiredDialog.show(context);
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const TicketsScreen()),
@@ -424,16 +493,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   icon: const Icon(Icons.smart_toy),
                   label: Text('profile.activateRobot'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                OutlinedButton.icon(
-                  onPressed: _handleLogout,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
-                    foregroundColor: const Color(0xFFE53E3E),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  icon: const Icon(Icons.logout),
-                  label: Text('profile.logout'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -513,6 +572,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     icon: const Icon(Icons.password),
                     label: Text('profile.changePassword'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: OutlinedButton.icon(
+                    onPressed: _handleLogout,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFE53E3E), width: 2),
+                      foregroundColor: const Color(0xFFE53E3E),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.logout),
+                    label: Text('profile.logout'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -839,9 +913,17 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
                   border: const OutlineInputBorder(),
                   prefixIcon: const Icon(Icons.phone),
                 ),
+                keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'profile.phoneNumberRequired'.tr();
+                  }
+                  // Validate Vietnamese phone number format
+                  final phone = value.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
+                  // Vietnamese phone numbers: 10 digits starting with 0[3|5|7|8|9], or 11 digits starting with 84[3|5|7|8|9]
+                  final phoneRegex = RegExp(r'^(0[35789][0-9]{8})$|^(84[35789][0-9]{8})$');
+                  if (!phoneRegex.hasMatch(phone)) {
+                    return 'profile.phoneNumberInvalid'.tr();
                   }
                   return null;
                 },
