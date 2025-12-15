@@ -484,6 +484,9 @@
     "continuePayment": "Continue Payment",
     "voucherInvalid": "Invalid Voucher",
     "voucherInvalidMessage": "Voucher is invalid or has reached usage limit",
+    "priceChanged": "Price Changed",
+    "updateCart": "Update Cart",
+    "cartUpdated": "Cart has been updated successfully",
     "status": {
       "pending": "Pending",
       "paid": "Paid",

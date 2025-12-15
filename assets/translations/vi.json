@@ -484,6 +484,9 @@
     "cancelError": "Không thể hủy đơn hàng",
     "continuePayment": "Tiếp tục thanh toán",
     "voucherInvalid": "Voucher không hợp lệ",
+    "priceChanged": "Giá đã thay đổi",
+    "updateCart": "Cập nhật giỏ hàng",
+    "cartUpdated": "Giỏ hàng đã được cập nhật thành công",
     "status": {
       "pending": "Đang chờ",
       "paid": "Đã thanh toán",

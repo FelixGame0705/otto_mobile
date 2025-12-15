@@ -119,6 +119,7 @@ class ApiErrorMapper {
         'Khoá học này yêu cầu robot tương thích. Vui lòng kích hoạt robot phù hợp trước khi mua.',
     'CART_007': 'Giỏ hàng đang trống.',
     'CART_008': 'Mã giảm giá không hợp lệ.',
+    'CART_009': 'Giỏ hàng đã được cập nhật. Vui lòng tính toán lại giỏ hàng trước khi thanh toán.',
 
     'ORDER_001': 'Không tìm thấy đơn hàng.',
     'ORDER_004':
@@ -497,7 +498,14 @@ class ApiErrorMapper {
       return 'Bạn chưa là học viên. Vui lòng đăng ký học viên để tiếp tục.';
     }
 
-    // Price changed between add-to-cart and checkout
+    // Cart items updated - need to recalculate
+    if (lowerMsg.contains('cart items have been updated') || 
+        lowerMsg.contains('please recalculate cart before checkout') ||
+        lowerMsg.contains('giỏ hàng đã được cập nhật')) {
+      return 'Giỏ hàng đã được cập nhật. Vui lòng tính toán lại giỏ hàng trước khi thanh toán.';
+    }
+
+    // Price changed between add-to-cart and checkout (legacy)
     if (lowerMsg.contains('price has changed for course')) {
       return 'Giá khóa học đã thay đổi. Vui lòng tải lại giỏ hàng.';
     }

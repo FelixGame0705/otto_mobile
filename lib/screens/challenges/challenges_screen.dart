@@ -28,23 +28,18 @@ class ChallengesScreen extends StatefulWidget {
 class _ChallengesScreenState extends State<ChallengesScreen> {
   final ChallengeService _service = ChallengeService();
   final SubmissionService _submissionService = SubmissionService();
-  final ScrollController _scroll = ScrollController();
 
   List<Challenge> _items = [];
   Map<String, int> _challengeBestStars = {}; // Map challenge ID to best star
   Set<String> _unlockedChallengeIds = {}; // Set of unlocked challenge IDs
   bool _loading = true;
-  bool _loadingMore = false;
   String _error = '';
-  int _page = 1;
-  bool _hasMore = true;
   DateTime? _lastRefreshTime;
 
   @override
   void initState() {
     super.initState();
     _load();
-    _scroll.addListener(_onScroll);
   }
 
   @override
@@ -69,7 +64,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
 
   @override
   void dispose() {
-    _scroll.dispose();
     super.dispose();
   }
 
@@ -78,19 +72,17 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       _loading = true;
       _error = '';
       if (refresh) {
-        _page = 1;
         _items.clear();
         _challengeBestStars.clear();
-        _hasMore = true;
       }
     });
     try {
-      // Load challenges
+      // Load challenges (100 items at once, no pagination needed)
       final res = await _service.getChallenges(
         lessonId: widget.lessonId,
         courseId: widget.courseId,
         searchTerm: null,
-        pageNumber: _page,
+        pageNumber: 1,
         pageSize: 100,
       );
       
@@ -111,17 +103,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         
         // Calculate unlocked challenges based on best submissions
         final unlockedIds = _calculateUnlockedChallenges(list, bestStars);
-        if (refresh) {
-          _items = list;
-          _challengeBestStars = bestStars;
-          _unlockedChallengeIds = unlockedIds;
-          _lastRefreshTime = DateTime.now();
-        } else {
-          _items.addAll(list);
-          _challengeBestStars.addAll(bestStars);
-          _unlockedChallengeIds.addAll(unlockedIds);
-        }
-        _hasMore = false; // Only load first page with up to 100 items
+        _items = list;
+        _challengeBestStars = bestStars;
+        _unlockedChallengeIds = unlockedIds;
+        _lastRefreshTime = DateTime.now();
         _loading = false;
       });
     } catch (e) {
@@ -152,19 +137,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
     }
   }
 
-  Future<void> _loadMore() async {
-    if (_loadingMore || !_hasMore) return;
-    setState(() => _loadingMore = true);
-    _page++;
-    await _load();
-    setState(() => _loadingMore = false);
-  }
-
-  void _onScroll() {
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-      _loadMore();
-    }
-  }
 
   /// Calculate which challenges should be unlocked based on best submissions
   /// Rules:
@@ -295,72 +267,57 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         : _items.isEmpty
                             ? Center(child: Text('common.notFound'.tr()))
                             : ListView.separated(
-                                controller: _scroll,
                                 padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 8),
-                                itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
+                                itemCount: _items.length,
                                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                                 itemBuilder: (context, index) {
-                                  if (index == _items.length && _loadingMore) {
-                                    return const Center(child: CircularProgressIndicator());
-                                  }
-                                  if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
-                                    return Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        child: Text('challenges.allShown'.tr(), style: TextStyle(color: Colors.grey[600])),
-                                      ),
-                                    );
-                                  }
-                                  if (index < _items.length) {
-                                    final c = _items[index];
-                                    final int? bestStar = _challengeBestStars[c.id];
-                                    final bool isUnlocked = _unlockedChallengeIds.contains(c.id);
-                                    return _GameChallengeTile(
-                                      challenge: c,
-                                      bestStar: bestStar,
-                                      isUnlocked: isUnlocked,
-                                      onTap: isUnlocked ? () async {
-                                        try {
-                                          final detail = await _service.getChallengeDetail(c.id);
-                                          if (!mounted) return;
-                                          await Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) => BlocklyEditorScreen(
-                                                initialMapJson: detail.mapJson,
-                                                initialChallengeJson: {
-                                                  ...?detail.challengeJson,
-                                                  'id': detail.id,
-                                                  'lessonId': detail.lessonId,
-                                                  'order': detail.order,
-                                                  'courseId': widget.courseId,
-                                                  // Prefer top-level API field; fallback to embedded JSON
-                                                  'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
-                                                      ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
-                                                      : 0),
-                                                  // Prefer top-level API field; fallback to embedded JSON
-                                                  'challengeType': detail.challengeType ?? (detail.challengeJson != null
-                                                      ? detail.challengeJson!['challengeType']
-                                                      : null),
-                                                },
-                                              ),
+                                  final c = _items[index];
+                                  final int? bestStar = _challengeBestStars[c.id];
+                                  final bool isUnlocked = _unlockedChallengeIds.contains(c.id);
+                                  return _GameChallengeTile(
+                                    challenge: c,
+                                    bestStar: bestStar,
+                                    isUnlocked: isUnlocked,
+                                    onTap: isUnlocked ? () async {
+                                      try {
+                                        final detail = await _service.getChallengeDetail(c.id);
+                                        if (!mounted) return;
+                                        await Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => BlocklyEditorScreen(
+                                              initialMapJson: detail.mapJson,
+                                              initialChallengeJson: {
+                                                ...?detail.challengeJson,
+                                                'id': detail.id,
+                                                'lessonId': detail.lessonId,
+                                                'order': detail.order,
+                                                'courseId': widget.courseId,
+                                                // Prefer top-level API field; fallback to embedded JSON
+                                                'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
+                                                    ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
+                                                    : 0),
+                                                // Prefer top-level API field; fallback to embedded JSON
+                                                'challengeType': detail.challengeType ?? (detail.challengeJson != null
+                                                    ? detail.challengeJson!['challengeType']
+                                                    : null),
+                                              },
                                             ),
-                                          );
-                                          
-                                          // Refresh when returning from blockly screen
-                                          if (mounted) {
-                                            print('🔄 Refreshing challenges after returning from blockly');
-                                            _load(refresh: true);
-                                          }
-                                        } catch (e) {
-                                          if (!mounted) return;
-                                          final msg = e.toString().replaceFirst('Exception: ', '');
-                                          showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
+                                          ),
+                                        );
+                                        
+                                        // Refresh when returning from blockly screen
+                                        if (mounted) {
+                                          print('🔄 Refreshing challenges after returning from blockly');
+                                          _load(refresh: true);
                                         }
-                                      } : null,
-                                      index: index,
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
+                                      } catch (e) {
+                                        if (!mounted) return;
+                                        final msg = e.toString().replaceFirst('Exception: ', '');
+                                        showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
+                                      }
+                                    } : null,
+                                    index: index,
+                                  );
                                 },
                               ),
               ),
@@ -482,6 +439,13 @@ class _GameChallengeTile extends StatelessWidget {
                             _Pill(icon: Icons.speed, text: 'Lv ${challenge.difficulty}'),
                             const SizedBox(width: 8),
                             _Pill(icon: Icons.access_time, text: '${(challenge.order + 1) * 2}p'),
+                            if (challenge.challengeMode != null) ...[
+                              const SizedBox(width: 8),
+                              _Pill(
+                                icon: challenge.challengeMode == 0 ? Icons.computer : Icons.usb,
+                                text: challenge.challengeMode == 0 ? '' : '',
+                              ),
+                            ],
                           ],
                         ),
                       ],
