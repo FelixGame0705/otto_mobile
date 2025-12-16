@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ottobit/models/certificate_model.dart';
 import 'package:ottobit/services/certificate_service.dart';
-import 'package:ottobit/widgets/common/section_card.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 
@@ -23,24 +22,17 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
   bool _hasMore = true;
   int _currentPage = 1;
   final int _pageSize = 10;
-  String _searchTerm = '';
-  String _orderBy = 'updatedAt';
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadCertificates();
     _scrollController.addListener(_onScroll);
-    _searchController.addListener(() {
-      setState(() {}); // Rebuild to update clear button visibility
-    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -69,8 +61,6 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
       final response = await _certificateService.getMyCertificates(
         page: _currentPage,
         size: _pageSize,
-        searchTerm: _searchTerm.isNotEmpty ? _searchTerm : null,
-        orderBy: _orderBy,
       );
 
       if (response.isSuccess && response.data != null) {
@@ -121,22 +111,7 @@ class _CertificatesScreenState extends State<CertificatesScreen> {
     await _loadCertificates(refresh: true);
   }
 
-  void _searchCertificates() {
-    setState(() {
-      _searchTerm = _searchController.text.trim();
-    });
-    _loadCertificates(refresh: true);
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    setState(() {
-      _searchTerm = '';
-    });
-    _loadCertificates(refresh: true);
-  }
-
-  void _shareCertificate(Certificate certificate) async {
+  Future<void> _shareCertificate(Certificate certificate) async {
     try {
       final shareText = '''
 🎓 ${'certificate.shareTitle'.tr()}
@@ -171,13 +146,6 @@ ${'certificate.shareVerifyUrl'.tr()}
   }
 
 
-  void _sortCertificates(String orderBy) {
-    setState(() {
-      _orderBy = orderBy;
-    });
-    _loadCertificates(refresh: true);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -197,108 +165,6 @@ ${'certificate.shareVerifyUrl'.tr()}
         child: SafeArea(
           child: Column(
             children: [
-                  // Search and Filter Section
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: SectionCard(
-                      title: 'certificate.searchFilter'.tr(),
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: 'certificate.searchHint'.tr(),
-                              suffixIcon: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_searchController.text.isNotEmpty)
-                                    IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: _clearSearch,
-                                    )else
-                                  IconButton(
-                                    icon: const Icon(Icons.search),
-                                    onPressed: _searchCertificates,
-                                  ),
-                                ],
-                              ),
-                              border: const OutlineInputBorder(),
-                            ),
-                            onSubmitted: (value) => _searchCertificates(),
-                            textInputAction: TextInputAction.search,
-                          ),
-                          const SizedBox(height: 12),
-                          // Responsive layout for filter controls
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              if (constraints.maxWidth > 600) {
-                                // Desktop/Tablet layout - horizontal
-                                return Row(
-                                  children: [
-                                    Expanded(
-                                      child: DropdownButtonFormField<String>(
-                                        decoration: InputDecoration(
-                                          labelText: 'certificate.sortBy'.tr(),
-                                          border: const OutlineInputBorder(),
-                                        ),
-                                        value: _orderBy,
-                                        items: [
-                                          DropdownMenuItem(value: 'updatedAt', child: Text('certificate.recentlyUpdated'.tr())),
-                                          DropdownMenuItem(value: 'issuedAt', child: Text('certificate.issueDate'.tr())),
-                                          DropdownMenuItem(value: 'courseTitle', child: Text('certificate.courseName'.tr())),
-                                        ],
-                                        onChanged: (value) {
-                                          if (value != null) _sortCertificates(value);
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: _refreshCertificates,
-                                        icon: const Icon(Icons.refresh, color: Color(0xFF00ba4a),),
-                                        label: Text('certificate.refresh'.tr(), style: const TextStyle(color: Color(0xFF00ba4a)),),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              } else {
-                                // Mobile layout - vertical
-                                return Column(
-                                  children: [
-                                    DropdownButtonFormField<String>(
-                                      decoration: InputDecoration(
-                                        labelText: 'certificate.sortBy'.tr(),
-                                        border: const OutlineInputBorder(),
-                                      ),
-                                      value: _orderBy,
-                                      items: [
-                                        DropdownMenuItem(value: 'updatedAt', child: Text('certificate.recentlyUpdated'.tr())),
-                                        DropdownMenuItem(value: 'issuedAt', child: Text('certificate.issueDate'.tr())),
-                                        DropdownMenuItem(value: 'courseTitle', child: Text('certificate.courseName'.tr())),
-                                      ],
-                                      onChanged: (value) {
-                                        if (value != null) _sortCertificates(value);
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: OutlinedButton.icon(
-                                        onPressed: _refreshCertificates,
-                                        icon: const Icon(Icons.refresh, color: Color(0xFF00ba4a),),
-                                        label: Text('certificate.refresh'.tr(), style: const TextStyle(color: Color(0xFF00ba4a)),),
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               // Certificates List
               Expanded(
                 child: _certificates.isEmpty && !_isLoading

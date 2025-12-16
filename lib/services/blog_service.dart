@@ -14,7 +14,7 @@ class BlogService {
   /// Get blogs with pagination and search
   Future<BlogApiResponse> getBlogs({
     String? searchTerm,
-    String? tagId,
+    List<String>? tagIds,
     String? dateFrom,
     String? dateTo,
     int? readingTimeMin,
@@ -27,48 +27,86 @@ class BlogService {
     int pageSize = 10,
   }) async {
     try {
-      final queryParams = <String, String>{
+      // Build base query params
+      final baseQueryParams = <String, String>{
         'PageNumber': pageNumber.toString(),
         'PageSize': pageSize.toString(),
       };
 
       if (searchTerm != null && searchTerm.isNotEmpty) {
-        queryParams['SearchTerm'] = searchTerm;
-      }
-      if (tagId != null && tagId.isNotEmpty) {
-        queryParams['TagId'] = tagId;
+        baseQueryParams['SearchTerm'] = searchTerm;
       }
       if (dateFrom != null && dateFrom.isNotEmpty) {
-        queryParams['DateFrom'] = dateFrom;
+        baseQueryParams['DateFrom'] = dateFrom;
       }
       if (dateTo != null && dateTo.isNotEmpty) {
-        queryParams['DateTo'] = dateTo;
+        baseQueryParams['DateTo'] = dateTo;
       }
       if (readingTimeMin != null) {
-        queryParams['ReadingTimeMin'] = readingTimeMin.toString();
+        baseQueryParams['ReadingTimeMin'] = readingTimeMin.toString();
       }
       if (readingTimeMax != null) {
-        queryParams['ReadingTimeMax'] = readingTimeMax.toString();
+        baseQueryParams['ReadingTimeMax'] = readingTimeMax.toString();
       }
       if (viewCountMin != null) {
-        queryParams['ViewCountMin'] = viewCountMin.toString();
+        baseQueryParams['ViewCountMin'] = viewCountMin.toString();
       }
       if (viewCountMax != null) {
-        queryParams['ViewCountMax'] = viewCountMax.toString();
+        baseQueryParams['ViewCountMax'] = viewCountMax.toString();
       }
       if (sortBy != null && sortBy.isNotEmpty) {
-        queryParams['SortBy'] = sortBy;
+        baseQueryParams['SortBy'] = sortBy;
       }
       if (sortDirection != null && sortDirection.isNotEmpty) {
-        queryParams['SortDirection'] = sortDirection;
+        baseQueryParams['SortDirection'] = sortDirection;
       }
 
-      print('BlogService: Making request to /v1/Blog');
-      print('BlogService: Query params: $queryParams');
+      // If we have multiple TagIds, use queryParametersAll
+      if (tagIds != null && tagIds.isNotEmpty) {
+        final queryParamsAll = <String, List<String>>{};
+        
+        // Convert base query params to List<String> format
+        baseQueryParams.forEach((key, value) {
+          queryParamsAll[key] = [value];
+        });
+        
+        // Add multiple TagIds
+        queryParamsAll['TagIds'] = tagIds.where((id) => id.isNotEmpty).toList();
+        
+        print('BlogService: Making request to /v1/blogs with multiple TagIds');
+        print('BlogService: Query paramsAll: $queryParamsAll');
+        
+        final response = await _httpService.get(
+          '/v1/blogs',
+          queryParamsAll: queryParamsAll,
+          throwOnError: false,
+        );
+
+        print('BlogService: Response status: ${response.statusCode}');
+        print('BlogService: Response body: ${response.body}');
+
+        if (response.statusCode == 200) {
+          final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+          print('BlogService: Parsed JSON: $jsonData');
+          return BlogApiResponse.fromJson(jsonData);
+        } else {
+          print('BlogService: Error response: ${response.statusCode} - ${response.body}');
+          final friendly = ApiErrorMapper.fromBody(
+            response.body,
+            statusCode: response.statusCode,
+            fallback: 'Failed to load blogs: ${response.statusCode}',
+          );
+          throw Exception(friendly);
+        }
+      }
+
+      // No TagIds or empty TagIds - use standard flow
+      print('BlogService: Making request to /v1/blogs');
+      print('BlogService: Query params: $baseQueryParams');
       
       final response = await _httpService.get(
         '/v1/blogs',
-        queryParams: queryParams,
+        queryParams: baseQueryParams,
         throwOnError: false,
       );
 

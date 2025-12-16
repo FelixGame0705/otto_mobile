@@ -46,6 +46,7 @@ class HttpService {
   Future<http.Response> get(
     String endpoint, {
     Map<String, String>? queryParams,
+    Map<String, List<String>>? queryParamsAll,
     bool includeAuth = true,
     bool throwOnError = true,
   }) async {
@@ -55,14 +56,24 @@ class HttpService {
     print('HttpService: Base URL: $_baseUrl');
     print('HttpService: Endpoint: $endpoint');
     print('HttpService: Query params received: $queryParams');
-    print('HttpService: Query params is null: ${queryParams == null}');
-    if (queryParams != null) {
-      print('HttpService: Query params keys: ${queryParams.keys.toList()}');
-      print('HttpService: Query params values: ${queryParams.values.toList()}');
-      print('HttpService: SearchTerm in queryParams: ${queryParams['SearchTerm']}');
-    }
+    print('HttpService: Query paramsAll received: $queryParamsAll');
     
-    final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
+    Uri uri;
+    if (queryParamsAll != null) {
+      // Build query string manually for multiple values with same key
+      final baseUri = Uri.parse('$_baseUrl$endpoint');
+      final queryParts = <String>[];
+      queryParamsAll.forEach((key, values) {
+        for (final value in values) {
+          queryParts.add('${Uri.encodeComponent(key)}=${Uri.encodeComponent(value)}');
+        }
+      });
+      final queryString = queryParts.join('&');
+      uri = Uri.parse('${baseUri.toString().split('?').first}?$queryString');
+    } else {
+      // Use standard queryParameters
+      uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
+    }
     
     print('HttpService: Final URI: $uri');
     print('HttpService: URI query: ${uri.query}');
