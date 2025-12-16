@@ -240,31 +240,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } catch (e) {
       if (!mounted) return;
       
-      setState(() {
-        _isProcessing = false;
-      });
-      
-      final isEnglish = context.locale.languageCode == 'en';
+        setState(() {
+          _isProcessing = false;
+        });
+        
+        final isEnglish = context.locale.languageCode == 'en';
       bool handled = false;
-      
-      // Check for VOU_012 error and show dialog
-      final errorStr = e.toString();
-      if (errorStr.contains('VOU_012') || errorStr.contains('Voucher đã đạt giới hạn')) {
-        // Try to extract error code from JSON if available
-        try {
-          final cleanedError = errorStr.replaceFirst(RegExp(r'Exception:\s*', caseSensitive: false), '').trim();
-          final errorJson = jsonDecode(cleanedError);
-          if (errorJson['errorCode'] == 'VOU_012') {
-            final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+        
+        // Check for VOU_012 error and show dialog
+        final errorStr = e.toString();
+        if (errorStr.contains('VOU_012') || errorStr.contains('Voucher đã đạt giới hạn')) {
+          // Try to extract error code from JSON if available
+          try {
+            final cleanedError = errorStr.replaceFirst(RegExp(r'Exception:\s*', caseSensitive: false), '').trim();
+            final errorJson = jsonDecode(cleanedError);
+            if (errorJson['errorCode'] == 'VOU_012') {
+              final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
             if (mounted) {
               _showVoucherErrorDialog(friendlyMsg);
             }
             handled = true;
-          }
-        } catch (_) {
-          // If parsing fails, check string directly
-          if (errorStr.contains('VOU_012')) {
-            final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+            }
+          } catch (_) {
+            // If parsing fails, check string directly
+            if (errorStr.contains('VOU_012')) {
+              final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
             if (mounted) {
               _showVoucherErrorDialog(friendlyMsg);
             }
@@ -289,9 +289,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
               if (mounted) {
                 _showPriceChangedDialog(friendlyMsg);
-              }
-              handled = true;
             }
+              handled = true;
+          }
           } catch (_) {
             // If parsing fails, check string directly or translated message
             if (errorStr.contains('CART_009') || 
@@ -328,11 +328,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         final messenger = ScaffoldMessenger.maybeOf(context);
         if (messenger != null) {
           messenger.showSnackBar(
-            SnackBar(
-              content: Text(errorMsg),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
+        );
         }
       }
     }

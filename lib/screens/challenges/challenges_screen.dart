@@ -103,10 +103,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         
         // Calculate unlocked challenges based on best submissions
         final unlockedIds = _calculateUnlockedChallenges(list, bestStars);
-        _items = list;
-        _challengeBestStars = bestStars;
-        _unlockedChallengeIds = unlockedIds;
-        _lastRefreshTime = DateTime.now();
+          _items = list;
+          _challengeBestStars = bestStars;
+          _unlockedChallengeIds = unlockedIds;
+          _lastRefreshTime = DateTime.now();
         _loading = false;
       });
     } catch (e) {
@@ -271,53 +271,53 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                 itemCount: _items.length,
                                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                                 itemBuilder: (context, index) {
-                                  final c = _items[index];
-                                  final int? bestStar = _challengeBestStars[c.id];
-                                  final bool isUnlocked = _unlockedChallengeIds.contains(c.id);
-                                  return _GameChallengeTile(
-                                    challenge: c,
-                                    bestStar: bestStar,
-                                    isUnlocked: isUnlocked,
-                                    onTap: isUnlocked ? () async {
-                                      try {
-                                        final detail = await _service.getChallengeDetail(c.id);
-                                        if (!mounted) return;
-                                        await Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (_) => BlocklyEditorScreen(
-                                              initialMapJson: detail.mapJson,
-                                              initialChallengeJson: {
-                                                ...?detail.challengeJson,
-                                                'id': detail.id,
-                                                'lessonId': detail.lessonId,
-                                                'order': detail.order,
-                                                'courseId': widget.courseId,
-                                                // Prefer top-level API field; fallback to embedded JSON
-                                                'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
-                                                    ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
-                                                    : 0),
-                                                // Prefer top-level API field; fallback to embedded JSON
-                                                'challengeType': detail.challengeType ?? (detail.challengeJson != null
-                                                    ? detail.challengeJson!['challengeType']
-                                                    : null),
-                                              },
+                                    final c = _items[index];
+                                    final int? bestStar = _challengeBestStars[c.id];
+                                    final bool isUnlocked = _unlockedChallengeIds.contains(c.id);
+                                    return _GameChallengeTile(
+                                      challenge: c,
+                                      bestStar: bestStar,
+                                      isUnlocked: isUnlocked,
+                                      onTap: isUnlocked ? () async {
+                                        try {
+                                          final detail = await _service.getChallengeDetail(c.id);
+                                          if (!mounted) return;
+                                          await Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (_) => BlocklyEditorScreen(
+                                                initialMapJson: detail.mapJson,
+                                                initialChallengeJson: {
+                                                  ...?detail.challengeJson,
+                                                  'id': detail.id,
+                                                  'lessonId': detail.lessonId,
+                                                  'order': detail.order,
+                                                  'courseId': widget.courseId,
+                                                  // Prefer top-level API field; fallback to embedded JSON
+                                                  'challengeMode': detail.challengeMode ?? (detail.challengeJson != null
+                                                      ? (detail.challengeJson!['challengeMode'] ?? detail.challengeJson!['mode'] ?? 0)
+                                                      : 0),
+                                                  // Prefer top-level API field; fallback to embedded JSON
+                                                  'challengeType': detail.challengeType ?? (detail.challengeJson != null
+                                                      ? detail.challengeJson!['challengeType']
+                                                      : null),
+                                                },
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                        
-                                        // Refresh when returning from blockly screen
-                                        if (mounted) {
-                                          print('🔄 Refreshing challenges after returning from blockly');
-                                          _load(refresh: true);
+                                          );
+                                          
+                                          // Refresh when returning from blockly screen
+                                          if (mounted) {
+                                            print('🔄 Refreshing challenges after returning from blockly');
+                                            _load(refresh: true);
+                                          }
+                                        } catch (e) {
+                                          if (!mounted) return;
+                                          final msg = e.toString().replaceFirst('Exception: ', '');
+                                          showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
                                         }
-                                      } catch (e) {
-                                        if (!mounted) return;
-                                        final msg = e.toString().replaceFirst('Exception: ', '');
-                                        showErrorToast(context, msg.isNotEmpty ? msg : 'Đã xảy ra lỗi khi mở thử thách.');
-                                      }
-                                    } : null,
-                                    index: index,
-                                  );
+                                      } : null,
+                                      index: index,
+                                    );
                                 },
                               ),
               ),

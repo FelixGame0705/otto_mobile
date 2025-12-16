@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/models/lesson_detail_model.dart';
@@ -122,14 +123,47 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
       _handleViewChallenges();
     } catch (e) {
       if (!mounted) return;
-      final isEnglish = context.locale.languageCode == 'en';
-      final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(friendly),
-          backgroundColor: Colors.red,
-        ),
-      );
+      
+      // Check if error is LES_008 (Lesson already completed)
+      bool isLES008 = false;
+      
+      // Check if it's LessonStartException with errorCode
+      if (e is LessonStartException) {
+        isLES008 = e.errorCode == 'LES_008';
+      } else {
+        // Fallback: check error string
+        final errorStr = e.toString();
+        try {
+          final cleanedError = errorStr.replaceFirst(RegExp(r'Exception:\s*', caseSensitive: false), '').trim();
+          final errorJson = jsonDecode(cleanedError);
+          if (errorJson['errorCode'] == 'LES_008') {
+            isLES008 = true;
+          }
+        } catch (_) {
+          // If parsing fails, check string directly
+          isLES008 = errorStr.contains('LES_008') || 
+                     errorStr.toLowerCase().contains('đã được hoàn thành') ||
+                     errorStr.toLowerCase().contains('already been completed') ||
+                     errorStr.toLowerCase().contains('lesson has already been completed');
+        }
+      }
+      
+      if (isLES008) {
+        // Lesson already completed - don't show error, just navigate to challenges
+        // Reload lesson detail to ensure we have latest data
+        await _loadLessonDetail();
+        _handleViewChallenges();
+      } else {
+        // Other errors - show error message
+        final isEnglish = context.locale.languageCode == 'en';
+        final friendly = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(friendly),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
