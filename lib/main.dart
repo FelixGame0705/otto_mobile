@@ -30,6 +30,9 @@ void main() async {
   );
 }
 
+// Global RouteObserver for tracking route changes
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -46,6 +49,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'OttoBit MB',
       navigatorKey: navigatorKey,
+      navigatorObservers: [routeObserver],
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,

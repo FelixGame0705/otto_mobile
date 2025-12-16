@@ -5,6 +5,7 @@ import 'package:ottobit/models/cart_model.dart';
 import 'package:ottobit/services/cart_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
 import 'package:ottobit/screens/home/home_screen.dart';
+import 'package:ottobit/main.dart' as main_app;
 
 class CartScreen extends StatefulWidget {
   final VoidCallback? onCartChanged;
@@ -15,7 +16,7 @@ class CartScreen extends StatefulWidget {
   State<CartScreen> createState() => _CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
+class _CartScreenState extends State<CartScreen> with RouteAware {
   final CartService _cartService = CartService();
   
   List<CartItem> _cartItems = [];
@@ -32,11 +33,32 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to route observer
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      main_app.routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
   void dispose() {
+    // Unsubscribe from route observer
+    main_app.routeObserver.unsubscribe(this);
     // Refresh cart count in home screen when leaving cart
     HomeScreen.refreshCartCount(context);
     super.dispose();
   }
+
+  @override
+  void didPopNext() {
+    // Called when returning to this route from another route
+    if (mounted) {
+      _loadCart();
+    }
+  }
+
 
   Future<void> _loadCart() async {
     setState(() {
@@ -179,7 +201,12 @@ class _CartScreenState extends State<CartScreen> {
         'cartItems': _cartItems,
         'cartSummary': _cartSummary,
       },
-    );
+    ).then((_) {
+      // Reload cart when returning from checkout
+      if (mounted) {
+        _loadCart();
+      }
+    });
   }
 
   @override
