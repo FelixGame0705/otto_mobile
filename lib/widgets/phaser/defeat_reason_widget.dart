@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'responsive_helpers.dart';
 
 class DefeatReasonWidget extends StatefulWidget {
@@ -83,8 +84,8 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                   Expanded(
                     child: Text(
                       _isExpanded 
-                        ? 'Lý do thua' 
-                        : 'Lý do thua: ${widget.data['message'] ?? 'Game Over'}',
+                        ? 'phaser.defeatReasonTitle'.tr()
+                        : 'phaser.defeatReasonPrefix'.tr() + ' ${widget.data['message'] ?? 'phaser.defeatDefault'.tr()}',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -113,7 +114,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _isExpanded ? 'Thu gọn' : 'Xem thêm',
+                          _isExpanded ? 'phaser.collapse'.tr() : 'phaser.expand'.tr(),
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: widget.isTablet ? 11 : 10,
@@ -195,7 +196,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'Chi tiết lỗi',
+                      'phaser.errorDetails'.tr(),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: widget.isTablet ? 13 : 12,
@@ -206,7 +207,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  '${widget.data['message'] ?? 'Game Over'}',
+                  '${widget.data['message'] ?? 'phaser.defeatDefault'.tr()}',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: ResponsiveHelpers.getResponsiveFontSize(
@@ -249,7 +250,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'Tiến độ',
+                        'phaser.progress'.tr(),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: widget.isTablet ? 13 : 12,
@@ -260,7 +261,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '${widget.data['collectedBatteries']} pin đã thu thập',
+                    'phaser.batteriesCollected'.tr(namedArgs: {'count': '${widget.data['collectedBatteries']}'}),
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: widget.isTablet ? 12 : 11,
@@ -293,7 +294,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${widget.data['message'] ?? 'Game Over'}',
+                '${widget.data['message'] ?? 'phaser.defeatDefault'.tr()}',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: ResponsiveHelpers.getResponsiveFontSize(
@@ -329,7 +330,7 @@ class _DefeatReasonWidgetState extends State<DefeatReasonWidget> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'Tiến độ: ${widget.data['collectedBatteries']} pin',
+                        'phaser.progressWithBatteries'.tr(namedArgs: {'count': '${widget.data['collectedBatteries']}'}),
                         style: TextStyle(
                           color: Colors.white70,
                           fontSize: widget.isTablet ? 12 : 11,

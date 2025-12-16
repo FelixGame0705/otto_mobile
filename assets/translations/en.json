@@ -685,7 +685,15 @@
     "simulation": "Simulation",
     "close": "Close",
     "continue": "Continue",
-    "gameOverTitle": "Game Over!"
+    "gameOverTitle": "Game Over!",
+    "defeatReasonTitle": "Defeat Reason",
+    "defeatReasonPrefix": "Defeat Reason:",
+    "errorDetails": "Error Details",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "progress": "Progress",
+    "batteriesCollected": "{count} batteries collected",
+    "progressWithBatteries": "Progress: {count} batteries"
   }
 }
 

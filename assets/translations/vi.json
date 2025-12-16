@@ -691,7 +691,10 @@
     "defeatReasonPrefix": "Lý do thua:",
     "errorDetails": "Chi tiết lỗi",
     "expand": "Xem thêm",
-    "collapse": "Thu gọn"
+    "collapse": "Thu gọn",
+    "progress": "Tiến độ",
+    "batteriesCollected": "{count} pin đã thu thập",
+    "progressWithBatteries": "Tiến độ: {count} pin"
   }
 }
 
