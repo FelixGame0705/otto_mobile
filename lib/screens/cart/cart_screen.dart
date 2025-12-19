@@ -492,17 +492,6 @@ class _CartScreenState extends State<CartScreen> with RouteAware {
                     ],
                   ),
                 ],
-                if (_cartSummary!.discountAmount > 0) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('cart.discount'.tr(), style: const TextStyle(fontSize: 16, color: Colors.white70)),
-                      Text('-${_cartSummary!.formattedDiscountAmount}',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
-                    ],
-                  ),
-                ],
                 const Divider(color: Colors.white12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
