@@ -360,7 +360,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
       final title = _blog!.title;
       final slug = _blog!.slug;
       // Share a simple, copyable link format with the slug
-      final shareText = '$title\n\nSlug: $slug';
+      final shareText = '$title\n\nhttps://stem.ottobit.edu.vn/news/$slug';
       Share.share(
         shareText,
         subject: title,

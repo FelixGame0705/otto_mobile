@@ -322,7 +322,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   void _handleShare() {
     if (_course == null) return;
-    final url = 'https://ottobit-fe.vercel.app/user/courses/${_course!.id}';
+    final url = 'https://stem.ottobit.edu.vn/user/courses/${_course!.id}';
     final message = '${_course!.title}\n\n${_course!.description}\n\n$url';
     Share.share(message, subject: _course!.title);
   }
