@@ -188,7 +188,10 @@ class _TicketsScreenState extends State<TicketsScreen> {
                   MaterialPageRoute(
                     builder: (context) => TicketDetailScreen(ticket: ticket),
                   ),
-                );
+                ).then((_) {
+                  // Khi quay lại từ màn hình chi tiết, luôn reload lại danh sách ticket
+                  _loadTickets();
+                });
               },
               child: Padding(
                 padding: const EdgeInsets.all(16),
