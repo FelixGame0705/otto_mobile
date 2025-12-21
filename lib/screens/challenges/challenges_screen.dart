@@ -221,18 +221,19 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.green.withOpacity(0.03),
-              Colors.greenAccent.withOpacity(0.02),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.green.withOpacity(0.03),
+                Colors.greenAccent.withOpacity(0.02),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ),
-        child: Column(
+          child: Column(
           children: [
             Expanded(
               child: Container(
@@ -325,7 +326,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           ],
         ),
       ),
-    );
+    ),);
   }
 }
 

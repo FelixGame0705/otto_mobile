@@ -318,10 +318,11 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
         title: Text('ticket.ticketDetails'.tr()),
         backgroundColor: const Color(0xFF17a64b),
       ),
-      body: Column(
-        children: [
-          // Ticket info header
-          Container(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Ticket info header
+            Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -622,7 +623,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

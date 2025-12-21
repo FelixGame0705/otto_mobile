@@ -177,6 +177,7 @@ class _NewsTabState extends State<NewsTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       drawer: BlogFilterDrawer(
         tags: _tags,
         currentTagIds: _selectedTagIds,

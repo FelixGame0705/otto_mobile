@@ -107,9 +107,10 @@ class _MyRobotsScreenState extends State<MyRobotsScreen> {
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _load(refresh: true),
-        child: _loading && _items.isEmpty
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => _load(refresh: true),
+          child: _loading && _items.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : _error.isNotEmpty && _items.isEmpty
                 ? Center(
@@ -293,7 +294,8 @@ class _MyRobotsScreenState extends State<MyRobotsScreen> {
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemCount: _items.length + (_loadingMore ? 1 : 0),
                       ),
-      ),
+          ),
+        ),
     );
   }
 }

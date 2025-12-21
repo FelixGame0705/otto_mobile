@@ -416,7 +416,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return AppScaffold(
       showAppBar: false,
       alignment: Alignment.center,
-      gradientColors: const [Color(0xFFEDFCF2), Color.fromARGB(255, 255, 255, 255)],
+      gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),

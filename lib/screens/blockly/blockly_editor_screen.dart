@@ -1178,9 +1178,10 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
               ),
           ],
         ),
-        body: Row(
-          children: [
-            Expanded(child: _buildLeftPane()),
+        body: SafeArea(
+          child: Row(
+            children: [
+              Expanded(child: _buildLeftPane()),
             _buildMiddleDivider(),
             Container(
               key: _keyRightPhaser,
@@ -1199,7 +1200,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
           ],
         ),
       ),
-    );
+    ),);
   }
 
   /// Hiển thị dialog với toàn bộ data từ socket

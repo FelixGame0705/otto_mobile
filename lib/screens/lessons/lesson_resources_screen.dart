@@ -55,9 +55,10 @@ class _LessonResourcesScreenState extends State<LessonResourcesScreen> {
       appBar: AppBar(
         title: Text(widget.lessonTitle ?? 'resource.title'.tr()),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -91,6 +92,7 @@ class _LessonResourcesScreenState extends State<LessonResourcesScreen> {
                         );
                       },
                     ),
+        ),
     );
   }
 }

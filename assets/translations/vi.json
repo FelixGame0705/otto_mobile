@@ -256,7 +256,7 @@
     "clear": "Xóa",
     "cannotLoad": "Không thể tải thử thách",
     "loadError": "Đã xảy ra lỗi khi tải danh sách thử thách.",
-    "allShown": "Đã hiển thị tất cả thử thách"
+    "allShown": "Đã hiển thị tất cả"
   },
   "resource": {
     "title": "Tài nguyên lý thuyết",
@@ -381,8 +381,10 @@
     "expand": "Mở rộng",
     "search": "Tìm kiếm",
     "brand": "Thương hiệu",
+    "searchAndBrand": "Tìm kiếm & Thương hiệu",
     "price": "Giá",
     "age": "Độ tuổi",
+    "sortBy": "Sắp xếp theo",
     "priceMin": "Giá từ",
     "priceMax": "Giá đến",
     "ageMin": "Độ tuổi từ",
@@ -695,6 +697,13 @@
     "progress": "Tiến độ",
     "batteriesCollected": "{count} pin đã thu thập",
     "progressWithBatteries": "Tiến độ: {count} pin"
+  },
+  "aiSupport": {
+    "title": "Hỗ trợ AI",
+    "hint": "Nhập câu hỏi của bạn...",
+    "send": "Gửi",
+    "error": "Đã có lỗi xảy ra: {0}",
+    "emptyReply": "..."
   }
 }
 

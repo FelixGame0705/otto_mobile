@@ -90,7 +90,9 @@ class _TicketsScreenState extends State<TicketsScreen> {
         title: Text('ticket.myTickets'.tr()),
         backgroundColor: const Color(0xFF17a64b),
       ),
-      body: _buildContent(),
+      body: SafeArea(
+        child: _buildContent(),
+      ),
     );
   }
 

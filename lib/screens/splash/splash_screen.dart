@@ -39,11 +39,13 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return const Scaffold(
       backgroundColor: Color(0xFFEDFCF2),
-      body: Center(
-        child: SizedBox(
+      body: SafeArea(
+        child: Center(
+          child: SizedBox(
           width: 56,
           height: 56,
-          child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00ba4a))),
+            child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00ba4a))),
+          ),
         ),
       ),
     );

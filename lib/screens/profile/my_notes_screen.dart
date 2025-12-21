@@ -262,9 +262,10 @@ class _MyNotesScreenState extends State<MyNotesScreen> {
           ),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -417,6 +418,7 @@ class _MyNotesScreenState extends State<MyNotesScreen> {
                         },
                       ),
                     ),
+        ),
     );
   }
 }

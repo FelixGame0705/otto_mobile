@@ -203,7 +203,8 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7FAFC),
-      body: _isLoading
+      body: SafeArea(
+        child: _isLoading
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -279,6 +280,7 @@ class _LessonDetailScreenState extends State<LessonDetailScreen> {
                   // Bottom padding for safe area
                   const SizedBox(height: 32),
                 ],
+              ),
               ),
             ),
     );

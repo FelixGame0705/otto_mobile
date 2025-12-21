@@ -6,6 +6,7 @@ import 'package:ottobit/models/component_model.dart';
 import 'package:ottobit/services/robot_service.dart';
 import 'package:ottobit/services/component_service.dart';
 import 'package:ottobit/widgets/products/product_card.dart';
+import 'package:ottobit/widgets/storeRobot/store_filter_drawer.dart';
 
 class StoreScreen extends StatefulWidget {
   const StoreScreen({super.key});
@@ -260,13 +261,62 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
 
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: Colors.white,
       drawer: Drawer(
         width: screenWidth < 420 ? screenWidth * 0.9 : 320,
-      child: SafeArea(
-        child: SingleChildScrollView(child: _buildFilterBar(screenWidth)),
-      ),
+        backgroundColor: Colors.white,
+        child: StoreFilterDrawer(
+          searchController: _searchCtrl,
+          brandController: _brandCtrl,
+          minAgeController: _minAgeCtrl,
+          maxAgeController: _maxAgeCtrl,
+          ageRange: _ageRange,
+          inStock: _inStock,
+          orderBy: _orderBy,
+          orderDirection: _orderDirection,
+          showFilters: _showFilters,
+          onApply: () {
+            _loadBoth();
+            _scaffoldKey.currentState?.closeDrawer();
+          },
+          onReset: () {
+            _searchCtrl.clear();
+            _brandCtrl.clear();
+            _minAgeCtrl.clear();
+            _maxAgeCtrl.clear();
+            setState(() {
+              _inStock = false;
+              _orderBy = 'Name';
+              _orderDirection = 'ASC';
+              _ageRange = const RangeValues(6, 18);
+            });
+            _loadBoth();
+            _scaffoldKey.currentState?.closeDrawer();
+          },
+          onAgeRangeChanged: (v) {
+            setState(() {
+              _ageRange = v;
+            });
+          },
+          onInStockChanged: (v) {
+            setState(() {
+              _inStock = v;
+            });
+          },
+          onOrderByChanged: (v) {
+            setState(() {
+              _orderBy = v;
+            });
+          },
+          onOrderDirectionChanged: (v) {
+            setState(() {
+              _orderDirection = v;
+            });
+          },
+        ),
       ),
       appBar: AppBar(
+        toolbarHeight: 80,
         title: Text('store.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
@@ -275,15 +325,27 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           tooltip: 'store.filters'.tr(),
         ),
-        bottom: TabBar(
-          controller: _tabController!,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          tabs: [
-            Tab(icon: const Icon(Icons.smart_toy_outlined), text: 'store.robots'.tr()),
-            Tab(icon: const Icon(Icons.extension), text: 'store.components'.tr()),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController!,
+              labelColor: const Color(0xFF00ba4a),
+              unselectedLabelColor: const Color(0xFF00ba4a).withOpacity(0.6),
+              indicatorColor: const Color(0xFF00ba4a),
+              tabs: [
+                Tab(
+                  icon: const Icon(Icons.smart_toy_outlined),
+                  text: 'store.robots'.tr(),
+                ),
+                Tab(
+                  icon: const Icon(Icons.extension),
+                  text: 'store.components'.tr(),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       body: TabBarView(
@@ -438,243 +500,6 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
     if (width < 1200) return 0.75;
     if (width < 1600) return 0.78;
     return 0.8;
-  }
-
-  Widget _buildFilterBar(double screenWidth) {
-    return Material(
-      elevation: 1,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF17a64b).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.tune, color: Color(0xFF17a64b)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'store.filters'.tr(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF166534),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_showFilters) ...[
-            if (screenWidth < 420) ...[
-              Column(
-                children: [
-                  TextField(
-                    controller: _searchCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'store.search'.tr(),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.search),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _brandCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'store.brand'.tr(),
-                      isDense: true,
-                      prefixIcon: const Icon(Icons.sell_outlined),
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'store.search'.tr(),
-                        isDense: true,
-                        prefixIcon: const Icon(Icons.search),
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _brandCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'store.brand'.tr(),
-                        isDense: true,
-                        prefixIcon: const Icon(Icons.sell_outlined),
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('store.age'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                    Text('${_ageRange.start.round()} - ${_ageRange.end.round()}'),
-                  ],
-                ),
-                RangeSlider(
-                  values: _ageRange,
-                  activeColor: const Color(0xFF17a64b),
-                  inactiveColor: const Color(0xFF17a64b).withOpacity(0.2),
-                  min: 1,
-                  max: 100,
-                  divisions: 100,
-                  labels: RangeLabels('${_ageRange.start.round()}', '${_ageRange.end.round()}'),
-                  onChanged: (v) {
-                    setState(() {
-                      _ageRange = v;
-                      _minAgeCtrl.text = v.start.round().toString();
-                      _maxAgeCtrl.text = v.end.round().toString();
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (screenWidth < 420) ...[
-              Column(
-                children: [
-                  DropdownButtonFormField<String>(
-                    value: _orderBy,
-                    items: [
-                      DropdownMenuItem(value: 'Name', child: Text('store.sort.name'.tr())),
-                      DropdownMenuItem(value: 'Price', child: Text('store.sort.price'.tr())),
-                      DropdownMenuItem(value: 'CreatedAt', child: Text('store.sort.created'.tr())),
-                    ],
-                    onChanged: (v) => setState(() => _orderBy = v ?? 'Name'),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: _orderDirection,
-                    items: [
-                      DropdownMenuItem(value: 'ASC', child: Text('store.asc'.tr())),
-                      DropdownMenuItem(value: 'DESC', child: Text('store.desc'.tr())),
-                    ],
-                    onChanged: (v) => setState(() => _orderDirection = v ?? 'ASC'),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-            ] else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _orderBy,
-                      items: [
-                        DropdownMenuItem(value: 'Name', child: Text('store.sort.name'.tr())),
-                        DropdownMenuItem(value: 'Price', child: Text('store.sort.price'.tr())),
-                        DropdownMenuItem(value: 'CreatedAt', child: Text('store.sort.created'.tr())),
-                      ],
-                      onChanged: (v) => setState(() => _orderBy = v ?? 'Name'),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _orderDirection,
-                      items: [
-                        DropdownMenuItem(value: 'ASC', child: Text('store.asc'.tr())),
-                        DropdownMenuItem(value: 'DESC', child: Text('store.desc'.tr())),
-                      ],
-                      onChanged: (v) => setState(() => _orderDirection = v ?? 'ASC'),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Switch(
-                  value: _inStock,
-                  onChanged: (v) => setState(() => _inStock = v),
-                ),
-                Text('store.inStock'.tr()),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _loadBoth,
-                    icon: const Icon(Icons.check, color: Colors.white),
-                    label: Text('store.apply'.tr(), style: const TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF17a64b),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      _brandCtrl.clear();
-                      _minAgeCtrl.clear();
-                      _maxAgeCtrl.clear();
-                      setState(() {
-                        _inStock = false;
-                        _orderBy = 'Name';
-                        _orderDirection = 'ASC';
-                        _ageRange = const RangeValues(6, 18);
-                      });
-                      _loadBoth();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: Text('store.reset'.tr()),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF17a64b),
-                      side: const BorderSide(color: Color(0xFF17a64b)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            )
-            ]
-          ],
-        ),
-      ),
-    );
   }
 
   Product _convertRobotToProduct(RobotItem robot) {

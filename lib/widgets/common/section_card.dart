@@ -5,17 +5,20 @@ class SectionCard extends StatelessWidget {
   final String? title;
   final Widget child;
   final EdgeInsetsGeometry padding;
+  final Color? color;
 
   const SectionCard({
     super.key,
     this.title,
     required this.child,
     this.padding = const EdgeInsets.all(16),
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: color ?? Colors.white,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(

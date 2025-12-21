@@ -108,9 +108,10 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error.isNotEmpty
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error.isNotEmpty
               ? Center(child: Text(_error))
               : _items.isEmpty
                   ? const Center(child: Text('No submissions yet'))
@@ -142,8 +143,9 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
                         return const SizedBox.shrink();
                       },
                       separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemCount: _items.length + (_loadingMore ? 1 : 0),
-                    ),
+                      itemCount: _items.length + (_loadingMore ? 1 : 0                  ),
+                ),
+        ),
     );
   }
 }

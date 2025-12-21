@@ -230,7 +230,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionCard(
-            title: 'profile.userInfo'.tr(),
+              title: 'profile.userInfo'.tr(),
             child: _user == null
                 ? Text('profile.noUser'.tr())
                 : Column(

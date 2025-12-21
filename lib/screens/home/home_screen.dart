@@ -1,3 +1,4 @@
+import 'package:animated_notch_bottom_bar/animated_notch_bottom_bar/animated_notch_bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/widgets/courses/explore_courses_tab.dart';
@@ -32,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final CartService _cartService = CartService();
   bool _tabLoading = true;
   int _cartItemCount = 0;
+  late final NotchBottomBarController _notchController;
 
   // Aggregates kept for potential future appbar profile usage
   // Removed unused aggregates (can be restored when appbar profile returns)
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
+    _notchController = NotchBottomBarController(index: _currentIndex);
     _loadAppBarProfile();
     _loadCartCount();
     Future.delayed(const Duration(milliseconds: 400), () {
@@ -51,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _notchController.dispose();
     super.dispose();
   }
 
@@ -88,49 +92,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   toolbarHeight: 80,
-      //   title: _currentIndex == 0
-      //       ? HomeAppBarProfile(
-      //           fullName: _fullName,
-      //           totalCourses: _totalCourses,
-      //           completedLessons: _completedLessons,
-      //           inProgressLessons: _inProgressLessons,
-      //         )
-      //       : const Text('OttoBit'),
-      //   backgroundColor: const Color(0xFF059669),
-      //   foregroundColor: Colors.white,
-      //   elevation: 0,
-      //   actions: [
-      //     // IconButton(
-      //     //   icon: const Icon(Icons.extension),
-      //     //   tooltip: 'Blockly',
-      //     //   onPressed: () => Navigator.pushNamed(context, AppRoutes.blockly),
-      //     // ),
-      //     // IconButton(
-      //     //   icon: const Icon(Icons.videogame_asset),
-      //     //   tooltip: 'Phaser',
-      //     //   onPressed: () => Navigator.pushNamed(context, AppRoutes.phaser),
-      //     // ),
-      //     IconButton(
-      //       icon: const Icon(Icons.person),
-      //       onPressed: () => Navigator.pushNamed(context, AppRoutes.profile),
-      //     ),
-      //     IconButton(
-      //       icon: const Icon(Icons.logout),
-      //       onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
-      //     ),
-      //   ],
-      // ),s
+      extendBody: true,
+      backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
-          ),
-        ),
+        color: const Color.fromARGB(255, 255, 255, 255),
         child: SafeArea(
+          bottom: false,
           child: _tabLoading
               ? _TabShimmer(index: _currentIndex)
               : (_currentIndex == 0
@@ -144,27 +111,54 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       : const _ProfileTab()),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) {
-          setState(() {
-            _currentIndex = i;
-            _tabLoading = true;
-          });
-          _loadCartCount(); // Refresh cart count on tab change
-          Future.delayed(const Duration(milliseconds: 400), () {
-            if (mounted) setState(() => _tabLoading = false);
-          });
-        },
-        selectedItemColor: const Color(0xFF1aad50),
-        unselectedItemColor: const Color(0xFFc0c7c2),
-        items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.library_books), label: 'home.myCourses'.tr()),
-          BottomNavigationBarItem(icon: const Icon(Icons.explore), label: 'home.explore'.tr()),
-          BottomNavigationBarItem(icon: const Icon(Icons.article), label: 'home.news'.tr()),
-          BottomNavigationBarItem(icon: const Icon(Icons.storefront), label: 'home.store'.tr()),
-          BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'Profile'),
-        ],
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: AnimatedNotchBottomBar(
+          notchBottomBarController: _notchController,
+          color: Colors.white,
+          showLabel: true,
+          notchColor: const Color.fromARGB(255, 255, 255, 255),
+          bottomBarItems: [
+            BottomBarItem(
+              inActiveItem: const Icon(Icons.library_books, color: Color(0xFFc0c7c2)),
+              activeItem: const Icon(Icons.library_books, color: Color(0xFF1aad50)),
+              // itemLabel: 'home.myCourses'.tr(),
+            ),
+            BottomBarItem(
+              inActiveItem: const Icon(Icons.explore, color: Color(0xFFc0c7c2)),
+              activeItem: const Icon(Icons.explore, color: Color(0xFF1aad50)),
+              // itemLabel: 'home.explore'.tr(),
+            ),
+            BottomBarItem(
+              inActiveItem: const Icon(Icons.article, color: Color(0xFFc0c7c2)),
+              activeItem: const Icon(Icons.article, color: Color(0xFF1aad50)),
+              // itemLabel: 'home.news'.tr(),
+            ),
+            BottomBarItem(
+              inActiveItem: const Icon(Icons.storefront, color: Color(0xFFc0c7c2)),
+              activeItem: const Icon(Icons.storefront, color: Color(0xFF1aad50)),
+              // itemLabel: 'home.store'.tr(),
+            ),
+            BottomBarItem(
+              inActiveItem: const Icon(Icons.person, color: Color(0xFFc0c7c2)),
+              activeItem: const Icon(Icons.person, color: Color(0xFF1aad50)),
+              // itemLabel: 'Profile',
+            ),
+          ],
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+              _notchController.index = index;
+              _tabLoading = true;
+            });
+            _loadCartCount(); // Refresh cart count on tab change
+            Future.delayed(const Duration(milliseconds: 400), () {
+              if (mounted) setState(() => _tabLoading = false);
+            });
+          },
+          kIconSize: 24.0,
+          kBottomRadius: 20.0,
+        ),
       ),
       floatingActionButton: _cartItemCount > 0
           ? FloatingActionButton(
@@ -225,7 +219,9 @@ class _MyCoursesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const HomeDashboard();
+    return const SafeArea(
+      child: HomeDashboard(),
+    );
   }
 }
 
@@ -234,7 +230,9 @@ class _ExploreTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ExploreCoursesTab();
+    return const SafeArea(
+      child: ExploreCoursesTab(),
+    );
   }
 }
 
@@ -243,7 +241,9 @@ class _NewsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const NewsTab();
+    return const SafeArea(
+      child: NewsTab(),
+    );
   }
 }
 
@@ -254,7 +254,9 @@ class _StoreTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const StoreScreen();
+    return const SafeArea(
+      child: StoreScreen(),
+    );
   }
 }
 
@@ -263,7 +265,9 @@ class _ProfileTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ProfileScreen();
+    return const SafeArea(
+      child: ProfileScreen(),
+    );
   }
 }
 

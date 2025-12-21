@@ -95,9 +95,10 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
             child: Stack(
               children: [
                 WebViewWidget(controller: _controller),
@@ -166,7 +167,8 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
                 ],
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }

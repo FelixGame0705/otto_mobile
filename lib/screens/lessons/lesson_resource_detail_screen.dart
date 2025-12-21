@@ -66,9 +66,10 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
           style: const TextStyle(color: Color(0xFF1F2937)),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -143,6 +144,7 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
                         ),
                       ),
                     ),
+        ),
     );
   }
 }

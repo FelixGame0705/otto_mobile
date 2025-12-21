@@ -86,15 +86,17 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
           ),
         ],
       ),
-      body: Container(
-        color: Colors.white,
-        child: _isLoading
+      body: SafeArea(
+        child: Container(
+          color: Colors.white,
+          child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
                 ? _buildErrorWidget()
                 : _blog == null
                     ? _buildNotFoundWidget()
                     : _buildBlogContent(),
+        ),
       ),
     );
   }
