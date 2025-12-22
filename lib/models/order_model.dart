@@ -1,9 +1,5 @@
 import 'package:intl/intl.dart';
-
-/// Helper function to parse DateTime and add 7 hours for timezone offset
-DateTime _parseDateTimeWithOffset(String dateTimeString) {
-  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
-}
+import 'package:ottobit/utils/date_time_utils.dart';
 
 class OrderItemModel {
   final String id;
@@ -43,8 +39,8 @@ class OrderItemModel {
       unitPrice: (json['unitPrice'] as num?)?.toInt() ?? 0,
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['unitPrice'] as num?)?.toInt() ?? 0,
-      createdAt: _parseDateTimeWithOffset(json['createdAt']),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt']),
     );
   }
 
@@ -102,8 +98,8 @@ class OrderModel {
       voucherId: json['voucherId'],
       voucherCode: json['voucherCode'],
       voucherName: json['voucherName'],
-      createdAt: _parseDateTimeWithOffset(json['createdAt']),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt']),
       items: (json['items'] as List<dynamic>?)
               ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -164,8 +160,8 @@ class PaymentTransactionModel {
       paidAt: (json['paidAt'] != null && json['paidAt'].toString().isNotEmpty)
           ? DateTime.tryParse(json['paidAt'].toString())?.add(const Duration(hours: 7))
           : null,
-      createdAt: _parseDateTimeWithOffset(json['createdAt'].toString()),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt'].toString()),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt'].toString()),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'].toString()),
     );
   }
 }

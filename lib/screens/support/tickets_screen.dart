@@ -254,7 +254,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${'common.createdAt'.tr()}: ${_formatDate(ticket.createdAt)}',
+                            '${'common.createdAt'.tr()} ${_formatDate(ticket.createdAt)}',
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[500],

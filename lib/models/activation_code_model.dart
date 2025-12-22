@@ -1,3 +1,5 @@
+import 'package:ottobit/utils/date_time_utils.dart';
+
 class ActivationCodeRequest {
   final String code;
 
@@ -84,11 +86,6 @@ class ActivationCodeData {
   }
 }
 
-/// Helper function to parse DateTime and add 7 hours for timezone offset
-DateTime _parseDateTimeWithOffset(String dateTimeString) {
-  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
-}
-
 /// Model for activation code with full details (used in My Robots)
 class MyActivationCode {
   final String id;
@@ -128,15 +125,15 @@ class MyActivationCode {
       robotId: json['robotId']?.toString() ?? '',
       status: (json['status'] as num?)?.toInt() ?? 0,
       usedAt: json['usedAt'] != null && json['usedAt'].toString().isNotEmpty
-          ? _parseDateTimeWithOffset(json['usedAt'].toString())
+          ? DateTimeUtils.parseDateTimeWithOffset(json['usedAt'].toString())
           : null,
       studentId: json['studentId']?.toString() ?? '',
-      expiresAt: _parseDateTimeWithOffset(json['expiresAt'].toString()),
+      expiresAt: DateTimeUtils.parseDateTimeWithOffset(json['expiresAt'].toString()),
       batchId: json['batchId']?.toString() ?? '',
       robotName: json['robotName']?.toString() ?? '',
       studentFullname: json['studentFullname']?.toString() ?? '',
-      createdAt: _parseDateTimeWithOffset(json['createdAt'].toString()),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt'].toString()),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt'].toString()),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'].toString()),
       isDeleted: json['isDeleted'] is bool ? json['isDeleted'] as bool : false,
     );
   }
@@ -194,7 +191,7 @@ class ActivationCodeListApiResponse {
       data: ActivationCodePage.fromJson(data),
       errors: json['errors']?.toString(),
       errorCode: json['errorCode']?.toString(),
-      timestamp: _parseDateTimeWithOffset(json['timestamp']?.toString() ?? DateTime.now().toIso8601String()),
+      timestamp: DateTimeUtils.parseDateTimeWithOffset(json['timestamp']?.toString() ?? DateTime.now().toIso8601String()),
     );
   }
 }

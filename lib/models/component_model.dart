@@ -1,3 +1,5 @@
+import 'package:ottobit/utils/date_time_utils.dart';
+
 class Component {
   final String id;
   final String name;
@@ -149,15 +151,6 @@ class RobotComponent {
   });
 
   factory RobotComponent.fromJson(Map<String, dynamic> json) {
-    DateTime _parseDateTimeWithOffset(String dateTimeString) {
-      try {
-        final dateTime = DateTime.parse(dateTimeString);
-        return dateTime.add(const Duration(hours: 7));
-      } catch (_) {
-        return DateTime.fromMillisecondsSinceEpoch(0);
-      }
-    }
-
     return RobotComponent(
       id: json['id'] ?? '',
       robotId: json['robotId'] ?? '',
@@ -166,8 +159,8 @@ class RobotComponent {
       robotName: json['robotName'] ?? '',
       componentName: json['componentName'] ?? '',
       componentImageUrl: json['componentImageUrl'],
-      createdAt: _parseDateTimeWithOffset(json['createdAt'] ?? ''),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt'] ?? ''),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt'] ?? ''),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'] ?? ''),
       isDeleted: json['isDeleted'] ?? false,
     );
   }
@@ -220,21 +213,12 @@ class RobotComponentApiResponse {
   });
 
   factory RobotComponentApiResponse.fromJson(Map<String, dynamic> json) {
-    DateTime _parseDateTimeWithOffset(String dateTimeString) {
-      try {
-        final dateTime = DateTime.parse(dateTimeString);
-        return dateTime.add(const Duration(hours: 7));
-      } catch (_) {
-        return DateTime.fromMillisecondsSinceEpoch(0);
-      }
-    }
-
     return RobotComponentApiResponse(
       message: json['message'] ?? '',
       data: json['data'] != null ? RobotComponentListResponse.fromJson(json) : null,
       errors: json['errors'],
       errorCode: json['errorCode'],
-      timestamp: _parseDateTimeWithOffset(json['timestamp'] ?? ''),
+      timestamp: DateTimeUtils.parseDateTimeWithOffset(json['timestamp'] ?? ''),
     );
   }
 }

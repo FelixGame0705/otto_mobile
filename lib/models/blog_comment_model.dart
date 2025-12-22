@@ -1,3 +1,5 @@
+import 'package:ottobit/utils/date_time_utils.dart';
+
 class BlogComment {
   final String id;
   final String blogId;
@@ -24,8 +26,8 @@ class BlogComment {
       userId: json['userId'] ?? '',
       userName: json['userName'],
       content: json['content'] ?? '',
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt'] ?? ''),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'] ?? ''),
     );
   }
 

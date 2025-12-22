@@ -1,3 +1,5 @@
+import 'package:ottobit/utils/date_time_utils.dart';
+
 class BlogTag {
   final String id;
   final String name;
@@ -70,8 +72,8 @@ class Blog {
       authorName: json['authorName'] ?? '',
       viewCount: (json['viewCount'] as num?)?.toInt() ?? 0,
       readingTime: (json['readingTime'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt'] ?? ''),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'] ?? ''),
       isDeleted: json['isDeleted'] ?? false,
       comments: json['comments'] ?? [],
       tags: (json['tags'] as List<dynamic>?)

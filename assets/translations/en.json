@@ -616,6 +616,7 @@
     "descriptionRequired": "Description is required",
     "descriptionMin": "Description must be at least 10 characters",
     "createButton": "Create",
+    "createSuccess": "Ticket created successfully",
     "getSupport": "Get Support",
     "myTickets": "My Support Tickets",
     "noTickets": "No support tickets",

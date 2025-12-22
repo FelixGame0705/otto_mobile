@@ -617,6 +617,7 @@
     "descriptionRequired": "Mô tả là bắt buộc",
     "descriptionMin": "Mô tả phải có ít nhất 10 ký tự",
     "createButton": "Tạo",
+    "createSuccess": "Tạo ticket thành công",
     "getSupport": "Nhận hỗ trợ",
     "myTickets": "Ticket hỗ trợ của tôi",
     "noTickets": "Chưa có ticket hỗ trợ",

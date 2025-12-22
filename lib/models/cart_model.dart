@@ -1,9 +1,5 @@
 import 'package:intl/intl.dart';
-
-/// Helper function to parse DateTime and add 7 hours for timezone offset
-DateTime _parseDateTimeWithOffset(String dateTimeString) {
-  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
-}
+import 'package:ottobit/utils/date_time_utils.dart';
 
 class CartItem {
   final String id;
@@ -43,8 +39,8 @@ class CartItem {
       unitPrice: (json['unitPrice'] as num?)?.toInt() ?? 0,
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       finalPrice: (json['finalPrice'] as num?)?.toInt() ?? (json['unitPrice'] as num?)?.toInt() ?? 0,
-      createdAt: _parseDateTimeWithOffset(json['createdAt']),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt']),
     );
   }
 
@@ -116,8 +112,8 @@ class Cart {
       voucherCode: json['voucherCode'],
       voucherName: json['voucherName'],
       itemsCount: (json['itemsCount'] as num?)?.toInt() ?? 0,
-      createdAt: _parseDateTimeWithOffset(json['createdAt']),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt']),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt']),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt']),
       items: (json['items'] as List<dynamic>?)
           ?.map((item) => CartItem.fromJson(item as Map<String, dynamic>))
           .toList() ?? [],
@@ -203,7 +199,7 @@ class CartSummary {
       discountAmount: (json['discountAmount'] as num?)?.toInt() ?? 0,
       total: (json['total'] as num?)?.toInt() ?? 0,
       isEmpty: json['isEmpty'] ?? true,
-      lastUpdated: _parseDateTimeWithOffset(json['lastUpdated']),
+      lastUpdated: DateTimeUtils.parseDateTimeWithOffset(json['lastUpdated']),
     );
   }
 
@@ -299,7 +295,7 @@ class CartApiResponse<T> {
       data: parsedData,
       errors: json['errors'],
       errorCode: json['errorCode'],
-      timestamp: _parseDateTimeWithOffset(json['timestamp']),
+      timestamp: DateTimeUtils.parseDateTimeWithOffset(json['timestamp']),
     );
   }
 

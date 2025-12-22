@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:ottobit/services/navigation_service.dart';
@@ -389,14 +391,44 @@ class ApiErrorMapper {
   /// - Ngược lại, trả về phần message đã được làm sạch (không còn tiền tố "Exception: ").
   /// - Nếu [isEnglish] là true, trả về message gốc từ backend thay vì message đã dịch.
   /// - Đảm bảo không có duplicate messages (tiếng Việt và tiếng Anh cùng lúc).
+  /// - Tự động phát hiện và xử lý lỗi kết nối mạng (SocketException, HttpException, timeout).
   static String fromException(
     Object error, {
     int? statusCode,
     String? fallback,
     bool? isEnglish,
   }) {
+    final isEn = isEnglish ?? _isEnglishLocale();
+    
+    // Kiểm tra lỗi kết nối mạng trước
+    if (error is SocketException) {
+      return isEn
+          ? 'Network connection error. Please check your internet connection.'
+          : 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
+    }
+    
+    if (error is HttpException) {
+      final message = error.message.toLowerCase();
+      if (message.contains('connection') || 
+          message.contains('timeout') || 
+          message.contains('network') ||
+          message.contains('failed host lookup') ||
+          message.contains('connection refused')) {
+        return isEn
+            ? 'Network connection error. Please check your internet connection.'
+            : 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
+      }
+    }
+    
+    // Kiểm tra timeout errors
+    if (error is TimeoutException) {
+      return isEn
+          ? 'Request timeout. Please check your internet connection and try again.'
+          : 'Hết thời gian chờ. Vui lòng kiểm tra kết nối internet và thử lại.';
+    }
+    
     final raw = error.toString().trim();
-    final defaultMsg = (isEnglish == true)
+    final defaultMsg = isEn
         ? 'An error occurred. Please try again.'
         : 'Đã xảy ra lỗi. Vui lòng thử lại.';
     
@@ -404,6 +436,22 @@ class ApiErrorMapper {
       return fallback?.trim().isNotEmpty == true
           ? fallback!.trim()
           : defaultMsg;
+    }
+    
+    // Kiểm tra các pattern lỗi mạng trong error string
+    final lowerRaw = raw.toLowerCase();
+    if (lowerRaw.contains('socketexception') ||
+        lowerRaw.contains('failed host lookup') ||
+        lowerRaw.contains('connection refused') ||
+        lowerRaw.contains('connection timed out') ||
+        lowerRaw.contains('network is unreachable') ||
+        lowerRaw.contains('no internet connection') ||
+        lowerRaw.contains('networkerror') ||
+        (lowerRaw.contains('connection') && lowerRaw.contains('error')) ||
+        (lowerRaw.contains('timeout') && (lowerRaw.contains('connection') || lowerRaw.contains('request')))) {
+      return isEn
+          ? 'Network connection error. Please check your internet connection.'
+          : 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet.';
     }
 
     // Loại bỏ tất cả các pattern "Exception:" hoặc "Exception: " ở mọi vị trí

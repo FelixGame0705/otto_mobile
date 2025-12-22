@@ -50,7 +50,7 @@ class _CreateTicketDialogState extends State<CreateTicketDialog> {
       if (response.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
+            content: Text('ticket.createSuccess'.tr()),
             backgroundColor: Colors.green,
           ),
         );
