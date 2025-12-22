@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/assistance_ticket_model.dart';
 import 'package:ottobit/services/assistance_ticket_service.dart';
 import 'dart:async';
@@ -317,11 +318,18 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       appBar: AppBar(
         title: Text('ticket.ticketDetails'.tr()),
         backgroundColor: const Color(0xFF17a64b),
+        foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
-      body: Column(
-        children: [
-          // Ticket info header
-          Container(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Ticket info header
+            Container(
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -548,8 +556,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                       ),
           ),
 
-          // Message input - Only allow messaging when status is 2 (inProgress)
-          if (widget.ticket.status == 2)
+          // Message input - Allow messaging when status is 2 (inProgress) hoặc 3 (resolved nhưng vẫn cho phép chat)
+          if (widget.ticket.status == 2 || widget.ticket.status == 3)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -622,7 +630,8 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
                 ),
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -760,11 +769,17 @@ class _TicketDetailScreenState extends State<TicketDetailScreen> {
       await _service.createRating(req);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('ticket.rating.success'.tr())),
+        SnackBar(
+          content: Text('ticket.rating.success'.tr()),
+          backgroundColor: const Color(0xFF48BB78), // Màu xanh tương tự toast ở home/cart
+        ),
       );
       setState(() {
-        // Optionally lock the form after submit
+        // Lock form tạm thời trong lúc reload lại đánh giá
+        _hasExistingRating = true;
       });
+      // Sau khi đánh giá xong thì load lại thông tin đánh giá từ server
+      await _loadExistingRating();
     } catch (e) {
       if (!mounted) return;
       final isEnglish = context.locale.languageCode == 'en';

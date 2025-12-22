@@ -255,7 +255,7 @@
     "clear": "Clear",
     "cannotLoad": "Cannot load challenges",
     "loadError": "An error occurred while loading challenges.",
-    "allShown": "All challenges shown"
+    "allShown": "All shown"
   },
   "resource": {
     "title": "Theory resources",
@@ -380,8 +380,10 @@
     "expand": "Expand",
     "search": "Search",
     "brand": "Brand",
+    "searchAndBrand": "Search & Brand",
     "price": "Price",
     "age": "Age",
+    "sortBy": "Sort By",
     "priceMin": "Price from",
     "priceMax": "Price to",
     "ageMin": "Age from",
@@ -484,6 +486,9 @@
     "continuePayment": "Continue Payment",
     "voucherInvalid": "Invalid Voucher",
     "voucherInvalidMessage": "Voucher is invalid or has reached usage limit",
+    "priceChanged": "Price Changed",
+    "updateCart": "Update Cart",
+    "cartUpdated": "Cart has been updated successfully",
     "status": {
       "pending": "Pending",
       "paid": "Paid",
@@ -682,7 +687,22 @@
     "simulation": "Simulation",
     "close": "Close",
     "continue": "Continue",
-    "gameOverTitle": "Game Over!"
+    "gameOverTitle": "Game Over!",
+    "defeatReasonTitle": "Defeat Reason",
+    "defeatReasonPrefix": "Defeat Reason:",
+    "errorDetails": "Error Details",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "progress": "Progress",
+    "batteriesCollected": "{count} batteries collected",
+    "progressWithBatteries": "Progress: {count} batteries"
+  },
+  "aiSupport": {
+    "title": "AI Support",
+    "hint": "Enter your question...",
+    "send": "Send",
+    "error": "An error occurred: {0}",
+    "emptyReply": "..."
   }
 }
 

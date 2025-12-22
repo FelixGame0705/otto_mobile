@@ -250,6 +250,21 @@ class _LoginScreenState extends State<LoginScreen> {
           await StorageService.saveTokenExpiry(expiryTime);
         }
 
+        // Kiểm tra role từ token trước khi lưu user
+        final roles = JwtTokenManager.getUserRoles(accessToken);
+        final hasUserRole = roles.any((role) => role.toLowerCase() == 'user');
+        
+        if (!hasUserRole) {
+          // Không có role "User", xóa token đã lưu, hiển thị lỗi
+          await StorageService.clearToken();
+          await StorageService.clearRefreshToken();
+          setState(() => _isLoading = false);
+          if (mounted) {
+            showErrorToast(context, 'Tài khoản của bạn không có quyền đăng nhập. Vui lòng liên hệ quản trị viên.');
+          }
+          return;
+        }
+
         final user = UserModel(
           id: (userMap['userId'] ?? userMap['id'] ?? '').toString(),
           fullName: (userMap['fullName'] ?? account.displayName ?? '').toString(),
@@ -316,6 +331,22 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     if (result.isSuccess) {
+      // Kiểm tra role từ token
+      final token = await StorageService.getToken();
+      if (token != null) {
+        final roles = JwtTokenManager.getUserRoles(token);
+        final hasUserRole = roles.any((role) => role.toLowerCase() == 'user');
+        
+        if (!hasUserRole) {
+          // Không có role "User", xóa token và user, hiển thị lỗi
+          await AuthService.logout();
+          _isProcessingError = false;
+          setState(() => _isLoading = false);
+          showErrorToast(context, 'Tài khoản của bạn không có quyền đăng nhập. Vui lòng liên hệ quản trị viên.');
+          return;
+        }
+      }
+      
       _isProcessingError = false;
       setState(() => _isLoading = false);
       showSuccessToast(context, 'Đăng nhập thành công!');
@@ -385,7 +416,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return AppScaffold(
       showAppBar: false,
       alignment: Alignment.center,
-      gradientColors: const [Color(0xFFEDFCF2), Color.fromARGB(255, 255, 255, 255)],
+      gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),

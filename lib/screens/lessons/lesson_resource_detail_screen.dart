@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/lesson_resource_model.dart';
 import 'package:ottobit/services/lesson_resource_service.dart';
 import 'package:ottobit/widgets/lessons/lesson_resource_meta.dart';
@@ -61,14 +62,20 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         foregroundColor: const Color(0xFF1F2937),
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         title: Text(
           _item?.title ?? 'resource.title'.tr(),
           style: const TextStyle(color: Color(0xFF1F2937)),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -143,6 +150,7 @@ class _LessonResourceDetailScreenState extends State<LessonResourceDetailScreen>
                         ),
                       ),
                     ),
+        ),
     );
   }
 }

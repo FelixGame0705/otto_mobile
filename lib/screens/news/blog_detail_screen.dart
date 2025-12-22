@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/blog_model.dart';
 import 'package:ottobit/services/blog_service.dart';
 import 'package:ottobit/services/auth_service.dart';
@@ -77,6 +78,11 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
         title: Text('news.detail'.tr()),
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         elevation: 0,
         actions: [
           IconButton(
@@ -86,15 +92,17 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
           ),
         ],
       ),
-      body: Container(
-        color: Colors.white,
-        child: _isLoading
+      body: SafeArea(
+        child: Container(
+          color: Colors.white,
+          child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
                 ? _buildErrorWidget()
                 : _blog == null
                     ? _buildNotFoundWidget()
                     : _buildBlogContent(),
+        ),
       ),
     );
   }
@@ -358,7 +366,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
       final title = _blog!.title;
       final slug = _blog!.slug;
       // Share a simple, copyable link format with the slug
-      final shareText = '$title\n\nSlug: $slug';
+      final shareText = '$title\n\nhttps://stem.ottobit.edu.vn/news/$slug';
       Share.share(
         shareText,
         subject: title,

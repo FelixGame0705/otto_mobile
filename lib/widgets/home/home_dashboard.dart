@@ -6,7 +6,7 @@ import 'package:ottobit/services/lesson_process_service.dart';
 import 'package:ottobit/services/learning_path_controller.dart';
 import 'package:ottobit/widgets/home/course_selector.dart';
 import 'package:ottobit/widgets/home/learning_path.dart';
-import 'package:ottobit/widgets/ui/ai_support_screen.dart';
+import 'package:ottobit/screens/support/ai_support_screen.dart';
 import 'package:ottobit/services/enrollment_service.dart';
 import 'package:ottobit/models/enrollment_model.dart';
 import 'package:ottobit/models/lesson_model.dart';
@@ -33,6 +33,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
   // Progress for locking
   final Set<String> _completedLessonIds = <String>{};
   int? _currentLessonOrder;
+
+  // Draggable button position
+  double _buttonX = 16.0;
+  double _buttonY = 96.0; // Initial position above bottom bar (80px bar + 16px padding)
 
   @override
   void initState() {
@@ -209,17 +213,37 @@ class _HomeDashboardState extends State<HomeDashboard> {
           ),
         ),
         Positioned(
-          bottom: 16,
-          left: 16,
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AiSupportScreen()),
-              );
+          bottom: _buttonY,
+          left: _buttonX,
+          child: GestureDetector(
+            onPanUpdate: (details) {
+              setState(() {
+                final screenWidth = MediaQuery.of(context).size.width;
+                final buttonWidth = 150.0; // Approximate width of extended FAB
+                final bottomBarHeight = 10.0; // Height of bottom navigation bar
+                
+                // Update position
+                _buttonX += details.delta.dx;
+                _buttonY -= details.delta.dy; // Subtract because bottom positioning is inverted
+                
+                // Constrain to screen bounds
+                // For X: keep button within screen width
+                _buttonX = _buttonX.clamp(0.0, screenWidth - buttonWidth);
+                // For Y: keep button above bottom bar (min) and below top safe area (max)
+                // bottom: 0 = at bottom, larger value = higher up
+                _buttonY = _buttonY.clamp(bottomBarHeight + 16, double.infinity);
+              });
             },
-            icon: const Icon(Icons.smart_toy, color: Colors.white),
-            label: Text('home.aiSupport'.tr(), style: const TextStyle(color: Colors.white)),
-            backgroundColor: const Color(0xFF17a64b),
+            child: FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AiSupportScreen()),
+                );
+              },
+              icon: const Icon(Icons.smart_toy, color: Colors.white),
+              label: Text('home.aiSupport'.tr(), style: const TextStyle(color: Colors.white)),
+              backgroundColor: const Color(0xFF17a64b),
+            ),
           ),
         ),
       ],

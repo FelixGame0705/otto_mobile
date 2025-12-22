@@ -428,4 +428,38 @@ class CartService {
       throw Exception(friendly);
     }
   }
+
+  /// Recalculate cart prices
+  Future<CartApiResponse<Cart>> recalculateCart() async {
+    try {
+      print('CartService: Recalculating cart');
+      
+      final response = await _httpService.post(
+        '/v1/cart/recalculate',
+        body: <String, dynamic>{},
+        throwOnError: false,
+      );
+
+      print('CartService: Response status: ${response.statusCode}');
+      print('CartService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        // The API returns the updated cart data directly in 'data' field
+        final cartData = jsonData['data'] as Map<String, dynamic>;
+        return CartApiResponse.fromJson(jsonData, (data) => Cart.fromJson(cartData));
+      } else {
+        final friendly = ApiErrorMapper.fromBody(
+          response.body,
+          statusCode: response.statusCode,
+          fallback: 'Failed to recalculate cart: ${response.statusCode}',
+        );
+        throw Exception(friendly);
+      }
+    } catch (e) {
+      final friendly = ApiErrorMapper.fromException(e);
+      print('CartService error (recalculateCart): $friendly');
+      throw Exception(friendly);
+    }
+  }
 }

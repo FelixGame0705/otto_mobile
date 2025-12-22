@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/lesson_model.dart';
 import 'package:ottobit/services/lesson_service.dart';
 import 'package:ottobit/services/lesson_detail_service.dart';
@@ -210,6 +211,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
         title: Text(widget.courseTitle ?? 'lessons.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

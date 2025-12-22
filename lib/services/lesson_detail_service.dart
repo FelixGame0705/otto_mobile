@@ -3,6 +3,17 @@ import 'package:ottobit/models/lesson_detail_model.dart';
 import 'package:ottobit/services/http_service.dart';
 import 'package:ottobit/utils/api_error_handler.dart';
 
+/// Custom exception to carry errorCode along with message
+class LessonStartException implements Exception {
+  final String message;
+  final String? errorCode;
+  
+  LessonStartException(this.message, [this.errorCode]);
+  
+  @override
+  String toString() => message;
+}
+
 class LessonDetailService {
   static final LessonDetailService _instance = LessonDetailService._internal();
   factory LessonDetailService() => _instance;
@@ -14,7 +25,10 @@ class LessonDetailService {
     try {
       final endpoint = '/v1/lesson-process/start-lesson/$lessonId';
       print('LessonDetailService: Starting lesson via POST $endpoint');
-      final res = await _httpService.post(endpoint);
+      final res = await _httpService.post(
+        endpoint,
+        throwOnError: false,
+      );
       print('LessonDetailService: Start lesson status: ${res.statusCode}');
       print('LessonDetailService: Start lesson body: ${res.body}');
       if (res.statusCode == 200 || res.statusCode == 201) {
@@ -26,13 +40,28 @@ class LessonDetailService {
           return 'Bắt đầu học thành công';
         }
       }
+      // Parse error response to get errorCode
+      String? errorCode;
+      try {
+        final jsonData = jsonDecode(res.body) as Map<String, dynamic>;
+        errorCode = jsonData['errorCode'] as String?;
+      } catch (_) {}
+      
       final friendly = ApiErrorMapper.fromBody(
         res.body,
         statusCode: res.statusCode,
         fallback: 'Không thể bắt đầu học (mã ${res.statusCode}).',
       );
+      
+      // Throw exception with errorCode if available
+      if (errorCode != null) {
+        throw LessonStartException(friendly, errorCode);
+      }
       throw Exception(friendly);
     } catch (e) {
+      if (e is LessonStartException) {
+        rethrow;
+      }
       final friendly = ApiErrorMapper.fromException(e);
       print('LessonDetailService error (startLesson): $friendly');
       throw Exception(friendly);

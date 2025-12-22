@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/submission_model.dart';
 import 'package:ottobit/services/submission_service.dart';
 import 'package:ottobit/screens/blockly/solution_viewer_screen.dart';
@@ -107,10 +108,16 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
         title: const Text('My Submissions'),
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error.isNotEmpty
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error.isNotEmpty
               ? Center(child: Text(_error))
               : _items.isEmpty
                   ? const Center(child: Text('No submissions yet'))
@@ -142,8 +149,9 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
                         return const SizedBox.shrink();
                       },
                       separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemCount: _items.length + (_loadingMore ? 1 : 0),
-                    ),
+                      itemCount: _items.length + (_loadingMore ? 1 : 0                  ),
+                ),
+        ),
     );
   }
 }

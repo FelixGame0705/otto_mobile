@@ -715,7 +715,9 @@ class _PhaserRunnerScreenState extends State<PhaserRunnerScreen> {
           ],
         ],
       ),
-      body: _buildBodyOnly(),
+      body: SafeArea(
+        child: _buildBodyOnly(),
+      ),
       floatingActionButton: _isGameReady
           ? Column(
               mainAxisAlignment: MainAxisAlignment.end,

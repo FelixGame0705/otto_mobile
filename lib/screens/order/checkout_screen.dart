@@ -30,8 +30,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isProcessing = false;
   String _paymentMethod = 'bank_transfer';
   String _discountCode = '';
-  bool _hasDiscount = false;
-  int _discountAmount = 0;
+  bool _hasVoucherDiscount = false;
   CartSummary? _currentCartSummary;
 
   final TextEditingController _discountController = TextEditingController();
@@ -48,8 +47,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) {
         setState(() {
           _currentCartSummary = summary.data;
-          _discountAmount = summary.data?.discountAmount ?? 0;
-          _hasDiscount = _discountAmount > 0;
+          // Check if voucher discount exists (has voucher code)
+          _hasVoucherDiscount = summary.data?.voucherCode != null && 
+                                summary.data!.voucherCode!.isNotEmpty &&
+                                (summary.data?.voucherDiscountAmount ?? 0) > 0;
+          _discountCode = summary.data?.voucherCode ?? '';
+          if (_hasVoucherDiscount && _discountCode.isNotEmpty) {
+            _discountController.text = _discountCode;
+          }
         });
       }
     } catch (e) {
@@ -71,18 +76,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
 
     try {
-      final response = await _cartService.applyDiscount(_discountController.text);
+      await _cartService.applyDiscount(_discountController.text);
       
       if (mounted) {
-        setState(() {
-          _hasDiscount = true;
-          _discountCode = _discountController.text;
-          _discountAmount = response.data?.discountAmount ?? 0;
-          _isProcessing = false;
-        });
-        
         // Refresh cart summary to get updated pricing
         await _loadCartSummary();
+        
+        setState(() {
+          _isProcessing = false;
+        });
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -118,16 +120,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       await _cartService.removeDiscount();
       
       if (mounted) {
+        // Refresh cart summary to get updated pricing
+        await _loadCartSummary();
+        
         setState(() {
-          _hasDiscount = false;
-          _discountCode = '';
-          _discountAmount = 0;
           _discountController.clear();
           _isProcessing = false;
         });
-        
-        // Refresh cart summary to get updated pricing
-        await _loadCartSummary();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -238,12 +237,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         }
       }
     } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+      
         setState(() {
           _isProcessing = false;
         });
         
         final isEnglish = context.locale.languageCode == 'en';
+      bool handled = false;
         
         // Check for VOU_012 error and show dialog
         final errorStr = e.toString();
@@ -254,27 +255,84 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             final errorJson = jsonDecode(cleanedError);
             if (errorJson['errorCode'] == 'VOU_012') {
               final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+            if (mounted) {
               _showVoucherErrorDialog(friendlyMsg);
-              return;
+            }
+            handled = true;
             }
           } catch (_) {
             // If parsing fails, check string directly
             if (errorStr.contains('VOU_012')) {
               final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+            if (mounted) {
               _showVoucherErrorDialog(friendlyMsg);
-              return;
+            }
+            handled = true;
+          }
+        }
+      }
+      
+      // Check for CART_009 error or cart items updated error
+      if (!handled) {
+        final lowerErrorStr = errorStr.toLowerCase();
+        if (errorStr.contains('CART_009') || 
+            errorStr.contains('Cart items have been updated') ||
+            errorStr.contains('please recalculate cart before checkout') ||
+            lowerErrorStr.contains('giỏ hàng đã được cập nhật') ||
+            lowerErrorStr.contains('vui lòng tính toán lại giỏ hàng')) {
+          // Try to extract error code from JSON if available
+          try {
+            final cleanedError = errorStr.replaceFirst(RegExp(r'Exception:\s*', caseSensitive: false), '').trim();
+            final errorJson = jsonDecode(cleanedError);
+            if (errorJson['errorCode'] == 'CART_009') {
+              final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+              if (mounted) {
+                _showPriceChangedDialog(friendlyMsg);
+            }
+              handled = true;
+          }
+          } catch (_) {
+            // If parsing fails, check string directly or translated message
+            if (errorStr.contains('CART_009') || 
+                errorStr.contains('Cart items have been updated') ||
+                errorStr.contains('please recalculate cart before checkout') ||
+                lowerErrorStr.contains('giỏ hàng đã được cập nhật') ||
+                lowerErrorStr.contains('vui lòng tính toán lại giỏ hàng')) {
+              final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+              if (mounted) {
+                _showPriceChangedDialog(friendlyMsg);
+              }
+              handled = true;
             }
           }
         }
-        
+      }
+      
+      // Legacy: Check for price changed error (backward compatibility)
+      if (!handled) {
+        final lowerErrorStr = errorStr.toLowerCase();
+        if (lowerErrorStr.contains('price has changed for course') || 
+            lowerErrorStr.contains('giá khóa học đã thay đổi')) {
+          final friendlyMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+          if (mounted) {
+            _showPriceChangedDialog(friendlyMsg);
+          }
+          handled = true;
+        }
+      }
+      
+      // Only show SnackBar if error was not handled by dialog
+      if (!handled && mounted) {
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         final messenger = ScaffoldMessenger.maybeOf(context);
-        messenger?.showSnackBar(
+        if (messenger != null) {
+          messenger.showSnackBar(
           SnackBar(
             content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
+        }
       }
     }
   }
@@ -301,8 +359,95 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  int get _subtotal => _currentCartSummary?.subtotal ?? widget.cartItems.fold(0, (sum, item) => sum + item.unitPrice);
-  int get _total => _currentCartSummary?.total ?? (_subtotal - _discountAmount);
+  void _showPriceChangedDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
+            const SizedBox(width: 12),
+            Expanded(child: Text('order.priceChanged'.tr())),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Navigate back to cart screen to see updated prices
+              Navigator.of(context).pop();
+            },
+            child: Text('common.cancel'.tr()),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _recalculateAndReload();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B5CF6),
+              foregroundColor: Colors.white,
+            ),
+            child: Text('order.updateCart'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _recalculateAndReload() async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // Recalculate cart
+      await _cartService.recalculateCart();
+      
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+        
+        // Navigate back to cart screen to show updated prices
+        Navigator.of(context).pop();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('order.cartUpdated'.tr()),
+            backgroundColor: const Color(0xFF48BB78),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+        
+        final isEnglish = context.locale.languageCode == 'en';
+        final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  int get _subtotal => _currentCartSummary?.subtotal ?? 
+    widget.cartItems.fold(0, (sum, item) => sum + item.finalPrice);
+
+  int get _courseDiscountTotal => _currentCartSummary?.courseDiscountTotal ?? 0;
+  
+  int get _voucherDiscountAmount => _currentCartSummary?.voucherDiscountAmount ?? 0;
+
+  int get _total => _currentCartSummary?.total ?? 
+    (_subtotal - _courseDiscountTotal - _voucherDiscountAmount);
 
   String _formatPrice(int price) {
     return price.toString().replaceAllMapped(
@@ -401,14 +546,31 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Text(_formatPrice(_subtotal)),
                       ],
                     ),
-                    if (_hasDiscount) ...[
+                    if (_courseDiscountTotal > 0) ...[
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('order.discount'.tr() + ' ($_discountCode)'),
+                          Text('cart.courseDiscount'.tr()),
                           Text(
-                            '-${_formatPrice(_discountAmount)}',
+                            '-${_formatPrice(_courseDiscountTotal)}',
+                            style: const TextStyle(color: Color(0xFF48BB78)),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (_hasVoucherDiscount && _voucherDiscountAmount > 0) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _currentCartSummary?.voucherCode != null && _currentCartSummary!.voucherCode!.isNotEmpty
+                                ? 'cart.voucherDiscountWithCode'.tr(args: [_currentCartSummary!.voucherCode!])
+                                : 'cart.voucherDiscount'.tr(),
+                          ),
+                          Text(
+                            '-${_formatPrice(_voucherDiscountAmount)}',
                             style: const TextStyle(color: Color(0xFF48BB78)),
                           ),
                         ],
@@ -461,12 +623,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             decoration: InputDecoration(
                               hintText: 'order.enterDiscountCode'.tr(),
                               border: const OutlineInputBorder(),
-                              enabled: !_hasDiscount,
+                              enabled: !_hasVoucherDiscount,
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        if (!_hasDiscount)
+                        if (!_hasVoucherDiscount)
                           ElevatedButton(
                             onPressed: _isProcessing ? null : _applyDiscount,
                             child: _isProcessing

@@ -24,12 +24,12 @@ class _NewsTabState extends State<NewsTab> {
   bool _hasMore = true;
   int _currentPage = 1;
   String? _searchTerm;
-  String? _selectedTagId;
+  List<String>? _selectedTagIds;
   String _sortBy = 'updatedAt';
   String _sortDirection = 'desc';
 
   bool get _filtersActive =>
-      _selectedTagId != null ||
+      (_selectedTagIds != null && _selectedTagIds!.isNotEmpty) ||
       _sortBy != 'updatedAt' ||
       _sortDirection != 'desc';
 
@@ -98,7 +98,7 @@ class _NewsTabState extends State<NewsTab> {
     try {
       final response = await _blogService.getBlogs(
         searchTerm: _searchTerm,
-        tagId: _selectedTagId,
+        tagIds: _selectedTagIds,
         sortBy: _sortBy,
         sortDirection: _sortDirection,
         pageNumber: _currentPage,
@@ -151,12 +151,12 @@ class _NewsTabState extends State<NewsTab> {
   }
 
   Future<void> _onFilter({
-    String? tagId,
+    List<String>? tagIds,
     String? sortBy,
     String? sortDirection,
   }) async {
     setState(() {
-      _selectedTagId = tagId;
+      _selectedTagIds = tagIds;
       _sortBy = sortBy ?? _sortBy;
       _sortDirection = sortDirection ?? _sortDirection;
       _currentPage = 1;
@@ -177,9 +177,10 @@ class _NewsTabState extends State<NewsTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       drawer: BlogFilterDrawer(
         tags: _tags,
-        currentTagId: _selectedTagId,
+        currentTagIds: _selectedTagIds,
         currentSortBy: _sortBy,
         currentSortDirection: _sortDirection,
         onApply: _onFilter,
@@ -210,19 +211,19 @@ class _NewsTabState extends State<NewsTab> {
                             padding: const EdgeInsets.only(right: 8),
                             child: FilterChip(
                               label: Text('common.all'.tr()),
-                              selected: _selectedTagId == null,
+                              selected: _selectedTagIds == null || _selectedTagIds!.isEmpty,
                               selectedColor: const Color(0xFF17a64b).withOpacity(0.2),
                               checkmarkColor: const Color(0xFF17a64b),
                               backgroundColor: Colors.white,
                               side: BorderSide(
-                                color: _selectedTagId == null 
+                                color: (_selectedTagIds == null || _selectedTagIds!.isEmpty)
                                     ? const Color(0xFF17a64b) 
                                     : Colors.grey[300]!,
                                 width: 1,
                               ),
                               onSelected: (selected) {
                                 if (selected) {
-                                  _onFilter(tagId: null);
+                                  _onFilter(tagIds: null);
                                 }
                               },
                             ),
@@ -230,23 +231,27 @@ class _NewsTabState extends State<NewsTab> {
                         }
                         
                         final tag = _tags[index - 1];
+                        final isSelected = _selectedTagIds != null && _selectedTagIds!.contains(tag.id);
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: FilterChip(
                             label: Text(tag.name),
-                            selected: _selectedTagId == tag.id,
+                            selected: isSelected,
                             selectedColor: const Color(0xFF17a64b).withOpacity(0.2),
                             checkmarkColor: const Color(0xFF17a64b),
                             backgroundColor: Colors.white,
                             side: BorderSide(
-                              color: _selectedTagId == tag.id 
+                              color: isSelected 
                                   ? const Color(0xFF17a64b) 
                                   : Colors.grey[300]!,
                               width: 1,
                             ),
                             onSelected: (selected) {
+                              final currentTagIds = _selectedTagIds ?? <String>[];
                               if (selected) {
-                                _onFilter(tagId: tag.id);
+                                _onFilter(tagIds: [...currentTagIds, tag.id]);
+                              } else {
+                                _onFilter(tagIds: currentTagIds.where((id) => id != tag.id).toList());
                               }
                             },
                           ),

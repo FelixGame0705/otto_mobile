@@ -109,7 +109,9 @@ class _SolutionViewerScreenState extends State<SolutionViewerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title ?? 'Solution')),
-      body: WebViewWidget(controller: _controller),
+      body: SafeArea(
+        child: WebViewWidget(controller: _controller),
+      ),
     );
   }
 }

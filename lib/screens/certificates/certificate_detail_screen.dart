@@ -448,6 +448,11 @@ ${'certificate.shareFooter'.tr()}
         title: Text('certificate.details'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(

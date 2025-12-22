@@ -223,6 +223,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      foregroundColor: const Color.fromARGB(255, 0, 0, 0),
       title: 'profile.title'.tr(),
       gradientColors: const [Color.fromARGB(255, 255, 255, 255), Color.fromARGB(255, 255, 255, 255)],
       alignment: Alignment.topCenter,
@@ -230,7 +232,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionCard(
-            title: 'profile.userInfo'.tr(),
+              title: 'profile.userInfo'.tr(),
             child: _user == null
                 ? Text('profile.noUser'.tr())
                 : Column(

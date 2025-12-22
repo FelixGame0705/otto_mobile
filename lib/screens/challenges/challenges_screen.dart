@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
 // Removed ChallengeProcessService in favor of server-side best submissions API
@@ -28,23 +29,18 @@ class ChallengesScreen extends StatefulWidget {
 class _ChallengesScreenState extends State<ChallengesScreen> {
   final ChallengeService _service = ChallengeService();
   final SubmissionService _submissionService = SubmissionService();
-  final ScrollController _scroll = ScrollController();
 
   List<Challenge> _items = [];
   Map<String, int> _challengeBestStars = {}; // Map challenge ID to best star
   Set<String> _unlockedChallengeIds = {}; // Set of unlocked challenge IDs
   bool _loading = true;
-  bool _loadingMore = false;
   String _error = '';
-  int _page = 1;
-  bool _hasMore = true;
   DateTime? _lastRefreshTime;
 
   @override
   void initState() {
     super.initState();
     _load();
-    _scroll.addListener(_onScroll);
   }
 
   @override
@@ -69,7 +65,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
 
   @override
   void dispose() {
-    _scroll.dispose();
     super.dispose();
   }
 
@@ -78,19 +73,17 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
       _loading = true;
       _error = '';
       if (refresh) {
-        _page = 1;
         _items.clear();
         _challengeBestStars.clear();
-        _hasMore = true;
       }
     });
     try {
-      // Load challenges
+      // Load challenges (100 items at once, no pagination needed)
       final res = await _service.getChallenges(
         lessonId: widget.lessonId,
         courseId: widget.courseId,
         searchTerm: null,
-        pageNumber: _page,
+        pageNumber: 1,
         pageSize: 100,
       );
       
@@ -111,17 +104,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         
         // Calculate unlocked challenges based on best submissions
         final unlockedIds = _calculateUnlockedChallenges(list, bestStars);
-        if (refresh) {
           _items = list;
           _challengeBestStars = bestStars;
           _unlockedChallengeIds = unlockedIds;
           _lastRefreshTime = DateTime.now();
-        } else {
-          _items.addAll(list);
-          _challengeBestStars.addAll(bestStars);
-          _unlockedChallengeIds.addAll(unlockedIds);
-        }
-        _hasMore = false; // Only load first page with up to 100 items
         _loading = false;
       });
     } catch (e) {
@@ -152,19 +138,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
     }
   }
 
-  Future<void> _loadMore() async {
-    if (_loadingMore || !_hasMore) return;
-    setState(() => _loadingMore = true);
-    _page++;
-    await _load();
-    setState(() => _loadingMore = false);
-  }
-
-  void _onScroll() {
-    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 200) {
-      _loadMore();
-    }
-  }
 
   /// Calculate which challenges should be unlocked based on best submissions
   /// Rules:
@@ -241,6 +214,11 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         title: Text(widget.lessonTitle ?? 'challenges.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         elevation: 0,
         actions: [
           IconButton(
@@ -249,18 +227,19 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.green.withOpacity(0.03),
-              Colors.greenAccent.withOpacity(0.02),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.green.withOpacity(0.03),
+                Colors.greenAccent.withOpacity(0.02),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ),
-        child: Column(
+          child: Column(
           children: [
             Expanded(
               child: Container(
@@ -295,23 +274,10 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         : _items.isEmpty
                             ? Center(child: Text('common.notFound'.tr()))
                             : ListView.separated(
-                                controller: _scroll,
                                 padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 8),
-                                itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
+                                itemCount: _items.length,
                                 separatorBuilder: (_, __) => const SizedBox(height: 10),
                                 itemBuilder: (context, index) {
-                                  if (index == _items.length && _loadingMore) {
-                                    return const Center(child: CircularProgressIndicator());
-                                  }
-                                  if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
-                                    return Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        child: Text('challenges.allShown'.tr(), style: TextStyle(color: Colors.grey[600])),
-                                      ),
-                                    );
-                                  }
-                                  if (index < _items.length) {
                                     final c = _items[index];
                                     final int? bestStar = _challengeBestStars[c.id];
                                     final bool isUnlocked = _unlockedChallengeIds.contains(c.id);
@@ -359,8 +325,6 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
                                       } : null,
                                       index: index,
                                     );
-                                  }
-                                  return const SizedBox.shrink();
                                 },
                               ),
               ),
@@ -368,7 +332,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           ],
         ),
       ),
-    );
+    ),);
   }
 }
 
@@ -482,6 +446,13 @@ class _GameChallengeTile extends StatelessWidget {
                             _Pill(icon: Icons.speed, text: 'Lv ${challenge.difficulty}'),
                             const SizedBox(width: 8),
                             _Pill(icon: Icons.access_time, text: '${(challenge.order + 1) * 2}p'),
+                            if (challenge.challengeMode != null) ...[
+                              const SizedBox(width: 8),
+                              _Pill(
+                                icon: challenge.challengeMode == 0 ? Icons.computer : Icons.usb,
+                                text: challenge.challengeMode == 0 ? '' : '',
+                              ),
+                            ],
                           ],
                         ),
                       ],

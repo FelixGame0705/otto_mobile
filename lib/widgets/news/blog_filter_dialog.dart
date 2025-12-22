@@ -4,11 +4,11 @@ import 'package:ottobit/models/blog_model.dart';
 
 class BlogFilterDrawer extends StatefulWidget {
   final List<BlogTag> tags;
-  final String? currentTagId;
+  final List<String>? currentTagIds;
   final String currentSortBy;
   final String currentSortDirection;
   final void Function({
-    String? tagId,
+    List<String>? tagIds,
     String? sortBy,
     String? sortDirection,
   }) onApply;
@@ -16,7 +16,7 @@ class BlogFilterDrawer extends StatefulWidget {
   const BlogFilterDrawer({
     super.key,
     required this.tags,
-    required this.currentTagId,
+    required this.currentTagIds,
     required this.currentSortBy,
     required this.currentSortDirection,
     required this.onApply,
@@ -27,7 +27,7 @@ class BlogFilterDrawer extends StatefulWidget {
 }
 
 class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
-  String? _selectedTagId;
+  Set<String> _selectedTagIds = {};
   String _sortBy = 'updatedAt';
   String _sortDirection = 'desc';
 
@@ -42,14 +42,14 @@ class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
   @override
   void initState() {
     super.initState();
-    _selectedTagId = widget.currentTagId;
+    _selectedTagIds = widget.currentTagIds != null ? Set<String>.from(widget.currentTagIds!) : {};
     _sortBy = widget.currentSortBy;
     _sortDirection = widget.currentSortDirection;
   }
 
   void _resetFilters() {
     setState(() {
-      _selectedTagId = null;
+      _selectedTagIds.clear();
       _sortBy = 'updatedAt';
       _sortDirection = 'desc';
     });
@@ -57,7 +57,7 @@ class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
 
   void _applyFilters() {
     widget.onApply(
-      tagId: _selectedTagId,
+      tagIds: _selectedTagIds.isNotEmpty ? _selectedTagIds.toList() : null,
       sortBy: _sortBy,
       sortDirection: _sortDirection,
     );
@@ -111,11 +111,11 @@ class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
                 children: [
                   ChoiceChip(
                     label: Text('common.all'.tr()),
-                    selected: _selectedTagId == null,
-                    onSelected: (_) => setState(() => _selectedTagId = null),
+                    selected: _selectedTagIds.isEmpty,
+                    onSelected: (_) => setState(() => _selectedTagIds.clear()),
                     selectedColor: const Color(0xFF17a64b).withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: _selectedTagId == null
+                      color: _selectedTagIds.isEmpty
                           ? const Color(0xFF17a64b)
                           : const Color(0xFF2D3748),
                       fontWeight: FontWeight.w600,
@@ -128,11 +128,19 @@ class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
                   ...widget.tags.map(
                     (tag) => ChoiceChip(
                       label: Text(tag.name),
-                      selected: _selectedTagId == tag.id,
-                      onSelected: (_) => setState(() => _selectedTagId = tag.id),
+                      selected: _selectedTagIds.contains(tag.id),
+                      onSelected: (selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedTagIds.add(tag.id);
+                          } else {
+                            _selectedTagIds.remove(tag.id);
+                          }
+                        });
+                      },
                       selectedColor: const Color(0xFF17a64b).withOpacity(0.2),
                       labelStyle: TextStyle(
-                        color: _selectedTagId == tag.id
+                        color: _selectedTagIds.contains(tag.id)
                             ? const Color(0xFF17a64b)
                             : const Color(0xFF2D3748),
                         fontWeight: FontWeight.w600,
