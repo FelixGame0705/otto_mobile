@@ -50,6 +50,15 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
   String _orderDirection = 'ASC';
   bool _showFilters = true;
 
+  bool get _filtersActive =>
+      _searchCtrl.text.trim().isNotEmpty ||
+      _brandCtrl.text.trim().isNotEmpty ||
+      _inStock ||
+      _orderBy != 'Name' ||
+      _orderDirection != 'ASC' ||
+      _ageRange.start.round() != 6 ||
+      _ageRange.end.round() != 18;
+
   @override
   void initState() {
     super.initState();
@@ -316,14 +325,43 @@ class _StoreScreenState extends State<StoreScreen> with SingleTickerProviderStat
         ),
       ),
       appBar: AppBar(
-        toolbarHeight: 80,
+        toolbarHeight: 70,
+        leadingWidth: 70,
         title: Text('store.title'.tr()),
-        backgroundColor: const Color(0xFF00ba4a),
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.tune, color: Colors.white),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-          tooltip: 'store.filters'.tr(),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 3),
+            child: SizedBox(
+              height: 40,
+              width: 40,
+              child: ElevatedButton(
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _filtersActive ? const Color(0xFF17a64b) : Colors.white,
+                  elevation: _filtersActive ? 2 : 0,
+                  side: BorderSide(
+                    color: _filtersActive
+                        ? const Color(0xFF17a64b)
+                        : const Color(0xFFE2E8F0),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Icon(
+                    Icons.tune,
+                    size: 18,
+                    color:
+                        _filtersActive ? Colors.white : const Color(0xFF17a64b),
+                  ),
+                ),
+              ),
+            ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),

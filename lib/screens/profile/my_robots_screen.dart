@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/activation_code_model.dart';
 import 'package:ottobit/services/activation_code_service.dart';
 import 'package:ottobit/routes/app_routes.dart';
@@ -106,6 +107,11 @@ class _MyRobotsScreenState extends State<MyRobotsScreen> {
         title: Text('profile.robots.title'.tr()),
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: SafeArea(
         child: RefreshIndicator(

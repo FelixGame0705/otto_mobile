@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/submission_model.dart';
 import 'package:ottobit/services/submission_service.dart';
 import 'package:ottobit/screens/blockly/solution_viewer_screen.dart';
@@ -107,6 +108,11 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
         title: const Text('My Submissions'),
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: SafeArea(
         child: _loading

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ottobit/models/certificate_model.dart';
 import 'package:ottobit/services/certificate_service.dart';
@@ -153,6 +154,11 @@ ${'certificate.shareVerifyUrl'.tr()}
         title: Text('certificate.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(

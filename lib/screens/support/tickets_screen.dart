@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/assistance_ticket_model.dart';
 import 'package:ottobit/services/assistance_ticket_service.dart';
 import 'package:ottobit/services/student_service.dart';
@@ -89,6 +90,12 @@ class _TicketsScreenState extends State<TicketsScreen> {
       appBar: AppBar(
         title: Text('ticket.myTickets'.tr()),
         backgroundColor: const Color(0xFF17a64b),
+        foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: SafeArea(
         child: _buildContent(),

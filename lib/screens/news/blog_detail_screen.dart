@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/blog_model.dart';
 import 'package:ottobit/services/blog_service.dart';
 import 'package:ottobit/services/auth_service.dart';
@@ -77,6 +78,11 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
         title: Text('news.detail'.tr()),
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         elevation: 0,
         actions: [
           IconButton(

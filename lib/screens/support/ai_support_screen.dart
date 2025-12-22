@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/services/ai_chat_service.dart';
 
 class AiSupportScreen extends StatefulWidget {
@@ -68,6 +69,11 @@ class _AiSupportScreenState extends State<AiSupportScreen> {
         title: Text('aiSupport.title'.tr()),
         backgroundColor: const Color(0xFF17a64b),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: SafeArea(
         child: Column(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/challenge_model.dart';
 import 'package:ottobit/services/challenge_service.dart';
 // Removed ChallengeProcessService in favor of server-side best submissions API
@@ -213,6 +214,11 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         title: Text(widget.lessonTitle ?? 'challenges.title'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
         foregroundColor: Colors.white,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         elevation: 0,
         actions: [
           IconButton(

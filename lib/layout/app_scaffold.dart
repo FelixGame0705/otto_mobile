@@ -8,6 +8,8 @@ class AppScaffold extends StatelessWidget {
   final bool showAppBar;
   final List<Color>? gradientColors;
   final Alignment? alignment;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   const AppScaffold({
     super.key,
@@ -18,6 +20,8 @@ class AppScaffold extends StatelessWidget {
     this.showAppBar = true,
     this.gradientColors,
     this.alignment = Alignment.topCenter,
+    this.backgroundColor = const Color(0xFF00ba4a),
+    this.foregroundColor = Colors.white,
   });
 
   @override
@@ -26,8 +30,8 @@ class AppScaffold extends StatelessWidget {
       appBar: showAppBar
           ? AppBar(
               title: title != null ? Text(title!) : null,
-              backgroundColor: const Color(0xFF00ba4a),
-              foregroundColor: Colors.white,
+              backgroundColor: backgroundColor,
+              foregroundColor: foregroundColor,
               centerTitle: centerTitle,
               actions: actions,
             )

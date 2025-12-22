@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/services.dart';
 import 'package:ottobit/models/lesson_resource_model.dart';
 import 'package:ottobit/services/lesson_resource_service.dart';
 import 'package:ottobit/widgets/lessons/lesson_resource_card.dart';
@@ -54,6 +55,11 @@ class _LessonResourcesScreenState extends State<LessonResourcesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.lessonTitle ?? 'resource.title'.tr()),
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       ),
       body: SafeArea(
         child: _loading
