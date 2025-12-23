@@ -67,6 +67,7 @@ class _BlogFilterDrawerState extends State<BlogFilterDrawer> {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 32),

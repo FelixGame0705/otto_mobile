@@ -108,7 +108,8 @@ class _SolutionViewerScreenState extends State<SolutionViewerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? 'Solution')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: Text(widget.title ?? 'Solution'), backgroundColor: Colors.white),
       body: SafeArea(
         child: WebViewWidget(controller: _controller),
       ),

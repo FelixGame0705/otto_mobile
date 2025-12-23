@@ -50,7 +50,7 @@ class _CreateTicketDialogState extends State<CreateTicketDialog> {
       if (response.isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
+            content: Text('ticket.createSuccess'.tr()),
             backgroundColor: Colors.green,
           ),
         );
@@ -82,6 +82,7 @@ class _CreateTicketDialogState extends State<CreateTicketDialog> {
     final maxWidth = screenWidth > 600 ? 500.0 : screenWidth * 0.9;
 
     return AlertDialog(
+      backgroundColor: Colors.white,
       title: Text('ticket.create'.tr()),
       contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),

@@ -91,6 +91,10 @@ class _ActivationCodeDialogState extends State<ActivationCodeDialog> {
         width: MediaQuery.of(context).size.width * 0.9,
         constraints: const BoxConstraints(maxWidth: 500),
         padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,3 +1,5 @@
+import 'package:ottobit/utils/date_time_utils.dart';
+
 class LessonNote {
   final String id;
   final String studentId;
@@ -30,15 +32,6 @@ class LessonNote {
   });
 
   factory LessonNote.fromJson(Map<String, dynamic> json) {
-    DateTime _parseDateTimeWithOffset(String dateTimeString) {
-      try {
-        final dateTime = DateTime.parse(dateTimeString);
-        return dateTime.add(const Duration(hours: 7));
-      } catch (_) {
-        return DateTime.now();
-      }
-    }
-
     return LessonNote(
       id: (json['id'] as String?) ?? '',
       studentId: (json['studentId'] as String?) ?? '',
@@ -47,10 +40,10 @@ class LessonNote {
       content: (json['content'] as String?) ?? '',
       timestampInSeconds: (json['timestampInSeconds'] as int?) ?? 0,
       createdAt: json['createdAt'] != null 
-          ? _parseDateTimeWithOffset(json['createdAt'] as String)
+          ? DateTimeUtils.parseDateTimeWithOffset(json['createdAt'] as String)
           : DateTime.now(),
       updatedAt: json['updatedAt'] != null
-          ? _parseDateTimeWithOffset(json['updatedAt'] as String)
+          ? DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'] as String)
           : DateTime.now(),
       studentFullname: (json['studentFullname'] as String?) ?? '',
       lessonTitle: (json['lessonTitle'] as String?) ?? '',

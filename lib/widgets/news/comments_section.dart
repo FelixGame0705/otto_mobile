@@ -175,13 +175,19 @@ class _CommentsSectionState extends State<CommentsSection> {
         await _refreshComments();
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('news.commentPosted'.tr())),
+          SnackBar(
+            content: Text('news.commentPosted'.tr()),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       final errorMsg = ApiErrorMapper.fromException(e);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg)),
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {

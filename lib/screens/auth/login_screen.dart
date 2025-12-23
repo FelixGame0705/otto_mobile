@@ -12,6 +12,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:ottobit/services/storage_service.dart';
 import 'package:ottobit/services/jwt_token_manager.dart';
 import 'package:ottobit/models/user_model.dart';
+import 'package:ottobit/utils/api_error_handler.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -284,9 +285,13 @@ class _LoginScreenState extends State<LoginScreen> {
       } catch (e) {
         setState(() => _isLoading = false);
         if (mounted) {
-          final errorMsg = e is PlatformException 
-              ? _handleGoogleSignInError(e)
-              : 'auth.googleAuthError'.tr();
+          String errorMsg;
+          if (e is PlatformException) {
+            errorMsg = _handleGoogleSignInError(e);
+          } else {
+            // Sử dụng ApiErrorMapper để xử lý lỗi mạng và các lỗi khác
+            errorMsg = ApiErrorMapper.fromException(e, fallback: 'auth.googleAuthError'.tr());
+          }
           showErrorToast(context, errorMsg);
         }
       }
@@ -299,7 +304,8 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        final errorMsg = _handleGoogleSignInError(e);
+        // Sử dụng ApiErrorMapper để xử lý lỗi mạng và các lỗi khác
+        final errorMsg = ApiErrorMapper.fromException(e, fallback: _handleGoogleSignInError(e));
         showErrorToast(context, errorMsg);
       }
     }
@@ -407,7 +413,9 @@ class _LoginScreenState extends State<LoginScreen> {
       _emailError = null;
       _passwordError = null;
     });
-    showErrorToast(context, 'Lỗi kết nối: $e');
+    // Sử dụng ApiErrorMapper để xử lý lỗi mạng và các lỗi khác
+    final errorMessage = ApiErrorMapper.fromException(e);
+    showErrorToast(context, errorMessage);
   }
 }
 

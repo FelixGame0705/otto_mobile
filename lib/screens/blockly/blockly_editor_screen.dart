@@ -1075,6 +1075,7 @@ class _BlocklyEditorScreenState extends State<BlocklyEditorScreen>
       },
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.white,
           title: Row(
             children: [
               const Text('Blockly Editor'),

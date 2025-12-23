@@ -1,7 +1,4 @@
-/// Helper function to parse DateTime and add 7 hours for timezone offset
-DateTime _parseDateTimeWithOffset(String dateTimeString) {
-  return DateTime.parse(dateTimeString).add(const Duration(hours: 7));
-}
+import 'package:ottobit/utils/date_time_utils.dart';
 
 class Submission {
   final String id;
@@ -37,8 +34,8 @@ class Submission {
       studentId: json['studentId'] as String,
       codeJson: json['codeJson'] as String,
       star: json['star'] as int,
-      createdAt: _parseDateTimeWithOffset(json['createdAt'] as String),
-      updatedAt: _parseDateTimeWithOffset(json['updatedAt'] as String),
+      createdAt: DateTimeUtils.parseDateTimeWithOffset(json['createdAt'] as String),
+      updatedAt: DateTimeUtils.parseDateTimeWithOffset(json['updatedAt'] as String),
       challengeTitle: json['challengeTitle'] as String,
       studentName: json['studentName'] as String,
       lessonTitle: json['lessonTitle'] as String,
@@ -84,7 +81,7 @@ class SubmissionApiResponse {
       data: json['data'] != null ? Submission.fromJson(json['data'] as Map<String, dynamic>) : null,
       errors: json['errors'] != null ? List<String>.from(json['errors'] as List) : null,
       errorCode: json['errorCode'] as String?,
-      timestamp: _parseDateTimeWithOffset(json['timestamp'] as String),
+      timestamp: DateTimeUtils.parseDateTimeWithOffset(json['timestamp'] as String),
     );
   }
 }
@@ -112,7 +109,7 @@ class SubmissionListApiResponse {
           .toList(),
       errors: json['errors'] != null ? List<String>.from(json['errors'] as List) : null,
       errorCode: json['errorCode'] as String?,
-      timestamp: _parseDateTimeWithOffset((json['timestamp'] as String?) ?? DateTime.now().toIso8601String()),
+      timestamp: DateTimeUtils.parseDateTimeWithOffset((json['timestamp'] as String?) ?? DateTime.now().toIso8601String()),
     );
   }
 }

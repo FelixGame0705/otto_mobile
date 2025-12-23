@@ -40,12 +40,16 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
 
   Future<void> _load({bool refresh = false}) async {
     setState(() {
-      _loading = true;
       _error = '';
+      // Chỉ hiển thị loading full-screen cho lần load đầu hoặc khi refresh thủ công
       if (refresh) {
         _page = 1;
         _items.clear();
         _hasMore = true;
+        _loading = true;
+      } else if (_page == 1 && _items.isEmpty) {
+        // Lần load đầu tiên
+        _loading = true;
       }
     });
     try {
@@ -134,6 +138,7 @@ class _MySubmissionsScreenState extends State<MySubmissionsScreen> {
                         if (index < _items.length) {
                           final s = _items[index];
                           return ListTile(
+                            tileColor: Colors.white,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             leading: CircleAvatar(
                               backgroundColor: Colors.green.shade50,

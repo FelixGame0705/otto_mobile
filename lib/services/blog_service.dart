@@ -376,4 +376,30 @@ class BlogService {
       throw Exception(friendly);
     }
   }
+
+  /// Increment view count for a blog
+  Future<bool> incrementViewCount(String blogId) async {
+    try {
+      print('BlogService: Making request to /v1/blogs/$blogId/view-count');
+      
+      final response = await _httpService.put(
+        '/v1/blogs/$blogId/view-count',
+        throwOnError: false,
+      );
+
+      print('BlogService: Response status: ${response.statusCode}');
+      print('BlogService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
+        return jsonData['data'] == true;
+      } else {
+        print('BlogService: Error response: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('BlogService error (incrementViewCount): $e');
+      return false;
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
@@ -21,16 +22,101 @@ class BlogDetailScreen extends StatefulWidget {
 
 class _BlogDetailScreenState extends State<BlogDetailScreen> {
   final BlogService _blogService = BlogService();
+  final ScrollController _scrollController = ScrollController();
   Blog? _blog;
   bool _isLoading = true;
   String? _error;
   String? _currentUserId;
+  
+  // View count tracking
+  bool _hasScrolled50Percent = false;
+  bool _hasViewed30Seconds = false;
+  bool _viewCountIncremented = false;
+  Timer? _viewTimer;
+  
+  // Session-based tracking (static to persist across widget rebuilds)
+  static final Set<String> _viewedBlogIds = <String>{};
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_handleScroll);
+    _startViewTimer();
     _loadCurrentUser();
     _loadBlog();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
+    _viewTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startViewTimer() {
+    _viewTimer = Timer(const Duration(seconds: 30), () {
+      if (mounted) {
+        setState(() {
+          _hasViewed30Seconds = true;
+        });
+        _checkAndIncrementViewCount();
+      }
+    });
+  }
+
+  void _handleScroll() {
+    if (_scrollController.hasClients) {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      final currentScroll = _scrollController.position.pixels;
+      final scrollPercentage = maxScroll > 0 ? (currentScroll / maxScroll) : 0.0;
+      
+      if (scrollPercentage >= 0.5 && !_hasScrolled50Percent) {
+        setState(() {
+          _hasScrolled50Percent = true;
+        });
+        _checkAndIncrementViewCount();
+      }
+    }
+  }
+
+  void _checkAndIncrementViewCount() {
+    // Only increment if all conditions are met and not already incremented
+    if (_viewCountIncremented || _blog == null) return;
+    
+    // Check if already viewed in this session
+    if (_viewedBlogIds.contains(_blog!.id)) {
+      _viewCountIncremented = true;
+      return;
+    }
+    
+    // Check if both conditions are met: 30 seconds AND 50% scroll
+    if (_hasViewed30Seconds && _hasScrolled50Percent) {
+      _incrementViewCount();
+    }
+  }
+
+  Future<void> _incrementViewCount() async {
+    if (_blog == null || _viewCountIncremented) return;
+    
+    // Mark as incremented to prevent duplicate calls
+    _viewCountIncremented = true;
+    _viewedBlogIds.add(_blog!.id);
+    
+    // Call API silently (no toast/notification)
+    try {
+      await _blogService.incrementViewCount(_blog!.id);
+      // Optionally update local view count if needed
+      if (mounted && _blog != null) {
+        setState(() {
+          // Note: We don't update viewCount here as it's loaded from server
+          // The next time the blog is loaded, it will have the updated count
+        });
+      }
+    } catch (e) {
+      // Silently handle errors - no user notification
+      print('Failed to increment view count: $e');
+    }
   }
 
   Future<void> _loadCurrentUser() async {
@@ -60,6 +146,17 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
           _blog = blog;
           _isLoading = false;
         });
+        // Reset view tracking when blog loads
+        if (blog != null) {
+          _hasScrolled50Percent = false;
+          _hasViewed30Seconds = false;
+          _viewCountIncremented = _viewedBlogIds.contains(blog.id);
+          // Restart timer if blog wasn't viewed in this session
+          if (!_viewCountIncremented) {
+            _viewTimer?.cancel();
+            _startViewTimer();
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -170,6 +267,7 @@ class _BlogDetailScreenState extends State<BlogDetailScreen> {
 
   Widget _buildBlogContent() {
     return SingleChildScrollView(
+      controller: _scrollController,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

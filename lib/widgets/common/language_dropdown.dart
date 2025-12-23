@@ -20,6 +20,7 @@ class LanguageDropdown extends StatelessWidget {
       value: current,
       isDense: true,
       decoration: InputDecoration(
+        fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),

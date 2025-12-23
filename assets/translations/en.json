@@ -98,7 +98,18 @@
     "lessonContent": "Lesson content",
     "createdAt": "Created at:",
     "lastUpdated": "Last updated:",
-    "challenges": "challenges"
+    "challenges": "challenges",
+    "missingCourseInfo": "Missing course information",
+    "missingLessonInfo": "Missing lesson information",
+    "missingChallengeInfo": "Missing challenge information",
+    "missingLessonResourceInfo": "Missing lesson resource information",
+    "missingResourceInfo": "Missing resource information",
+    "missingProductInfo": "Missing product information",
+    "missingCartInfo": "Missing cart information",
+    "missingOrderId": "Missing order ID",
+    "missingPaymentParams": "Missing payment parameters",
+    "missingBlogInfo": "Missing blog information",
+    "missingCertificateId": "Missing certificate ID"
   },
   "activationCode": {
     "title": "Activate Robot",
@@ -616,6 +627,7 @@
     "descriptionRequired": "Description is required",
     "descriptionMin": "Description must be at least 10 characters",
     "createButton": "Create",
+    "createSuccess": "Ticket created successfully",
     "getSupport": "Get Support",
     "myTickets": "My Support Tickets",
     "noTickets": "No support tickets",
