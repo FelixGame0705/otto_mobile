@@ -81,7 +81,7 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         final isEnglish = context.locale.languageCode == 'en';
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     }
@@ -132,7 +132,7 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         final isEnglish = context.locale.languageCode == 'en';
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     }
@@ -178,13 +178,13 @@ class _CourseRatingWidgetState extends State<CourseRatingWidget> {
         _loadRatings(); // Reload ratings after delete
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('course.ratingDeleted'.tr())),
+          SnackBar(content: Text('course.ratingDeleted'.tr()), backgroundColor: Colors.green),
         );
       } catch (e) {
         final isEnglish = context.locale.languageCode == 'en';
         final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg)),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     }
@@ -595,7 +595,7 @@ class _RatingDialogState extends State<_RatingDialog> {
       final isEnglish = context.locale.languageCode == 'en';
       final errorMsg = ApiErrorMapper.fromException(e, isEnglish: isEnglish);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg)),
+        SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) {

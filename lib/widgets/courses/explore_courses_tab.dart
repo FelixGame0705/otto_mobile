@@ -180,7 +180,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       drawer: _buildFilterDrawer(),
       body: Column(
         children: [
@@ -318,6 +318,7 @@ class _ExploreCoursesTabState extends State<ExploreCoursesTab> {
 
   Widget _buildFilterDrawer() {
     return Drawer(
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: StatefulBuilder(
           builder: (context, setDrawerState) {

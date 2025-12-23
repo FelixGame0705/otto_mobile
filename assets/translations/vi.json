@@ -99,7 +99,18 @@
     "lessonContent": "Nội dung bài học",
     "createdAt": "Ngày tạo:",
     "lastUpdated": "Cập nhật cuối:",
-    "challenges": "thử thách"
+    "challenges": "thử thách",
+    "missingCourseInfo": "Thiếu thông tin khóa học",
+    "missingLessonInfo": "Thiếu thông tin bài học",
+    "missingChallengeInfo": "Thiếu thông tin thử thách",
+    "missingLessonResourceInfo": "Thiếu thông tin tài nguyên bài học",
+    "missingResourceInfo": "Thiếu thông tin tài nguyên",
+    "missingProductInfo": "Thiếu thông tin sản phẩm",
+    "missingCartInfo": "Thiếu thông tin giỏ hàng",
+    "missingOrderId": "Thiếu mã đơn hàng",
+    "missingPaymentParams": "Thiếu tham số thanh toán",
+    "missingBlogInfo": "Thiếu thông tin bài viết",
+    "missingCertificateId": "Thiếu mã chứng chỉ"
   },
   "activationCode": {
     "title": "Kích hoạt Robot",

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:ottobit/screens/auth/login_screen.dart';
 import 'package:ottobit/screens/auth/register_screen.dart';
 import 'package:ottobit/screens/auth/forgot_password_screen.dart';
@@ -97,9 +98,9 @@ class AppRoutes {
           return LessonsScreen(courseId: courseId, courseTitle: courseTitle);
         }
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin khóa học'),
+          child: Text('common.missingCourseInfo'.tr()),
         ),
       );
     },
@@ -108,9 +109,9 @@ class AppRoutes {
       if (args is String) {
         return LessonDetailScreen(lessonId: args);
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin bài học'),
+          child: Text('common.missingLessonInfo'.tr()),
         ),
       );
     },
@@ -130,9 +131,9 @@ class AppRoutes {
           );
         }
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin thử thách'),
+          child: Text('common.missingChallengeInfo'.tr()),
         ),
       );
     },
@@ -145,9 +146,9 @@ class AppRoutes {
           return LessonResourcesScreen(lessonId: lessonId, lessonTitle: lessonTitle);
         }
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin tài nguyên bài học'),
+          child: Text('common.missingLessonResourceInfo'.tr()),
         ),
       );
     },
@@ -162,9 +163,9 @@ class AppRoutes {
           return LessonResourceDetailScreen(resourceId: id);
         }
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin tài nguyên'),
+          child: Text('common.missingResourceInfo'.tr()),
         ),
       );
     },
@@ -188,9 +189,9 @@ class AppRoutes {
         // Backward compatibility for old String argument
         return ProductDetailScreen(productId: args);
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin sản phẩm'),
+          child: Text('common.missingProductInfo'.tr()),
         ),
       );
     },
@@ -207,9 +208,9 @@ class AppRoutes {
           );
         }
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin giỏ hàng'),
+          child: Text('common.missingCartInfo'.tr()),
         ),
       );
     },
@@ -217,7 +218,7 @@ class AppRoutes {
     orderDetail: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is String) return OrderDetailScreen(orderId: args);
-      return const Scaffold(body: Center(child: Text('Thiếu mã đơn hàng')));
+      return Scaffold(body: Center(child: Text('common.missingOrderId'.tr())));
     },
     paymentWebview: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
@@ -231,16 +232,16 @@ class AppRoutes {
           return PaymentWebViewScreen(paymentUrl: paymentUrl, returnUrl: returnUrl, cancelUrl: cancelUrl, amount: amount, description: description);
         }
       }
-      return const Scaffold(body: Center(child: Text('Thiếu tham số thanh toán')));
+      return Scaffold(body: Center(child: Text('common.missingPaymentParams'.tr())));
     },
     blogDetail: (context) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is String) {
         return BlogDetailScreen(slug: args);
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Thiếu thông tin bài viết'),
+          child: Text('common.missingBlogInfo'.tr()),
         ),
       );
     },
@@ -259,9 +260,9 @@ class AppRoutes {
           );
         }
       }
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: Text('Missing certificate ID'),
+          child: Text('common.missingCertificateId'.tr()),
         ),
       );
     },

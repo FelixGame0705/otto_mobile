@@ -34,6 +34,9 @@ class _HomeDashboardState extends State<HomeDashboard> {
   final Set<String> _completedLessonIds = <String>{};
   int? _currentLessonOrder;
 
+  // Filter state: only show in-progress enrollments (IsCompleted = false)
+  bool _inProgressOnly = false;
+
   // Draggable button position
   double _buttonX = 16.0;
   double _buttonY = 96.0; // Initial position above bottom bar (80px bar + 16px padding)
@@ -52,7 +55,10 @@ class _HomeDashboardState extends State<HomeDashboard> {
     try {
       // Load enrollments for course selector
       try {
-        final enrollRes = await _enrollmentService.getMyEnrollments(pageSize: 20);
+        final enrollRes = await _enrollmentService.getMyEnrollments(
+          pageSize: 20,
+          isCompleted: _inProgressOnly ? false : null,
+        );
         _enrollments = enrollRes.items;
         if (_enrollments.isNotEmpty) {
           _selectedCourseId ??= _enrollments.first.courseId;
@@ -164,11 +170,30 @@ class _HomeDashboardState extends State<HomeDashboard> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                'home.learningPath'.tr(),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'home.learningPath'.tr(),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  FilterChip(
+                    label: Text('common.inProgress'.tr()),
+                    selected: _inProgressOnly,
+                    onSelected: (value) {
+                      setState(() {
+                        _inProgressOnly = value;
+                        // Reset selected course when filter changes to avoid pointing to non-existing course
+                        _selectedCourseId = null;
+                      });
+                      _load();
+                    },
+                    selectedColor: const Color(0xFF17a64b).withOpacity(0.15),
+                    checkmarkColor: const Color(0xFF17a64b),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               CourseSelector(

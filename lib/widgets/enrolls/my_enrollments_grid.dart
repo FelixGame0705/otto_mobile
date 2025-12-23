@@ -130,9 +130,11 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
         ),
       );
     }
-    return Column(
-      children: [
-        Padding(
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
           child: Row(
             children: [
@@ -172,38 +174,39 @@ class _MyEnrollmentsGridState extends State<MyEnrollmentsGrid> {
                 Text('${_items.length}${_hasMore ? '+' : ''}'),
             ],
           ),
-        ),
-        const SizedBox(height: 8),
-        if (_items.isEmpty)
-          Expanded(child: Center(child: Text('common.noMatchingCourses'.tr())))
-        else
-          Expanded(
-            child: GridView.builder(
-              controller: _scroll,
-              padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 12),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _cols(w, o),
-                childAspectRatio: _ratio(w, o),
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _items.length && _loadingMore) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
-                  return Center(child: Text('common.viewAllShown'.tr()));
-                }
-                if (index < _items.length) {
-                  final e = _items[index];
-                  return _EnrollmentCard(enrollment: e);
-                }
-                return const SizedBox.shrink();
-              },
-            ),
           ),
-      ],
+          const SizedBox(height: 8),
+          if (_items.isEmpty)
+            Expanded(child: Center(child: Text('common.noMatchingCourses'.tr())))
+          else
+            Expanded(
+              child: GridView.builder(
+                controller: _scroll,
+                padding: EdgeInsets.symmetric(horizontal: padH.toDouble(), vertical: 12),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _cols(w, o),
+                  childAspectRatio: _ratio(w, o),
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: _items.length + (_loadingMore ? 1 : 0) + (!_hasMore && _items.isNotEmpty ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index == _items.length && _loadingMore) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (index == _items.length + (_loadingMore ? 1 : 0) && !_hasMore && _items.isNotEmpty) {
+                    return Center(child: Text('common.viewAllShown'.tr()));
+                  }
+                  if (index < _items.length) {
+                    final e = _items[index];
+                    return _EnrollmentCard(enrollment: e);
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

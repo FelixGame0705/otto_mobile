@@ -87,6 +87,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('ticket.myTickets'.tr()),
         backgroundColor: const Color(0xFF17a64b),
@@ -97,8 +98,11 @@ class _TicketsScreenState extends State<TicketsScreen> {
           statusBarBrightness: Brightness.light,
         ),
       ),
-      body: SafeArea(
-        child: _buildContent(),
+      body: Container(
+        color: Colors.white,
+        child: SafeArea(
+          child: _buildContent(),
+        ),
       ),
     );
   }
@@ -185,6 +189,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
         itemBuilder: (context, index) {
           final ticket = _tickets[index];
           return Card(
+            color: Colors.white,
             elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

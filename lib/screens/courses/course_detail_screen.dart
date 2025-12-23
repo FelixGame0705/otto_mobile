@@ -500,38 +500,38 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
             ),
           
-          // Lessons Button (hidden in read-only mode)
-          if (!widget.hideEnroll)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.lessons,
-                          arguments: {
-                            'courseId': widget.courseId,
-                            'courseTitle': _course?.title,
-                          },
-                        );
-                      },
-                      icon: const Icon(Icons.menu_book),
-                      label: Text('course.viewLessons'.tr()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF48BB78),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 2,
+          // Lessons Button (always visible for enrolled users)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.lessons,
+                        arguments: {
+                          'courseId': widget.courseId,
+                          'courseTitle': _course?.title,
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.menu_book),
+                    label: Text('course.viewLessons'.tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF48BB78),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      elevation: 2,
                     ),
                   ),
+                ),
+                if (!widget.hideEnroll) ...[
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -540,8 +540,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       icon: const Icon(Icons.support_agent),
                       label: Text('ticket.getSupport'.tr()),
                       style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF17a64b),
-                      side: const BorderSide(color: Color(0xFF17a64b)),
+                        foregroundColor: const Color(0xFF17a64b),
+                        side: const BorderSide(color: Color(0xFF17a64b)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -550,8 +550,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
+          ),
           
           // Discounts offered after completion (place above rating)
           if (_course != null && _course!.isPaid)

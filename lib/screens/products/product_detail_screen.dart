@@ -232,6 +232,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('product.detail'.tr()),
         backgroundColor: const Color(0xFF00ba4a),
@@ -243,8 +244,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: _buildBody(),
+      body: Container(
+        color: Colors.white,
+        child: SafeArea(
+          child: _buildBody(),
+        ),
       ),
     );
   }

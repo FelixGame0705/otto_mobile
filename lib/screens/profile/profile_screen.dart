@@ -91,6 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final mq = MediaQuery.of(context);
         final isWide = mq.size.width > 600;
         return AlertDialog(
+          backgroundColor: Colors.white,
           scrollable: true,
           insetPadding: EdgeInsets.symmetric(
             horizontal: isWide ? mq.size.width * 0.25 : 16,
@@ -173,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (res.isSuccess) {
         setState(() { _user = res.user; });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.message ?? 'profile.updateSuccess'.tr())),
+          SnackBar(content: Text(res.message ?? 'profile.updateSuccess'.tr()), backgroundColor: Colors.green),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -501,6 +502,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
           SectionCard(
+            color: Colors.white,
             title: 'profile.security'.tr(),
             child: Column(
               children: [
@@ -877,6 +879,7 @@ class _StudentRegistrationDialogState extends State<_StudentRegistrationDialog> 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       title: Text(
         widget.isUpdate ? 'profile.editStudentProfile'.tr() : 'profile.student.dialogTitle'.tr(),
         style: const TextStyle(fontWeight: FontWeight.bold),
