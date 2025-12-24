@@ -274,7 +274,7 @@ class _StoreFilterDrawerState extends State<StoreFilterDrawer> {
                         value: _orderBy,
                         items: [
                           DropdownMenuItem(value: 'Name', child: Text('store.sort.name'.tr())),
-                          DropdownMenuItem(value: 'Price', child: Text('store.sort.price'.tr())),
+                          //DropdownMenuItem(value: 'Price', child: Text('store.sort.price'.tr())),
                           DropdownMenuItem(value: 'CreatedAt', child: Text('store.sort.created'.tr())),
                         ],
                         onChanged: (v) {
