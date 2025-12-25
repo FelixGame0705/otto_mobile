@@ -213,14 +213,18 @@
       <div class="zoom-controls">
         <button class="zoom-btn" id="zoomIn" title="Zoom in">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"/>
+            <path
+              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+            <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z" />
           </svg>
         </button>
         <button class="zoom-btn" id="zoomOut" title="Zoom out">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-            <path d="M7 9h5v1H7z"/>
+            <path
+              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+            <path d="M7 9h5v1H7z" />
           </svg>
         </button>
       </div>
@@ -964,16 +968,16 @@
             const op = target.getFieldValue("OP");
             // Map Blockly operators to Phaser operators
             const opMap = {
-              "ADD": "+",
-              "MINUS": "-",
-              "MULTIPLY": "*",
-              "DIVIDE": "/"
+              ADD: "+",
+              MINUS: "-",
+              MULTIPLY: "*",
+              DIVIDE: "/",
             };
             return {
               type: "arithmetic",
               op: opMap[op] || op,
               left: left,
-              right: right
+              right: right,
             };
           }
           return 0;
@@ -1084,71 +1088,68 @@
           };
         }
         function nodeIfElseIf(block) {
-          // helpers
+          // --- Helpers ---
           const toList = (name) => {
             const v = statementToList(block, name);
             if (!v) return [];
             return Array.isArray(v) ? v.filter(Boolean) : [v];
           };
-          const defaultCond = {
-            type: "condition",
-            function: "isGreen",
-            check: true,
+
+          // Nếu không có block điều kiện, trả về một node "luôn đúng" (hoặc mặc định)
+          const toNode = (b) => {
+            if (b && !b.isShadow?.()) return blockToNode(b);
+            return {
+              type: "condition",
+              function: "true", // Điều kiện mặc định là true
+              check: true,
+            };
           };
-          const toNode = (b) => (b ? blockToNode(b) : defaultCond);
+
           const isRealBlock = (b) =>
-            !!(b && !b.isShadow?.() && !b.isInsertionMarker_); // lọc shadow / marker
+            !!(b && !b.isShadow?.() && !b.isInsertionMarker_);
 
-          const result = { type: "if_else_if", conditions: [], thens: [] };
+          // --- Khởi tạo cấu trúc theo đúng bộ thực thi của bạn ---
+          const result = {
+            type: "if",
+            // 1) Nhánh IF đầu tiên: Nếu trống thì coi như true
+            cond: toNode(block.getInputTargetBlock("CONDITION")),
+            then: toList("THEN"),
+          };
 
-          // 1) IF đầu
-          result.conditions.push(
-            toNode(block.getInputTargetBlock("CONDITION"))
-          );
-          result.thens.push(toList("THEN"));
-
-          // 2) ELSE-IF: duyệt theo input thực tế
+          // 2) Nhánh ELSE-IF
+          const elseIfBranches = [];
           let i = 1;
           while (block.getInput && block.getInput("CONDITION" + i)) {
-            const c = block.getInputTargetBlock("CONDITION" + i);
-            if (c) {
-              result.conditions.push(blockToNode(c));
-              result.thens.push(toList("THEN" + i));
-            }
+            const condBlock = block.getInputTargetBlock("CONDITION" + i);
+            const thenList = toList("THEN" + i);
+
+            // Chỉ thêm nếu có lệnh trong then hoặc có điều kiện cụ thể
+            elseIfBranches.push({
+              cond: toNode(condBlock),
+              then: thenList,
+            });
             i++;
           }
 
-          // 3) ELSE: CHỈ thêm khi có cờ else + có block thật + list không rỗng
-          const hasElseFlag =
-            !!block.elseCount_ ||
-            (typeof block.getFieldValue === "function" &&
-              block.getFieldValue("HAS_ELSE") === "TRUE");
-
-          const elseInput = block.getInput && block.getInput("ELSE");
-          const elseTarget =
-            elseInput &&
-            (elseInput.connection?.targetBlock?.() ||
-              block.getInputTargetBlock?.("ELSE"));
-
-          if (hasElseFlag && isRealBlock(elseTarget)) {
-            const elseList = toList("ELSE");
-            if (elseList.length > 0) {
-              result.else = elseList;
-            }
+          if (elseIfBranches.length > 0) {
+            result.elseIf = elseIfBranches;
           }
 
-          // 4) Phòng hờ: nếu vì lý do nào đó vẫn có 'else' mà rỗng -> xoá
-          if (
-            "else" in result &&
-            (!result.else ||
-              (Array.isArray(result.else) && result.else.length === 0))
-          ) {
-            delete result.else;
+          // 3) Nhánh ELSE: Đây là nơi bạn đang gặp lỗi không thực thi
+          // Kiểm tra trực tiếp xem có block nào đang nối vào cổng ELSE không
+          const elseInput = block.getInput("ELSE");
+          const elseTarget = elseInput?.connection?.targetBlock?.();
+
+          if (isRealBlock(elseTarget)) {
+            const elseList = toList("ELSE");
+            if (elseList.length > 0) {
+              result.else = elseList; // Khớp với if (Array.isArray(action.else)) trong bộ thực thi
+            }
           }
 
           return result;
         }
-
+        
         function nodeFunctionDefine(block) {
           return {
             type: "function_define",
@@ -1547,7 +1548,11 @@
             }
           }
           // Emit functions first if present
-          if (program.functions && Array.isArray(program.functions) && program.functions.length > 0) {
+          if (
+            program.functions &&
+            Array.isArray(program.functions) &&
+            program.functions.length > 0
+          ) {
             program.functions.forEach(function (fn) {
               const name = fn.name || "myFunction1";
               lines.push("def " + name + "():");
@@ -1728,8 +1733,8 @@
       };
 
       // Zoom controls
-      const zoomInBtn = document.getElementById('zoomIn');
-      const zoomOutBtn = document.getElementById('zoomOut');
+      const zoomInBtn = document.getElementById("zoomIn");
+      const zoomOutBtn = document.getElementById("zoomOut");
 
       function getCurrentScale() {
         if (workspace.getScale) {
@@ -1764,13 +1769,13 @@
         const scale = getCurrentScale();
         const minScale = 0.3;
         const maxScale = 3.0;
-        
+
         if (zoomInBtn) zoomInBtn.disabled = scale >= maxScale;
         if (zoomOutBtn) zoomOutBtn.disabled = scale <= minScale;
       }
 
       if (zoomInBtn) {
-        zoomInBtn.addEventListener('click', function() {
+        zoomInBtn.addEventListener("click", function () {
           const currentScale = getCurrentScale();
           const maxScale = 3.0;
           const newScale = Math.min(currentScale + 0.2, maxScale);
@@ -1780,7 +1785,7 @@
       }
 
       if (zoomOutBtn) {
-        zoomOutBtn.addEventListener('click', function() {
+        zoomOutBtn.addEventListener("click", function () {
           const currentScale = getCurrentScale();
           const minScale = 0.3;
           const newScale = Math.max(currentScale - 0.2, minScale);
